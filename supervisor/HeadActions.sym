@@ -1,0 +1,52 @@
+;general
+declare ff HeadActions.freeId 0
+declare symbol HeadActions.sem
+declare be HeadActions.action
+declare cwp HeadActions.report
+declare cwp HeadActions.stop
+
+
+;init
+declare op_predicate HeadActions.init
+
+;getFreeId
+declare op_predicate HeadActions.getFreeId
+declare symbol id
+
+;lookAt
+declare symbol lookAt
+declare symbol target
+declare symbol joint
+declare symbol actionId
+declare symbol sparkId
+declare symbol xOb
+declare symbol yOb
+declare symbol zOb
+declare symbol yawOb
+declare symbol pitchOb
+declare symbol rollOb
+declare symbol smId
+declare symbol pan
+declare symbol tilt
+declare symbol robotPan
+declare symbol robotTilt
+
+
+;lookAtLocation
+declare symbol lookAtLocation
+declare symbol location
+declare symbol actionId
+
+;;headExpdlore
+declare symbol headExplore
+declare symbol actionId
+
+;;headExploreLocation
+declare symbol location
+declare symbol actionId
+
+;;handleReport
+declare symbol reportName
+declare symbol id
+declare symbol actionId
+

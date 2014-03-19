@@ -1,0 +1,44 @@
+;; -*-Lisp-*-
+;;author: Michelangelo Fiore
+;;this class contains procedure to create and manage timers 
+;; a new timer is created with the procedure startTimer and is associated to an id. 
+;; when the timer expires it posts the fact Timer.elapsedTime @id
+;; the timer stops before expiration if the fact Timer.stop @id is posted
+(
+ (defop |init|
+   :invocation (!(Timer.init))
+   :documentation "initializes the module"
+   :body (
+	  (=>(Timer.freeId 0))
+	  (!(SEM-CREATE Timer.sem 1 SEM-FIFO))
+	  )
+   )
+
+ (defop |getFreeId|
+   :invocation (!(Timer.getFreeId $id))
+   :documentation "returns an id to use for the other functions"
+   :body (
+	  (!(SEM-P Timer.sem))
+	  (?(Timer.freeId $id))
+	  (=>(Timer.freeId (+ $id 1)))
+	  (!(SEM-V Timer.sem))
+	  )
+   )
+
+ (defop |startTimer|
+   :invocation (!(Timer.startTimer @waitTime @id))
+   :documentation "creates a new timer that will expire after @waitTime seconds"
+   :body (
+	  (=>(Timer.isRunning @id))
+	  (^(|| (ELAPSED-TIME(TIME) @waitTime) (Timer.stopTimer (VAL @id))))
+	  (IF(?(~(Timer.stopTimer (VAL @id))))
+	     (=>(Timer.elapsedTime @id))
+	     ELSE
+	     (~>(Timer.stopTimer (VAL @id)))
+	     )
+	  (~>(Timer.isRunning (VAL @id)))	  
+	  )
+   )
+ 
+ 
+ )

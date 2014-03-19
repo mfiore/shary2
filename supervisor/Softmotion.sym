@@ -1,0 +1,140 @@
+;;GENERAL
+declare symbol Softmotion.semRArm
+declare symbol Softmotion.semLArm
+declare symbol Softmotion.semRGripper
+declare symbol Softmotion.semLGripper
+declare symbol Softmotion.semHead
+declare symbol Softmotion.semStop
+declare ff Softmotion.freeId 0
+declare be Softmotion.request
+declare cwp Softmotion.stop
+declare cwp Softmotion.report
+declare cwp Softmotion.report
+
+declare predicate Softmotion.rightArm
+declare predicate Softmotion.leftArm
+declare predicate Softmotion.leftGripperClose
+declare predicate Softmotion.leftGripperOpen
+declare predicate Softmotion.rightGripperClose
+declare predicate Softmotion.rightGripperOpen
+
+
+declare symbol PR2SOFTMOTION
+declare symbol PR2SOFTMOTION_TRACKQ
+declare symbol PR2SOFTMOTION_GOTOQ
+
+declare symbol ROPEN
+declare symbol LOPEN
+declare symbol RCLOSE
+declare symbol LCLOSE
+declare symbol RRELEASE
+declare symbol LRELEASE
+declare symbol RCANCEL
+declare symbol LCANCEL
+
+declare symbol RARM
+declare symbol LARM
+
+
+;;getFreeId
+declare op_predicate getFreeId
+declare symbol id
+
+;moveArm
+declare symbol moveArm
+declare symbol armId
+declare symbol id
+declare symbol parameters
+declare symbol report
+declare symbol result
+
+declare predicate PR2SM_TRACK_STR
+declare predicate posterName
+declare predicate name
+declare symbol mhpArmTraj
+declare predicate trackMode
+declare symbol PR2SM_TRACK_POSTER
+declare predicate robotPart
+
+;;moveHead
+declare symbol moveHead
+declare symbol pan
+declare symbol tilt
+declare symbol id
+declare symbol parameters
+
+declare predicate  PR2SM_QSTR 
+declare predicate robotPart
+declare symbol  HEAD
+declare predicate relatif
+declare predicate  base_tx 
+declare predicate base_ty
+declare predicate base_tz 
+declare predicate base_rx
+declare predicate base_ry
+declare predicate base_rz
+declare predicate torso 
+declare predicate head_pan
+declare predicate head_tilt 
+declare predicate laser_tilt 
+declare predicate r_shoulder_pan 
+declare predicate r_shoulder_lift
+declare predicate r_upper_arm_roll
+declare predicate r_elbow_flex  
+declare predicate r_forearm_roll 
+declare predicate r_wrist_flex 
+declare predicate r_writ_roll 
+declare predicate r_gripper  
+declare predicate r_gripper_false 
+declare predicate l_shoulder_pan
+declare predicate l_shoulder_lift 
+declare predicate l_upper_arm_roll 
+declare predicate l_elbow_flex 
+declare predicate l_forearm_roll 
+declare predicate l_wrist_flex 
+declare predicate l_wrist_roll  
+declare predicate l_gripper  
+declare predicate l_gripper_false  
+
+;;useGripper
+declare symbol useGripper
+declare symbol state
+declare symbol id
+declare symbol irAddFact
+declare symbol state
+declare symbol stopFact
+declare symbol waitTime
+
+declare symbol PR2SOFTMOTION_GRIPPERGRABRELEASE
+declare symbol parameters
+declare symbol report
+declare symbol result
+
+
+;getPanTiltFROMXYZ
+declare symbol getPanTiltFromXYZ
+declare symbol id
+declare symbol x
+declare symbol y
+declare symbol z
+
+declare predicate PR2SM_xyzHead
+declare predicate x
+declare predicate y
+declare predicate z
+declare predicate frame
+declare symbol /map
+
+declare symbol PR2SOFTMOTION_GETPANTILTFROMXYZ
+declare symbol report
+declare symbol result
+
+declare predicate pan
+declare predicate tilt
+declare predicate PR2SM_PanTilt
+
+declare symbol pan
+declare symbol tilt
+
+
+

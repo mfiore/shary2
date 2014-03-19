@@ -1,0 +1,33 @@
+;;GENERAL
+declare ff Viman.freeId 0
+declare symbol Viman.sem
+declare cwp Viman.stop
+declare cwp Viman.report
+declare cwp Viman.result
+declare symbol VIMAN
+declare be Viman.request
+
+
+;;init
+declare op_predicate Viman.init
+
+;;getFreeId
+declare op_predicate Viman.getFreeId
+declare symbol id
+
+;;activateTracking
+declare symbol activateTracking
+declare symbol id
+declare symbol VIMAN_ACTIVATETRACKiNG
+declare symbol report
+declare symbol result
+
+
+;;stopTracking
+declare symbol stopTracking
+declare symbol id
+declare symbol VIMAN_STOP
+declare symbol report
+declare symbol result
+
+

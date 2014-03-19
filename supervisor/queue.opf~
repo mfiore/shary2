@@ -1,0 +1,3 @@
+;; -*-Lisp-*-
+;;author: Michelangelo Fiore
+;;This file contains procedures to handle a queue in a thread-safe way.

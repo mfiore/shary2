@@ -1,0 +1,25 @@
+;; -*-Lisp-*-
+;;author: Michelangelo Fiore
+;;this module contains utilities procedures to manage Viman.
+ 
+(
+ 
+ (defop |activateTracking|
+   :invocation (Viman.activateTracking $report)
+   :documentation "activates tracking for viman"
+   :body (
+	 
+	  (!(GenomInterface.handleRequest VIMAN VIMAN_ACTIVATETRACKING FALSE FALSE (Viman.isTracking TRUE) 300 NIL $report)) 
+	  )
+   )
+
+ (defop |stopTracking|
+   :invocation (Viman.stopTracking)
+   :documentation "stops tracking for viman"
+   :body (
+	  (!(GenomInterface.handleRequest VIMAN VIMAN_STOP FALSE FALSE (Viman.isTracking FALSE) 300 NIL $report)) 
+		  
+	  )
+   )
+
+)

@@ -1,0 +1,177 @@
+;; -*-Lisp-*-
+;;author: Michelangelo Fiore
+;;this files contains procedures to monitor the environment, at the moment only by moving the head of the robot. Future versions of this module should allow the robot to move it's base too, but then, of course, everything becomes quite more complicated =). The monitoring is at the moment done using a priority queue, that indicates which item or agent the robot should look at and which conditions should be satisfied for the monitoring to be considered successfull. We can also have an ID associated to each monitor operation, so that the MonitorManager can inform other procedures of the success of the monitoring. We can also include a list of failure conditions. If these happen the monitoring is considered failed. It could be someting as simple as time-elapsed. 
+
+;In theory the procedures for the priority queue should go to another file. But i'm too lazy for that at the moment =)
+
+;Since the queue will be modified by different thread we use as monitor the fact MonitorManager.isQueueInUse TRUE\FALSE
+
+;At the moment we express these conditions has logic expression like A || B
+
+(
+
+ (defop |addActionListToQueue|
+   :invocation (!(MonitorManager.addActionListToQueue @actionList @failureConditions @priority @id))
+   :documentation "this procedure takes a list of actions as input and puts them into the priority queue, obtaining the postconditions of each action on the way. 
+TO EDIT WHEN WE FIND OUT HOW ARE ACTIONS SENT BY HATP PRECISELY"
+   :body (
+	  (?(MySelf @robotName))
+	  (WHILE(?(~(NULL actionList)))   ;;while there are actions
+		(! (= @action (CAR @actionList)))      ;;get the current action
+		(! (= @actionList (CDR @actionList)))
+	
+		;;get the values of the action
+		(! (== (VAL @action) (ACTION (ACTION-ID $action-id) (ACTION-NAME $action-name) (ACTOR $actor) (START-TIME $start-time) (END-TIME $end-time) (PARAMETERS $actionParameters))))
+		
+		;;get the actual parameters
+		(! (= @actor (CAR @actionParameters)))
+		(! (= @actionParameters (CDR @actionParameters)))
+		(! (= @subject (CAR @actionParameters)))
+		(! (= @actionParameters (CDR @actionParameters)))
+		(!(= @value (CAR @actionParameters)))
+		   
+		
+		;;look for the pre and postconditions in the database. Actually we need only the postconditions for monitoring
+		(? (Action @action-name @preConditions @postConditions))
+	       		
+		(WHILE(?(~(NULL @postConditions)))  ;;the postconditions is a list. Let's parse it
+		      (!(= currentPostCondition (CAR @postConditions)))
+		      (!(= @postConditions (CDR @postConditions)))
+
+		      (!(== @postConditions (@predicate @truth))) ;;get the parameters of the postconditn
+	    
+		      (IF(?(EQUAL @truth TRUE)) ;;depending on the truth value of the postcondition we will test for a normal fact or a negated fact
+			 (!(= @fact (AGENT-STATEMENT @robotName @subject @predicate @value)))
+			 
+			 ELSE 
+			 (!(= @fact (~(AGENT-STATEMENT @robotName @subject @predicate @value))))
+			 )
+		      (IF(?(BOUNDP(@conditions)))  ;;build the conditions. WILL THIS WORK? PROBABLY NOT =)
+			 (!(= @conditions ((VAL @conditions) (@fact))))
+			 
+			 ELSE
+			 (!(= @conditions (@fact)))
+			 
+			 )
+		      )
+		(!(= @successConditions (&& @conditions)))  ;;the final conditions is an end on all conditions. Again this will probably not work
+		
+		;;build the queue element and add it to the priority queue?
+		(!(= @queueElement (. @subject @postConditions @failureConditions @priority @id .))) 
+		(!(= @priority (+ @priority 1))) ;;we increment the priority for each actions so that the elements get monitored in order.
+		(!(MonitorManager.pushQueueElement @queueElement))
+		)
+		    
+	  )
+   )
+
+ (defop |pushQueueElement|
+   :invocation (!(MonitorManager.pushQueueElement $queueElement))
+   :documentation "this procudere is used to insert an element into the priority queue"
+   :body (
+
+	  (^(MonitorManager.isQueueInUse FALSE))
+	  (=> (MonitorManager.isQueueInUse TRUE))
+	  
+	  ;;get the values of the element to add
+	  (!(== (VAL $queueElement) (. @subject @postConditions @failureConditions @priority @id .)))
+	  (?(MonitorManager.priorityQueue @queue))  ;;get the queue
+	  (!(= @done FALSE))2
+	  
+	  (WHILE(?(EQUAL @done FALSE)) ;;in this loop we are going to put the new element at the correct position, based on the priority. The variable @queue is going to shrink and we are going to save every element before $queueElement into @prevElements and the rest of the queue+$queueElements in @queue. After the while we will join these lists.
+		(IF(?(~(NULL @queue)))  ;;if there are still elements in the queue 
+		   (!(= @actualElement (CAR @queue)))  
+		   (!(== (VAL @actualElement) (. @actualSubject @actualPostConditions @actualFailureConditions @actualPriority @actualId .)))
+		   
+		   (IF(?(< @priority @actualPriority)) ;;the new element should be the head of the queue
+		      (!(= @queue (CONS $queueElement @queue)))
+		      (!(= @done TRUE))
+		      ELSE
+		      (IF(?(~(BOUNDP @prevElements)))  ;;we are in the middle of the queue. We must record the elements until this point into another list
+			 (!(= @prevElements (.(CAR @queue).)))
+			 
+			 ELSE
+			 (!(= @prevElements (CONS @prevElements (. (CAR @queue) .))))
+			
+		      )
+		      (!(= @queue (CDR @queue))) ;;and erase the current element from the list
+		      )  		
+		   
+		   ELSE
+		   (!(= @queue (. $queueElement .))) ;;we are at the end of the queue. 
+		   (!(= @done TRUE))
+		   )
+		)
+	  (IF(?(~(NULL @prevElements))) ;;the element has not been inserted in front of the queue
+	     (!(= @newQueue  @prevElements))
+	     (!(= @newQueue (CONS @newQueue @queue)))
+	     
+	     ELSE
+	     (=> (MonitorManager.lowestPriority @priority))  ;;if the element is the new head than it has the lowest priority
+	     (!(= @newQueue @queue))
+	     )
+	  (=> (MonitorManager.priorityQueue @newQueue))
+	  (=> (MonitorManager.isQueueEmpty FALSE))   ;;the queue is not empty anymore
+	  (=> (MonitorManager.isQueueInUse TRUE))
+	  )
+   )
+
+ (defOp |popQueueElement|
+   :invocation (!(MonitorManager.popQueueElement))
+   :documentation "This procedure removes the head of the queue"
+   :body (
+	  (^(MonitorManager.isQueueInUse FALSE))   
+	  (=> (MonitorManager.isQueueInUse TRUE))
+	  
+	  (?(MonitorManager.priorityQueue @queue))
+	  (!(= @queue (CDR @queue)))    
+	  (IF(?(NULL @queue))
+	     (=> (MonitorManager.isQueueEmpty TRUE))
+	     ELSE
+	     (!(= @head (CAR @queue)))
+	     (!(== (VAL @head) (. @subject @postconditions @failureconditions @priority @id .)))
+	     (=> (MonitorManager.lowestPriority @priority)) ;the new head has the lowest priority
+	  )
+	  (=> (MonitorManager.isQueueInUse FALSE))
+	  )
+   )
+
+ (defop |MonitorLoop|
+   :invocation (!(MonitorManager.monitorLoop))
+   :documentation "this is the main loop for the MonitorManager. It monitors the first element of the priority queue until there is a new first element, its postconditions are verified or its failing conditions are verified."
+   :body (
+	  (?(ExecutionManager @executionManager))
+	  (WHILE(?(MonitorManager.shouldRun TRUE)) ;who should set this false? Is this fake and the loop should go on forever or until a shutdown? =)
+		
+		(^(MonitorManager.isQueueEmpty FALSE)) ;if queue is empty we don't have anything to do
+		
+		(^(MonitorManager.isQueueInUse FALSE))  ;if we're adding elements let's wait until it's done
+		(?(MonitorManager.priorityQueue @queue))
+		
+
+		(!(= @toMonitor (CAR @queue))) 
+		(!(== (VAL @toMonitor) (. @subject @postconditions @failureconditions @priority @id .)))
+		(!(= @message (Action moveHead @subject)))
+		(!(SEND-MESSAGE @message @executionManager))  ;;let's execute the action
+		
+		;we wait until success or failure is achieved or there is a new head in the queue. This is not robust and should account failures in the execution of the move head. We should link executions of actions to an id and have reports from that. This is a TODO
+		(^ (|| (@postConditions) (@failureConditions) (~(MonitorManager.lowestPriority (VAL @priority))) ))
+		(IF(?(|| (@postConditions) (@failureConditions))) 
+		   ;;if the monitor has success or failure erase the element from the head and send and post the result
+		   (!(MonitorManager.popQueueElement))
+		   (IF (?(@postConditions))
+		       (=> (MonitorManager.result @id SUCCESS))
+		       
+		       ELSE(?(@failureConditions))
+		       (=> (MonitorManager.result @id FAILURE))
+		       )
+
+  		   )
+		
+		
+		)
+	  
+	  )
+   )
+
+)

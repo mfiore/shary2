@@ -1,0 +1,5 @@
+#!/bin/bash    
+
+export OPRS_DATA_PATH=${OPRS_DATA_PATH}:"."
+
+xoprs OPRS_SUP -x ./supervisor/main.inc -x  /home/mfiore/openrobots_new/superv/transgen-link/auto/translink-superv.inc

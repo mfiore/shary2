@@ -1,0 +1,20 @@
+include "Planner.sym"
+
+include "new-default.inc"
+include "semaphore.inc"
+
+include "ActionManager.sym"
+;;load opf "ActionManager.opf"
+include "PlanManager.sym"
+load opf "PlanManager.opf"
+include "DatabaseInterface.sym"
+load opf "DatabaseInterface.opf"
+include "MonitorManager.sym"
+;;load opf "MonitorManager.opf"
+
+;;load opf "Planner.opf"
+
+include "GlobalCostants.sym"
+load db "GlobalConstants.db"
+
+load db "StartingKnowledge.db"

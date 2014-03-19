@@ -1,0 +1,36 @@
+;; -*-Lisp-*-
+;;author: Michelangelo Fiore
+"this file contains procedure to simulate spark in the supervision system. It should be launched in place of the Attention Manager at the moment."
+
+(
+ 
+ (defop |init|
+   :invocation (!(SparkSimulator.init))
+   :documentation "creates the initial state of the world"
+   :body (
+	  ;TO DO BASED ON TESTS
+	  
+	  )
+   )
+
+ (defop |processAction|
+   :invocation (ExecutionManager.result $id $result)
+   :documentation "updates the database based on the result of the action"
+   :body (
+	  (?(SparkSimulator.action $id @postConditions @failureConditions))
+	  (IF(?(EQUAL $result SUCCESS))
+	     (!(= @list @postConditions))
+	     
+	     ELSE
+	     (!(= @list @failureConditions))
+	     )
+	     (WHILE(?(~(NULL @list)))
+		   (!(= @condition (CAR @list)))
+		   (!(= @postConditions (CDR @list)))
+		   
+		   (!(DatabaseInterface.add @condition $result)
+		   )
+
+	     )
+   )
+)

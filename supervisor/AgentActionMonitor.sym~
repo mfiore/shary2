@@ -1,0 +1,91 @@
+;startMonitoringAgent
+declare op_predicate AgentActionMonitor.startMonitoringAgent
+declare symbol agent
+declare symbol lastPriority
+declare symbol monitorId
+declare symbol successConditions
+declare symbol failureConditions
+declare symbol sparkHumanHead
+declare symbol priority
+declare cwp AgentActionMonitor.monitorId
+declare cwp AgentActionMonitor.isMonitoringAgent
+
+;;stopMonitoringAgent
+declare op_predicate AgentActionMonitor.stopMonitoringAgent
+declare symbol agent
+declare symbol monitorId
+
+;;cleanMonitorSpheres
+declare op_predicate AgentActionMonitor.cleanMonitorSpheres
+declare symbol sphereId
+declare symbol sparkId
+declare symbol report
+declare cwp AgentActionMonitor.sphere
+
+;cleanAgentMonitorSpheres
+declare op_predicate AgentActionMonitor.cleanAgentMonitorSpheres
+declare symbol agent
+declare symbol sphereId
+declare symbol sparkId
+declare symbol object
+
+;cleanMonitorSphere
+declare op_predicate AgentActionMonitor.cleanMonitorSphere
+declare symbol sphereId
+declare symbol sparkId
+declare symbol report
+declare symbol agent
+declare symbol object
+
+;cleanAgentMonitorSpheres
+declare op_predicate AgentActionMonitor.cleanAgentMonitorSpheres
+
+
+
+;objectAppeaqrs
+declare be objectAppears
+declare symbol object
+declare symbol agent
+declare symbol object
+
+
+;;activateMonitorSpheres
+declare op_predicate AgentActionMonitor.activateMonitorSpheres
+declare symbol actions
+declare symbol currentAction
+declare symbol actionToMonitor
+declare symbol actionId
+declare symbol actionLinks
+declare symbol actionName
+declare symbol actionParameters
+declare symbol object
+declare symbol support
+declare symbol placement
+declare symbol sparkId
+declare symbol x
+declare symbol y
+declare symbol z
+declare symbol yaw
+declare symbol pitch
+declare symbol roll
+declare symbol sphereId
+declare symbol sparkHand
+declare symbol sphereType
+declare symbol actionName
+declare symbol i
+
+declare cwp AgentActionMonitor.monitorAction
+declare cwp AgentActionMonitor.unexpectedAction
+declare cwp AgentActionMonitor.isMonitoringAgent
+
+;MonitorSphereLoop
+declare be AgentActionMonitor.startMonitorSphereLoop
+declare cwp AgentActionMonitor.stopMonitorSphereLoop
+
+;readMonitorSpheresPoster
+declare op_predicate AgentActionMonitor.readMonitorSpheresPoster
+declare symbol SPARK_MONITORINGSPHERES
+declare symbol poster
+declare symbol spheres
+declare symbol spheresList
+declare cwp Agent.hasObject

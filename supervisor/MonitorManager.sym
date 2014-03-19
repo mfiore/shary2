@@ -1,0 +1,45 @@
+declare ff MonitorMAnager.highestAvailablePriority 0
+
+;OP DECLARATION
+
+declare op_predicate MonitorManager.init
+declare op_predicate MonitorManager.parseConditions
+declare op_predicate MonitorManager.addActionListToQueue
+
+
+;PREDICATE DECLARATION
+declare be MonitorManager.testAndConditions
+declare be MonitorManager.testOrConditions
+
+declare ff MonitorManager.isMonitoringTarget 0
+declare ff MonitorManager.lastId 0
+declare ff MonitorManager.shouldRun 0
+
+
+declare cwp MonitorManager.stopTestConditions
+declare cwp PostConditions 
+declare cwp FailureConditions 
+declare cwp StopConditions 
+declare cwp MonitorManager.target
+declare cwp successConditions
+declare cwp failureConditions
+
+declare ff MonitorManager.lowPriorityQueue 0
+declare ff MonitorManager.mediumPriorityQueue 0
+declare ff MonitorManager.highPriorityQueue 0
+declare ff MonitorManager.freeId 0
+
+declare cwp MonitorManager.cancelMonitoring
+declare cwp MonitorManager.result
+
+
+declare symbol SubjectType
+declare symbol Predicate
+declare symbol ValueType
+declare symbol Actor
+declare symbol Subject
+declare symbol Value
+declare symbol Action
+declare symbol subjectType
+declare symbol Truth
+declare symbol Action

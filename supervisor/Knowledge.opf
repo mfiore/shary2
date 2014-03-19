@@ -1,0 +1,7 @@
+;; -*-Lisp-*-
+;;author: Michelangelo Fiore
+;;this module contains procedures to handle the execution of actions in the supervisor. The requestes
+;;are sent to the robot using genom.
+;;requestes are asynchronous. The execution manager returns the result in the fact
+; (ExecutionManager.result $id $result) 
+

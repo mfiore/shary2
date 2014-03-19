@@ -1,0 +1,37 @@
+;; -*-Lisp-*-
+;;author: Michelangelo Fiore
+;;this files contains procedures to use POMDPs in ROS.
+
+(
+
+(defop |init|
+  :invocation (!(POMDP.init @name @xState $action))
+  :documentation "Creates a new POMDP and inits it with @xState, returning $action. "
+  :body (
+	 (?(POMDP.timeToWait @time))
+	 (!(= @message (init @xState)))
+	 (!(SEND-MESSAGE @name @message))
+	 (^(|| (@name response $action) (ELAPSED-TIME (TIME) @time )))
+	 (IF(?(~(BOUNDP $action)))
+	    (!(FAILED))
+	    )
+	 	 
+	 )
+  )
+
+(defop |update|
+  :invocation (!(POMDP.update @name @xState @yState $action))
+  :documentation "Updates the pomdp @name with @xState and y@State and returns $action"
+  :body (
+	 (?(POMDP.timeToWait @time))
+	 (!(= @message @name (update @yState @xState)))
+	 (!(SEND-MESSAGE @name @message))
+	 (^(|| (@name response $action) (ELAPSED-TIME (TIME) @time)))
+	 (IF(?(~(BOUNDP $action)))
+	    (!(FAILED))
+	    )
+	 )
+  )
+)
+
+)

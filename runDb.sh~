@@ -1,0 +1,5 @@
+#!/bin/bash    
+
+export OPRS_DATA_PATH=${OPRS_DATA_PATH}:"."
+
+xoprs OPRS_DB ./Db.inc

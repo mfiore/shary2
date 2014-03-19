@@ -1,0 +1,12 @@
+;;GENERAL
+declare ff Acapela.isActive 0
+declare ff Acapela.server 0
+
+;;init
+declare op_predicate Acapela.init
+
+
+;;say
+declare op_predicate Acapela.say
+declare symbol message
+

@@ -1,0 +1,204 @@
+;;GENERAL
+declare symbol ExecutionManager.sem
+declare ff ExecutionManager.freeId 0
+declare cwp ExecutionManager.report
+declare cwp ExecutionManager.stop
+declare be ExecutionManager.execute
+declare be ExecutionManager.executeAction
+declare cwp ExecutionManager.isExecutingAction
+declare ff ExecutionManager.oldArmPosition 0
+declare ff ExecutionManager.oldDistance 0
+
+;;init
+declare op_predicate ExecutionManager.init
+
+;;getFreeId
+declare op_predicate ExecutionManager.getFreeId
+declare symbol id
+
+;;chooseArmForTake
+declare op_predicate ExecutionManager.chooseArmForTAke
+declare symbol object
+declare symbol armForTake
+declare symbol robotName
+declare symbol torso
+declare symbol sparkId
+declare symbol sparkReport
+declare symbol executionId
+declare symbol xOb
+declare symbol yOb
+declare symbol zOb
+declare symbol yawOb
+declare symbol pitchOb
+declare symbol rollOb
+declare symbol xTorso
+declare symbol yTorso
+declare symbol zTorso
+declare symbol yawTorso
+declare symbol pitchTorso
+declare symbol rollTorso
+
+
+;;handle report
+declare op_predicate ExecutionManager.handleReport
+declare symbol reportName
+declare symbol id
+declare symbol executionId
+
+;;handleReportAsync
+declare symbol reportName
+declare symbol id 
+declare symbol executionId
+
+;take
+declare cwp objectNotVisible
+declare symbol take
+declare symbol arm
+declare symbol object
+declare symbol executionId
+declare symbol timeTolerance
+declare symbol failureConditions
+declare symbol successCondition
+declare symbol lastPriority
+declare symbol monitorId
+declare symbol report
+declare symbol armForPick
+declare symbol actionId
+declare symbol sparkId
+declare symbol spark
+
+;;getHumanObservations
+declare op_predicate ExecutionManager.getHumanObservations
+declare symbol agent
+declare symbol executionId
+declare symbol armPosition
+declare symbol distance
+declare symbol orientation
+declare symbol sparkRobotName
+declare symbol hWrist
+declare symbol hHip
+declare symbol oldArmPosition
+declare symbol oldDistance
+declare symbol robotTorsoX
+declare symbol robotTorsoY
+declare symbol robotTorsoZ
+declare symbol robotTorsoYaw
+declare symbol robotTorsoPitch
+declare symbol robotTorsoRoll
+declare symbol sparkId
+declare symbol report
+declare symbol humanHipX
+declare symbol humanHipY
+declare symbol humanHipZ
+declare symbol humanHipYaw
+declare symbol humanHipPitch
+declare symbol humanHipRoll
+declare symbol humanWristX
+declare symbol humanWristY
+declare symbol humanWristZ
+declare symbol humanWristYaw
+declare symbol humanWristPitch
+declare symbol humanWristRoll
+declare symbol xDiff
+declare symbol xDiffSquare
+declare symbol yDiff
+declare symbol yDiffSquare
+declare symbol squareDistance
+
+;;getQForHuman
+declare op_predicate ExecutionManager.getQForHuman 
+declare symbol arm
+declare symbol agent
+declare symbol q0
+declare symbol sparkRobotName
+declare symbol hTorso
+declare symbol sparkId
+declare symbol report
+declare symbol humanTorsoX
+declare symbol humanTorsoY
+declare symbol humanTorsoZ
+declare symbol humanTorsoYaw
+declare symbol humanTorsoPitch
+declare symbol humanTorsoRoll
+declare symbol difference
+
+
+;;give
+declare symbol give
+declare symbol object
+declare symbol agent
+declare symbol executionId
+declare symbol observationWaitTime
+declare symbol maxEngage
+declare symbol nEngage
+declare symbol waitTime
+declare symbol timerId
+declare symbol arm
+declare symbol sparkRobotName
+declare symbol humanHead
+declare symbol robotTorsoX
+declare symbol robotTorsoY
+declare symbol robotTorsoZ
+declare symbol robotTorsoYaw
+declare symbol robotTorsoPitch
+declare symbol robotTorsoRoll
+declare symbol actionId
+declare symbol monitorSuccessConditions
+declare symbol monitorFailureConditions
+declare symbol monitorId
+declare symbol monitorPriority
+declare symbol armPosition
+declare symbol distance
+declare symbol orientation
+declare symbol inRange
+declare symbol q0
+declare symbol task
+declare symbol time
+declare symbol xState
+declare symbol yState
+declare symbol action
+declare symbol robotState
+declare symbol armRest
+declare symbol armReady
+declare symbol armExtended
+declare symbol timerId
+
+;;throw
+declare symbol throw
+declare symbol object
+declare symbol placement
+declare symbol executionId
+declare symbol arm
+declare symbol sparkId
+declare symbol xp
+declare symbol yp
+declare symbol zp
+declare symbol yawp
+declare symbol pitchp
+declare symbol rollp
+declare symbol zf
+
+;;placeObject
+declare symbol placeObject
+declare symbol object
+declare symbol support
+declare symbol placement
+declare symbol executionId
+declare symbol sparkId
+declare symbol xp
+declare symbol yp
+declare symbol zp
+declare symbol yawp
+declare symbol pitchp
+declare symbol rollp
+declare symbol actionId
+
+;execute action
+declare symbol actionName
+declare symbol actionParameters
+declare symbol executionId
+declare symbol object
+declare symbol support
+declare symbol placement
+declare symbol maxTime
+

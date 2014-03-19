@@ -1,0 +1,4 @@
+Queue ok
+PriorityQueue ok
+MonitorManager testing only AND conditions. 
+

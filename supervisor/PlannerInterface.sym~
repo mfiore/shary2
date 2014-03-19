@@ -1,0 +1,17 @@
+;general
+declare symbol hatp
+
+;init
+declare ff PlannerInterface.freeId 1
+declare op_predicate PlannerInterface.init
+
+;getplan
+declare ff PlannerInterface.usePlanner 0
+declare symbol goal
+declare symbol parameters
+
+;getHatpPlan
+declare op_predicate PlannerInterface.getHatpPlan
+declare symbol goal
+declare symbol parameters
+declare ff PlannerInterface.bridgeName 1

@@ -1,0 +1,168 @@
+;; -*-Lisp-*-
+;;author: Michelangelo Fiore
+;;this files contains the attentional system of the supervisor. This
+;;module reads spark posters, analyzes data and updates the Database. At the moment data from spark are simply inserted into the Database with no processing.
+
+(
+
+ (defop |init|
+   :invocation(!(Attention.init))
+   :body (
+	  (=>(Attention.lineIndex -1))
+	  (=>(Attention.tableIter 0))
+	  (=>(Database.name OPRS_DB))
+	  (=>(Database.supervisorName OPRS_SUP))
+	  )
+   )
+
+ 
+ (defop |posterLoop|
+   :invocation(!(Attention.posterLoop))
+   :body (
+	  (!(= @a TRUE))
+	  (WHILE(?(EQUAL @a TRUE))
+		(!(Attention.readFactPoster))
+		(^(ELAPSED-MTIME (MTIME) 300))
+		)
+	  )
+   )
+
+
+ (defop |readFactPoster|
+   :invocation(!(Attention.readFactPoster))
+   :body (
+	  (!(READ-POSTER-INTERNAL SPARK_FACTOPERATIONS @poster))
+	  (IF(! (== (VAL @poster) (SPARK_FACTOPERATIONS_POSTER_STR (factOperations (curLineIndex @curLineIndex) (curFullTableIter @curFullTableIter) (numLineMax @numLineMax) (maxFactOperationsUpdateNum @maxFactOperationsUpdateNum) @facts))))
+
+	     (!(= @factList (BUILD-LLISP-FROM-TERM-COMP @facts)))		
+	     (!(= @factList (CDR @factList)))
+	     (!(= @a (CAR @factList)))
+	     
+	     
+	     (?(Attention.lineIndex @dbLineIndex))
+	     (?(Attention.tableIter @dbTableIter))
+	     
+	     (!(= @lineStart @dbLineIndex))
+	     (!(= @maxLines (- @numLineMax 1)))
+	     (IF(?(> @curFullTableIter @dbTableIter))
+		(!(= @lineEnd (VAL @maxLines)))
+		
+		ELSE
+		(!(= @lineEnd (VAL @curLineIndex)))
+		)
+
+	     (!(= @linesToSkip (+ @lineStart 1)))
+	     (!(Attention.skipLinesInFactPoster @factList @linesToSkip @facts2))
+
+
+	     (!(= @linesToParse  (- @lineEnd @lineStart)))
+	     (!(Attention.parseFactPoster @facts2 @linesToParse @facts3))
+	
+	     (IF(?(> @curFullTableIter @dbTableIter))
+		(!(Attention.parseFactPoster @factList (+ @curLineIndex 1) @facts4))
+		)
+	     (=>(Attention.lineIndex @curLineIndex))
+	     (=>(Attention.tableIter @curFullTableIter))
+	     )
+
+	  )
+   )
+
+ (defop |skipLinesInFactPoster|
+   :invocation(!(Attention.skipLinesInFactPoster @facts @lines $newFacts))
+   :body (
+	  (!(= @i 0))
+
+
+	  (WHILE(?(< @i @lines))
+		(!(= @typeFact (CAR @facts)))
+		(!(= @facts (CDR @facts)))
+		(!(= @agentModelFact (CAR @facts)))
+		(!(= @facts (CDR @facts)))
+		(!(= @subjecFact (CAR @facts)))
+		(!(= @facts (CDR @facts)))
+		(!(= @predicateFact (CAR @facts)))
+		(!(= @facts (CDR @facts)))
+		(!(= @valueFact (CAR @facts)))
+		(!(= @facts (CDR @facts)))  
+		
+		(!(= @i (+ @i 1)))
+		)
+	  (!(= $newFacts @facts))
+	  )
+   
+   )
+
+
+(defop |parseFactPoster|
+  :invocation(!(Attention.parseFactPoster @facts @lines $newFacts ))
+  :body (
+	 (?(Database.name @dbName))
+	 (?(Database.supervisorName @supName))
+	 (!(= @i 0))
+
+	 (WHILE(?(< @i @lines))
+
+	       (!(= @typeFact (CAR @facts)))
+	       (!(= @facts (CDR @facts)))
+	       (!(= @agentModelFact (CAR @facts)))
+	       (!(= @facts (CDR @facts)))
+	       (!(= @subjecFact (CAR @facts)))
+	       (!(= @facts (CDR @facts)))
+	       (!(= @predicateFact (CAR @facts)))
+	       (!(= @facts (CDR @facts)))
+	       (!(= @valueFact (CAR @facts)))
+	       (!(= @facts (CDR @facts)))  
+	       
+	       (!(PRINT @typeFact))
+	       (!(== (VAL @typeFact) (type @type)))
+	       (!(== (VAL @agentModelFact) (agentModel (name @agentModel))))
+	       (!(== (VAL @subjecFact) (subject (name @subject))))
+	       (!(== (VAL @predicateFact) (predicate (name @predicate))))
+	       (!(== (VAL @valueFact) (value (name @value))))
+	       
+	       (!(PRINT @type))
+	       (!(= @agentModel (MAKE-ATOM @agentModel)))
+	       (!(= @subject (MAKE-ATOM @subject)))
+	       (!(= @predicate (MAKE-ATOM @predicate)))
+	       (!(= @value (MAKE-ATOM @value)))
+	       (IF(?(EQUAL @type SPARK_ADD_FACT))
+		 
+		  (!(Database.add (AGENT-STATEMENT (VAL @agentModel) (VAL @subject) (VAL @predicate) (VAL @value))))		     
+
+		  
+
+
+		  ;(^(Database.report @report))
+		  ;(~>(Database.report @report))
+		  
+		  ELSEIF(?(EQUAL @type SPARK_UPDATE_FACT))
+		  (IF(?(~(EQUAL @predicate isReachableBy)))
+		     (!(Database.update (AGENT-STATEMENT (VAL @agentModel) (VAL @subject) (VAL @predicate) (VAL @value))))
+		     )
+		  ELSE
+		  (!(Database.remove (AGENT-STATEMENT (VAL @agentModel) (VAL @subject) (VAL @predicate) (VAL @value))))
+		  ;(^(Database.report @report))
+		  ;(~>(Database.report @report))
+		  )
+	       (!(= @i (+ @i 1)))
+	       (!(PRINT @i))
+	       )
+
+
+	 
+
+
+	 )  
+  
+  
+  
+  )
+
+
+
+
+
+
+ 
+)

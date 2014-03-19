@@ -1,0 +1,16 @@
+;;init
+
+
+
+
+;;OP DECLARATION
+ 
+
+;;FACT DECLARATION
+
+
+;;SYMBOL DECLARATION
+
+
+declare ff ActionManager.action 0
+declare ff ActionManager.result 0

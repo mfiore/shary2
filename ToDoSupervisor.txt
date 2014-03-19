@@ -1,0 +1,7 @@
+Calcolare le posizioni del braccio per l'handover. Per mo in maniera semplice.
+Comunicazione ROS-OPRS
+Parametri per il POMDP
+
+
+Reingegnerizzare MonitorManager e in generale tutto. Per ora pensiamo
+solo alla situazione Table per semplificare

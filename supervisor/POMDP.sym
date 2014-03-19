@@ -1,0 +1,48 @@
+declare symbol unknown
+declare symbol outOfRange
+declare symbol closer
+declare symbol farther
+declare symbol still
+declare symbol notCompleted
+declare symbol waitingGrasp
+declare symbol completed
+declare symbol engaged
+declare symbol notEngaged
+declare symbol notInterested
+declare symbol towardRobot
+declare symbol other
+declare symbol ok
+declare symbol expired
+declare symbol Handover
+declare symbol CONTINUE
+declare symbol WAIT
+declare symbol ENGAGE
+declare symbol ABANDON
+
+
+;OP_PREDICATES
+declare op_predicate POMDP.init
+declare op_predicate POMDP.update
+
+;PREDICATES
+declare predicate POMDP.timeToWait
+declare be POMDP.response
+declare predicate init
+declare predicate update
+;SYMBOLS
+;POMDP INIT
+declare symbol name
+declare symbol xState
+declare symbol action
+declare symbol message
+declare symbol time
+
+;POMDP UPDATE
+declare symbol time
+declare symbol name
+declare symbol message
+declare symbol xState
+declare symbol yState
+
+
+

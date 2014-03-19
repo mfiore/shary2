@@ -1,0 +1,176 @@
+;;general
+declare symbol Spark.sem
+declare ff Spark.freeId 0
+declare be Spark.request
+declare cwp Spark.result
+declare cwp Spark.report
+declare cwp Spark.stop
+declare symbol SPARK
+
+declare ff Spark.robotName 0
+declare predicate Spark.robotName 
+declare predicate Spark.robotTorso
+declare predicate Spark.robotHand
+declare predicate Spark.humanTorso
+declare predicate Spark.humanWrist
+declare predicate Spark.humanHip
+
+declare symbol SPARK_PRECISE_ROBOT_HAND
+declare symbol PR2_ROBOT
+declare symbol Torso
+declare symbol HERAKLES_HUMAN1
+declare symbol HERAKLES_HUMAN2
+declare symbol TorsoX
+declare symbol rWristX
+declare symbol rHipX
+declare symbol HeadX
+
+
+;;init
+declare op_predicate Spark.init
+
+;:getFreeId
+declare  op_predicate Spark.getFreeId
+declare symbol id
+
+;;getJointAbsPose
+declare symbol getJointAbsPose
+declare symbol name
+declare symbol  joint
+declare symbol  id
+declare symbol param
+
+declare predicate STRUCT_SPARK_JOINT_ABS_POS_PARAM
+declare predicate robotName
+declare predicate name
+declare predicate jointName
+declare symbol SPARK_GETJOINTABSPOSE
+declare predicate STRUCT_SPARK_JOINT_ABS_POS_PARAM
+
+declare symbol report
+declare symbol result
+
+declare predicate POM_EULER
+declare predicate yaw
+declare predicate pitch
+declare predicate roll
+declare predicate x
+declare predicate y
+declare predicate z
+
+declare symbol yaw
+declare symbol pitch
+declare symbol roll
+declare symbol x
+declare symbol y
+declare symbol z
+
+
+;;setGraspedObject
+declare symbol setGraspedObject
+declare symbol objectName
+declare symbol isGrasped
+declare symbol armId
+declare symbol id
+declare symbol param
+declare predicate STRUCT_SPARK_SET_GRASPED_OBJECT_PARAMS
+declare predicate name
+declare predicate is_grasping_object
+declare predicate grasped_object_arm_i
+declare symbol SPARK_SETGRASPEDOBJECT
+
+;,setInferrenceForObject
+declare symbol setInferrenceForObject
+declare symbol objectName
+declare symbol hasInferrence
+declare symbol agent
+declare symbol agentPart
+declare symbol inferrenceType
+declare symbol multiply
+declare symbol id
+declare predicate STRUCT_SPARK_SET_INFERRENCE_FOR_OBJECT_PARAMS
+
+declare predicate objectName
+declare predicate name
+declare predicate hasInferrence
+declare predicate agentOrObjectName
+declare predicate name
+declare predicate agentPartNum
+declare predicate inferrenceType
+declare predicate perceptionInferrenceConflictThresholdMultiply
+
+declare symbol objectName
+declare symbol hasInferrence
+declare symbol  agent
+declare symbol agentPart
+declare symbol inferrenceType
+declare symbol multiply
+
+declare symbol SPARK_SETINFERRENCEFOROBJECT
+declare symbol param
+declare symbol report
+declare symbol result
+
+;; placeObjectForSimu
+declare symbol placeObjectForSimu
+declare symbol object
+declare symbol x
+declare symbol y
+declare symbol z
+declare symbol yaw
+declare symbol pitch
+declare symbol roll
+declare symbol hasDisappeared
+declare symbol id
+declare symbol param
+
+declare predicate STRUCT_SPARK_M3D_OBJECT_SIMU_PARAMS
+declare predicate name
+declare predicate coords
+declare predicate x
+declare predicate y
+declare predicate z
+declare predicate pitch
+declare predicate roll
+declare predicate hasDisappeared
+
+declare symbol SPARK_PLACEOBJECTFORSIMU
+declare symbol report
+declare symbol result
+
+
+;setObjectFixed
+declare symbol setObjectFixed
+declare symbol object
+declare symbol value
+declare symbol id
+declare symbol GEN_TRUE
+declare predicate STRUCT_SPARK_ENTITY_STATE
+declare predicate name
+declare predicate state
+declare symbol SPARK_PLACEOBJECTFORSIMU
+declare symbol param
+
+;;placeObject
+declare symbol placeObject
+declare symbol object
+declare symbol x
+declare symbol y 
+declare symbol z
+declare symbol yaw
+declare symbol pitch
+declare symbol roll
+declare symbol id
+declare symbol param
+declare predicate STRUCT_SPARK_M3D_OBJECT
+declare predicate name
+declare predicate coords
+declare predicate x
+declare predicate y
+declare predicate z
+declare predicate yaw
+declare predicate pitch
+declare predicate roll
+declare symbol SPARK_PLACEOBJECT
+declare symbol report
+declare symbol result

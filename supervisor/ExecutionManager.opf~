@@ -1,0 +1,93 @@
+;; -*-Lisp-*-
+;;author: Michelangelo Fiore
+;;this module contains procedures to handle the execution of actions in the supervisor. The requestes
+;;are sent to the robot using genom.
+;;requestes are asynchronous. The execution manager returns the result in the fact
+; (ExecutionManager.result $id $result) 
+
+(
+ (defop |headExplore|
+   :invocation(ExecutionManager.headExplore @actionId)
+   :documentation "this procedure explores the surrounding area moving the head"
+   :body (
+	  )
+   )
+
+ (defop |headExploreLocation|
+   :invocation(ExecutionManager.headExplore @location @actionId)
+   :documentation "this procedure explores the area surrounding a certain location. This could be useful
+when we want to find something near a certain point"
+   :body (
+	  )
+   )
+ 
+ (defop |take|
+   :invocation(ExecutionManager.take @action @executionId)
+   :documentation "this procedure takes the item @item"
+   :body (
+	  (?(ExecutionManager.lastExecutionId @lastExecutionId))
+	  (IF(?(> @executionId @lastExecutionId))
+	     (=>(ExecutionManager.lastExecutionId (VAL @executionId)))
+	     )
+
+	  (IF(?(|| (PR2 hasFreeHand right) (PR2 hasFreeHand left)))
+	     
+	     ;;get the actual parameters
+	     (! (== (VAL @action) (ACTION (ACTION-ID @action-id) (ACTION-NAME @action-name) (ACTOR @action-actor) (START-TIME @start-time) (END-TIME @end-time) (PARAMETERS @actionParameters))))
+	     (! (= @actor (CAR @actionParameters)))
+	     (! (= @actionParameters (CDR @actionParameters)))
+	     (! (= @subject (CAR @actionParameters)))
+	     (! (= @actionParameters (CDR @actionParameters)))
+	     (!(= @value (CAR @actionParameters)))
+	     
+	     ;;set the parameters for the monitor manager
+	     (! (= @timeTolerance 10))  ;;time that the system can wait to see the item
+	     (!(= @failureConditions (. (~(AGENT-STATEMENT (VAL @actor) (VAL @subject) isVisibleBy (VAL @actor)))  (TIME-ELAPSED(TIME) (VAL @timeTolerance))   .)  (. .) )) 	 ; item not there 
+	     (!(= @stopConditions (. (ExecutionManager.isExecutingAction (VAL @executionId)) .)  (. .) ))     ; when the execution starts the robot is free to monitor something else
+	     (?(MonitorManager.lastPriority @lastPriority))
+	     (!(= @priority (+ @lastPriority 1)))
+	     (?(MonitorManager.lastMonitorId @lastMonitorId))
+	     (!(= @monitorId (+ @lastMonitorId 1)))
+	     (!(MonitorManager.addActionListToQueue (. (VAL @action) .) @failureconditions @stopConditions @priority @monitorId ))
+
+	     
+	     (^(|| MonitorManager.isMonitoringAction (VAL @monitorId)) (MonitorManager.result (VAL @monitorId) @monitorResult ))
+	     (IF(?(MonitorManager.result (VAL @monitorId) @result)) ;;action has already been realized or there's an error. Anyway we can quit.
+		(=> (ExecutionManager.result (VAL @actionId) @result))
+		
+		ELSE
+					;send genom-request
+					;wait for results
+		
+		)
+	     
+				
+	     
+	     )
+	  )
+   )
+
+ (defop |drop|
+   :invocation(ExecutionManager.drop @item @location @actionId)
+   :documentation "this procedure drops the item @item in location @location"
+   :body (
+	  )
+   )
+
+ (defop |lookAt|
+   :invocation(ExecutionManager.lookAtItem @item @actionId)
+   :documentation "this procedure moves the head to look at item @item"
+   :body (
+	  )
+   )
+ 
+ (defop |lookAtLocation|
+   :invocation(ExecutionManager.lookAtLocation @location @actionId)
+   :documentation "this procedure looks at some location. This could be a direction from the user or a 
+pointing gesture"
+   :body (
+	  )
+   )
+
+ 
+)

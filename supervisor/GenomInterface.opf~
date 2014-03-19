@@ -1,0 +1,55 @@
+;; -*-Lisp-*-
+;;author: Michelangelo Fiore
+;;this module contains utilities procedures for MHP. The basic idea is
+;;to put into this files only procedures for repetitive things, like
+;;creating parameters, but allowing the ExecutionManager control over
+;;parameters.
+
+
+(
+ (defop |MakeRequest|
+   :invocation (!(GenomInterface.makeRequest @module @request @exitFact @irAddFact @waitTime @parameters @report))
+   :documentation "This procedure handles Genom Requestes. exictFact and irAddFact must be set to
+FALSE if they are not used"
+   :body (
+	  
+	  (!(= @timeElapsed FALSE))
+	  (! (RS-SEND-REQUEST @module @request @parameters @requestId))  ;;actual genom request
+	  (IF(? (~ (EQUAL @exitFact FALSE)))
+	     (=> GenomInterface.waitExitFact TRUE)
+	     )
+	  (IF(? (~ (EQUAL @irAddFact FALSE)))
+	     (^ (||   (IR @module @request @rqstId @actId) (ELAPSED-TIME (TIME) (VAL @waitTime))))
+	     (IF(?(IR @module @request @rqstId @actId))
+		(=> (VAL @irAddFact))
+		(~> (IR @module @request @rqstId @actId))
+		
+		ELSE
+		(!(= @timeElapsed TRUE))
+		)	    
+	     )
+	  (IF(?(EQUAL (VAL @timeElapsed) FALSE))
+	    
+		(^(|| (FR @module @request @rqstId @reportModule @result) (ELAPSED-TIME (TIME) (VAL @waitTime))
+		   (& (GenomInterface.waitExitFact TRUE) (VAL @exitFact))))
+		
+		(IF(?(FR @module @request @rqstId @reportModule @result))
+		   (= @report @reportModule)
+		   (~> (FR @module @request @rqstId @reportModule @result) )
+		   
+		   ELSEIF(?(& (GenomInterface.waitExitFact TRUE) (VAL @exitFact)))
+		   (= @report INTERRUPTED)
+		   
+		   ELSE
+		   (= @report TIME-ELAPSED)
+		   )
+		
+		ELSE
+		(= @report TIME-ELAPSED)
+
+	     )
+	  
+	  
+	  )
+   )
+)

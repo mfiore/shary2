@@ -1,0 +1,93 @@
+;; -*-Lisp-*-
+;;author: Michelangelo Fiore
+;;this files contains an interface for the Database in the supervision
+;;system. At the moment it only handles the OPRS DB but in the future
+;;it should be extended to handle different possibilities
+
+(
+ 
+
+ (defop |find|
+   :invocation (! (DatabaseInterface.find $fact $result))
+   :documentation "this procedure contacts the Database to check if $fact is present. It returns Database.result TRUE, Database.result FALSE or Database.result ERROR in $result"
+   :body (
+	  (? (ONTO_NAME $ONTO_NAME))
+	  (? (SUP_NAME $SUP_NAME))
+	  (!(SEND-MESSAGE $ONTO_NAME (Database.find $fact $SUP_NAME)))
+	  (!(DatabaseInterface.getResult $result))
+	  )
+   )
+ (defop |findList|
+   :invocation (! (DatabaseInterface.findList $request $unboundVariables $result))
+   :documentation "this procedure returns in the variable $result a list of list, containing the values of the unbound variables. It's used parameters must be set as follows. $request= composed term like (fact 1 @b 3)  
+$unboundVariables= lisp-list containing the variables for which we want to find values. Continuing from the previous examples this would be (. @b .)"
+   :body 
+   (
+    (? (ONTO_NAME $ONTO_NAME))
+    (? (SUP_NAME $SUP_NAME))
+    (!(SEND-MESSAGE $ONTO_NAME (Database.findList $request $unboundVariables $SUP_NAME)))
+    (!(DatabaseInterface.getResult $result))
+    )	
+   )	
+ (defop |add|
+   :invocation (!(DatabaseInterface.add $fact $result))
+   :documentation "this procedure adds $fact into the database and returns $result. $fact= a composed term like (isOn cup_0 table_0)."
+   :body (	  
+	  (? (ONTO_NAME $ONTO_NAME))
+	  (? (SUP_NAME $SUP_NAME))
+	  (!(SEND-MESSAGE $ONTO_NAME (Database.add $fact $SUP_NAME)))
+	  (!(DatabaseInterface.getResult $result))   
+	  
+	)	
+   )
+
+ (defop |remove|
+   :invocation (!(DatabaseInterface.remove $fact $result))
+   :documentation "this procedure removes $fact from the database. $fact= a composed termi like (isOn cup_0 table_0)"
+   :body (
+	  (? (ONTO_NAME $ONTO_NAME))
+	  (? (SUP_NAME $SUP_NAME))
+	  (!(SEND-MESSAGE $ONTO_NAME (Database.remove $fact $SUP_NAME)))
+	  (!(DatabaseInterface.getResult $result))	
+   )
+)
+ (defop |addMonitor|
+   :invocation (!(DatabaseInterface.addMonitor $factToMonitor $event $result))
+   :documentation "this procedure sets up a monitor for a given fact. When this fact is first added to the Database it returns $eventName to the current kernel. $fact and $event are both composed terms"
+   :body (
+	  (? (ONTO_NAME $ONTO_NAME))
+	  (? (SUP_NAME $SUP_NAME))
+	  (!(SEND-MESSAGE $ONTO_NAME (Database.addMonitor (VAL $factToMonitor) (VAL $event) $SUP_NAME)))
+	  (!(DatabaseInterface.getResult $result))
+	  
+	  
+	)	
+   )
+ (defop |removeMonitor|
+   :invocation (!(DatabaseInterface.removeMonitor $factToMonitor $result))
+   :documentation "this procedure removes the monitor for a given fact."
+   :body (
+	  (? (ONTO_NAME $ONTO_NAME))
+	  (? (SUP_NAME $SUP_NAME))
+	  (!(SEND-MESSAGE $ONTO_NAME (Database.removeMonitor $factToMonitor $SUP_NAME)))
+	  (!(DatabaseInterface.getResult $result))
+	  
+	  
+	)	
+   )
+ (defop |getResult|
+   :invocation(!(DatabaseInterface.getResult $result))
+   :documentation "this procedure handles the return message of the DB"
+   :body (
+	  (? (TIME_TO_WAIT_DB $TIME_TO_WAIT_DB))
+	  (^ (|| (Database.result $result) (ELAPSED-TIME (TIME) $TIME_TO_WAIT_DB)))
+	  (IF(~ (BOUNDP $result))
+	     (!(= $result ERROR))
+	     
+	     ELSE
+	     (~> (Database.result $result))
+	     )	  
+	  )
+   )
+ ) 
+

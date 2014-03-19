@@ -1,0 +1,280 @@
+;; -*-Lisp-*-
+;;author: Michelangelo Fiore
+;;this module contains utilities procedures for MHP. 
+;;The module supports multiple trajectories in memory, so that the robot can calculate motion plans in advance and react quickly to requestes. For now we don't support composed trajectories (for example the robot
+;;plans three different movement in advance and executes them together)
+
+(
+ 
+
+ (defop |init|
+   :invocation(!(Mhp.init))
+   :documentation "inits the parameters of the module"
+   :body (
+	  (!(SEM-CREATE Mhp.sem 1 SEM-FIFO))
+	  (=>(Mhp.freeId 0))
+	  )
+   )
+ 
+
+ (defop |Mhp.getFreeId|
+   :invocation(!(Mhp.getFreeId $id))
+   :documentation "gets a new id for requestes"
+   :body (
+	  (!(SEM-P Mhp.sem))
+	  (?(Mhp.freeId $id))
+
+	  (=>(Mhp.freeId (+ $id 1)))
+	  (!(SEM-V Mhp.sem))
+	  )
+   )
+ (defop |makeArmStartParameter|
+   :invocation (!(Mhp.makeArmStartParameter @q1 @q2 @q3 @q4 @q5 @q6 @q7 $armStart))
+   :documentation "utility function to create the ArmStart parameter"
+   :body 
+   (
+            (!(= $armStart (armStart 
+              (q1  (VAL @q1))
+              (q2  (VAL @q2))
+              (q3  (VAL @q3))
+              (q4  (VAL @q4))
+              (q5  (VAL @q5))
+              (q6  (VAL @q6))
+              (q7  (VAL @q7)))))
+    
+	    )
+   )
+ (defop |makeArmGotoParameter|
+   :invocation (!(Mhp.makeArmGotoParameter @q1 @q2 @q3 @q4 @q5 @q6 @q7 $armGoto))
+   :documentation "utility function to create the ArmStart parameter"
+   :body 
+   (
+    (!(= $armGoto (armGoto 
+		   (q1  (VAL @q1))
+		   (q2  (VAL @q2))
+		   (q3  (VAL @q3))
+		   (q4  (VAL @q4))
+		   (q5  (VAL @q5))
+		   (q6  (VAL @q6))
+		   (q7  (VAL @q7)))))
+    
+    )
+   )
+ 
+ (defop |setTrajectories|
+   :invocation(Mhp.request setTrajectories @trajList) 
+   :documentation "Starts calculating the trajectories in @trajList. @trajList is a LispList (. @traj1 @traj2 @trajn .) where each @traji follows the following format:
+    (. @task @armId @armGoto @object @support @placement @cartesian  @useObjGoto @objGoto .) . This procedure is interrupted if there is a cleanTrajectories
+    there is no return from this procedure. The idea is that it just runs in background and does what it can"
+   :body (
+					;the start is always the same
+	  (!(= @armStart (armStart 
+			  (q1  0)   
+			  (q2  0)
+			  (q3  0)
+			  (q4  0)
+			  (q5  0)
+			  (q6  0)
+			  (q7  0))))
+	  (!(= @objStart (objStart 0.0 0.0 0.0 0.0 0.0 0.0))) 
+	  (!(= @useObjStart 0))
+	  (~>(Mhp.stopSetTrajectories))
+
+	  (WHILE(?(& (~(Mhp.stopSetTrajectories)) (~(NULL @trajList)) ))
+		
+
+		(!(= @traj (CAR @trajList)))
+		(!(= @trajList (CDR @trajList)))
+		
+		(!(== (VAL @traj) (. @task @armId @armGoto @object @support @placement @cartesian @useObjGoto @objGoto .)))
+
+		(!(Mhp.getFreeId @mhpTrajId))
+
+		
+		(=>(Mhp.request setTrajectory GEN_TRUE @task @armId @armStart @armGoto @object @support @placement @cartesian @useObjStart @objStart @useObjGoto @objGoto @mhpTrajId))
+
+		(^(Mhp.report (VAL @mhpTrajId) @report)) ;we don't actually do error report here. We leave that part to the execution manager when he actually tries to get the trajectory
+
+		(~>(Mhp.report (VAL @mhpTrajId) (VAL @report)))
+
+	
+		)
+	  
+	  )
+   )
+
+   ( defop |setTrajectory|
+   :invocation(Mhp.request setTrajectory @startIsCurrent @task @armId @armStart @armGoto @object @support @placement @cartesian @useObjStart @objStart @useObjGoto @objGoto @mhpId)
+   :documentation "If there is an already calculated trajectory for a given task it sets it if not it calculates it"
+   :body(
+	 
+	 ;;we don't call mutexes here since we're going to call other  mhp requestes inside.
+	 
+	 (!(Mhp.chooseTargetForTrajectory @task @object @placement @armGoto @useObjGoto @objGoto @target))
+
+	 (!(Mhp.getFreeId @mhpId2))  ;;this procedure must call one or two mhp requestes so we get other ids.
+	 (IF(?(Mhp.hasTrajectory @trajId (VAL @armId) (VAL @task) (VAL @target))) ;if there is already a trajectory we just switch the poster to that one.
+
+	    (=>(Mhp.request armSelectTraj @trajId @mhpId2))
+	    (^(Mhp.report (VAL @mhpId2) @report))
+	    (~>(Mhp.report (VAL @mhpId2) (VAL @report)))
+	    (=>(Mhp.report (VAL @mhpId) @report))  ;the final report is equal to the report of the switch trajectory request.
+
+	    ELSE ;we don't have a trajectory so we're going to calculate it and switch to it.
+	    
+	    (=> (Mhp.request armPlanTask @startIsCurrent @task @armId @armStart @armGoto @object @support @placement @cartesian @useObjStart @objStart @useObjGoto @objGoto @mhpId2))  
+	    (^(Mhp.report (VAL @mhpId2) @report1))       
+	    (~>(Mhp.report (VAL @mhpId2) (VAL @report1)))
+	    (IF(?(EQUAL @report1 "OK")) ;if the trajectory is calculated successfully we switch to it
+	       (IF(?(Mhp.hasTrajectory @trajId (VAL @armId) (VAL @task) (VAL @target)))
+		  ;;if we don't enter this loop it means the the trajectories were canceled after a move action. This means that basically we fail to calculate this trajectory. It should only happen if this procedure was called from the "SetTrajectories" function.
+		  
+		  (!(Mhp.getFreeId @mhpId3))
+		  (=>(Mhp.request armSelectTraj @trajId @mhpId3))
+		  (^(Mhp.report (VAL @mhpId3) @report2))
+		  (~>(Mhp.report (VAL @mhpId3) (VAL @report2)))
+		  
+		  ELSE
+		  ;in this case we don't switch to the new function and edit the @report1 variable to a canceled state
+		  (!(= @report@1 CANCELED))
+		  
+		  )
+	       )
+	    (=>(Mhp.report (VAL @mhpId) @report1)) ;in this case we take for final report the report of mhp.armplantask since the other will not fail (is this correct?)
+
+	    )
+	 
+
+	 )
+   )
+
+(defop |armSelectTraj|
+  :invocation(Mhp.request armSelectTraj @trajId @id)
+  :documentation "Select a trajectory for execution"
+  :body (
+
+	 (!(SEM-P Mhp.sem))
+	 (!(= @parameters 
+	     (INTEGER (VAL @trajId))
+	    ));  $RQST-ID))
+	 (!(GenomInterface.handleRequest MHP MHP_ARMSELECTTRAJ (Mhp.stop (VAL @id)) (FALSE) (FALSE) 300 (VAL @parameters) @report @result))
+
+	 (=>(Mhp.report (VAL @id) (VAL @report)))
+
+	 (!(SEM-V Mhp.sem))
+
+	 )
+  )
+
+(defop |chooseTargetForTrajectory|
+  :invocation(!(Mhp.chooseTargetForTrajectory  @task @object @placement @armGoto @useObjGoto @objGoto $target))
+  :documentation "utility function. Does some controls to choose which the target to put\retrieve from the database depending on the task e target point of the trajectory"
+  :body (
+	 (IF(?(EQUAL @useObjGoto 0)) 
+	    (IF(?(EQUAL @task MHP_ARM_PICK_GOTO))
+	       (!(= $target (VAL @object)))  ;if planning a pick our target is the object
+	       
+	       ELSEIF(?(|| (EQUAL @task MHP_ARM_PICK_TAKE_TO_PLACE) (EQUAL @task MHP_PLACE_FROM_FREE)))
+	       (!(= $target (VAL @placement)))     ;if planning a place we save the name of the placement
+	       
+	       ELSE
+	       (!(= $target (VAL @armGoto)))   ;target is the q configuration.
+	       )
+	    ELSE  
+	    (!(= $target (VAL @objGoto)))  ;if we are planning a trajectory to a point we save that point
+	    )
+	 )
+  )
+
+ (defop |armPlanTask|
+   :invocation (Mhp.request armPlanTask @startIsCurrent @task @armId @armStart @armGoto @object @support @placement @cartesian @useObjStart @objStart @useObjGoto @objGoto @id)
+   :documentation "calculates a new trajectory for the given parameters"
+   :body (
+	  
+	  
+	  (!(SEM-P Mhp.sem))
+	 	  
+ 	  (!(Mhp.chooseTargetForTrajectory  @task @object @placement @armGoto @useObjGoto @objGoto $target))
+	  (IF(?(~(Mhp.hasTrajectory @trajId (VAL @armId) (VAL @task) (VAL $target)))) ;if we don't have already a trajectory for this task.
+	     (!(Mhp.getTrajId @trajId)) ;find a free trajectory id
+	     (!(= @parameters
+		  (STRUCT_MHP_ARM_PLAN_PARAMS 
+		   (trajId  (VAL @trajId))
+		   (startIsCurrent  (VAL @startIsCurrent))
+		   (taskType  (VAL @task))
+		   (armId  (VAL @armId))
+		   (VAL @armStart)
+		   (VAL @armGoto)
+		   (objectName 
+		    (name  (TERM-STRING-CAT @object)))
+		   (supportName 
+		    (name  (TERM-STRING-CAT @support)))
+		   (placementName 
+		    (name  (TERM-STRING-CAT @placement)))
+		   (cartesian  (VAL @cartesian))
+		   (useObjStart  (VAL @useObjStart))
+		   (VAL @objStart)
+		   (unused2  0)
+		   (useObjGoto (VAL @useObjGoto))
+		   (VAL @objGoto)
+		   )
+		  )
+	       )
+	     (!(GenomInterface.handleRequest MHP MHP_ARMPLANTASK (Mhp.stop (VAL @id)) (FALSE) (FALSE) 300 (VAL @parameters) @report @result))
+	     (=>(Mhp.report (VAL @id) (VAL @report)))
+
+
+	     (IF(?(EQUAL @report "OK"))
+
+		(=>(Mhp.hasTrajectory (VAL @trajId) (VAL @armId) (VAL @task) (VAL $target))) ;save the new trajectory info.
+		)
+	       
+	  ELSE
+	  (=>(Mhp.report (VAL @id) "OK"))
+
+	  )
+	  (!(SEM-V Mhp.sem))
+	  )
+   )
+
+ (defop |SelectTrajId|
+   :invocation(!(Mhp.getTrajId $trajId))
+   :documentation "returns the first free trajectory or cancels the one with the lowest id"
+   :body   (
+	    (!(= @i 0))
+	    (!(= @isFound FALSE))
+	    (WHILE(?(&(EQUAL @isFound FALSE) (< @i 10)))
+		  (IF(?(Mhp.hasTrajectory (VAL @i) @armId @task @target))
+		     (!(= @i (+ @i 1)))
+		     
+		     ELSE
+		     (!(= @isFound TRUE))
+		     )
+		  )
+	    (IF(?(EQUAL @isFound TRUE))
+	       (!(= $trajId (VAL @i)))
+
+	       ELSE
+	       (!(= $trajId 0))
+	       (~>(Mhp.hasTrajectory 0 @armId @task @target))
+	       )
+	    )
+   )
+ (defop |CleanTrajectories|
+   :invocation (!(Mhp.cleanTrajectories))
+   :documentation "Deletes every trajectory in memory"
+   :body (
+	  (=>(Mhp.stopSetTrajectories))  ;if we're calculating trajectories stop.
+
+	  (!(= @toDo TRUE))
+	  (WHILE(?(EQUAL @toDo TRUE))
+		(IF(?(Mhp.hasTrajectory @id @armId @task @target))
+		   (~>(Mhp.hasTrajectory (VAL @id) (VAL @armId) (VAL @task) (VAL @target) ))
+		   
+		   ELSE
+		   (!(= @toDo FALSE))
+		   )
+		)
+	  )
+   )
+ )

@@ -1,0 +1,24 @@
+;This file includes the entity and fact rules of HATP's domain. It
+;could be nice (and probably easy) to make it automatically generated from the domain file
+(
+ (dbRule Table TABLE_4)
+ (dbRule Table IKEA_SHELF_DARK)
+ (dbRule Table IKEA_SHELF_LIGHT_2)
+ (dbRule Table META_TABLE)
+
+ (dbRule Trashbin PINK_TRASHBIN)
+
+ (dbRule Accesskit BOX)
+
+ (dbRule GameArtifact GREY_TAPE)
+ (dbRule GameArtifact LOTR_TAPE)
+ (dbRule GameArtifact WALLE_TAPE)
+
+ (dbRule GameArtifact isOn Table GameArtifact isOnTable Table)
+
+ (dbRule GameArtifact isNextTo Box GameArtifact isNextToBox Box)
+ 
+
+ ;; TO_CHECK HOW this placeOfGameArtifacts works right now. Is it a list? OR what?(dbRule GameArtifact isOnTable placeOfGameArtifact) 
+;;(DbRule isOnTable GameArtifact empty placeOfGameArtifact empty true) 
+;;(DbRule isOn empty SimpleTable isOn META_TABLE false)

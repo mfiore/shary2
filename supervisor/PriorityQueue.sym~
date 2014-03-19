@@ -1,0 +1,20 @@
+;OP DECLARATION
+
+declare op_predicate PriorityQueue.init
+declare op_predicate PriorityQueue.push
+declare op_predicate PriorityQueue.pop
+declare op_predicate PriorityQueue.head
+
+;PREDICATE DECLARATION
+declare ff PriorityQueue.isEmpty 1
+declare ff PriorityQueue.isInUse 1
+
+;;SYMBOLS DECLARATIONS
+declare symbol queueName
+declare symbol isEmpty
+declare symbol isInUse
+declare symbol TRUE
+declare symbol FALSE
+declare symbol element
+declare symbol queue
+declare symbol head

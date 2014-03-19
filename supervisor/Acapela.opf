@@ -1,0 +1,28 @@
+;; -*-Lisp-*-
+;;author: Michelangelo Fiore
+;;this module contains procedures to use the Acapela voice module
+
+(
+ (defop |init|
+   :invocation(!(Acapela.init))
+   :documentation "Initializes the module"
+   :body (
+	  (IF(?(Acapela.isActive TRUE))
+	     (?(Acapela.server @server))
+	     (! (acapela_Init_report acapela (VarArg (server @server)) @reportTmp))
+	     (! (acapela_SetVoice_report acapela (VarArg (voice "graham")) @reportTmp))
+	     )
+	  )
+   )
+ 
+ (defop |say|
+   :invocation(!(Acapela.say @message))
+   :documentation "Speaks the message received in input"
+   :body (
+	  (IF(?(Acapela.isActive TRUE))
+	     (! (acapela_Say_report acapela (VarArg (message @message)) @reportTmp))
+	     )
+	  )
+   )
+)
+

@@ -1,0 +1,17 @@
+;OP DECLARATION
+
+declare op_predicate Queue.init
+declare op_predicate Queue.push
+
+;PREDICATE DECLARATION
+
+
+;;SYMBOLS DECLARATIONS
+declare symbol queueName
+declare symbol isEmpty
+declare symbol isInUse
+declare symbol TRUE
+declare symbol FALSE
+declare symbol element
+declare symbol queue
+declare symbol head

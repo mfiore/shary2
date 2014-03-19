@@ -1,0 +1,3 @@
+declare symbol MAX_PLANNING_WAIT
+declare symbol MAX_PLANNING_FAILURES
+declare symbol TIME_TO_RETRY

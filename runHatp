@@ -1,0 +1,8 @@
+xterm -sb -rightbar -T "hatp ontology bridge" -geometry 30x5+1450+800 -e "msgconnector-OPRS-bridge HATP SERVONTO localhost OPRS_DB localhost 1" &
+
+xterm -sb -rightbar -T "hatp oprs bridge" -geometry 30x5+1500+600 -e "msgconnector-OPRS-bridge HATP HATPSHARY localhost OPRS_SUP localhost 1" &
+
+xterm -sb -rightbar -T "hatp console" -geometry 30x5+1650+800 -e "hatpconsole localhost 5500" &
+sleep 5
+xterm -sb -rightbar -T "hatp on board" -geometry 30x5+1680+800 -e "cd /home/mfiore/openrobots_new/src/HATPOnboard/build/onboard; ./HATPOnboard  -vvv --oprs OPRS_DB" &
+

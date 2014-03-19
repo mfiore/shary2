@@ -1,0 +1,62 @@
+;general
+declare symbol hatp
+
+;init
+declare ff PlannerInterface.freeId 1
+declare op_predicate PlannerInterface.init
+declare cwp PlannerInterface.action 
+
+;getplan
+declare ff PlannerInterface.usePlanner 0
+declare symbol goal
+declare symbol parameters
+
+;getHatpPlan
+declare op_predicate PlannerInterface.getHatpPlan
+declare symbol goal
+declare symbol parameters
+declare ff PlannerInterface.bridgeName 1
+declare symbol message
+declare symbol plan
+declare symbol id
+declare predicate HATP-REQ
+declare predicate REQ-TYPE
+declare predicate TASK-NAME
+declare predicate PARAMETERS
+declare predicate HATP-REQ
+declare predicate REQ-ID
+declare predicate REPORT
+declare predicate ACTION-LIST
+declare predicate LINK-LIST
+declare symbol report
+declare symbol actionList
+declare symbol linkList
+declare symbol robotActions
+declare symbol humanActions
+declare symbol currentAction
+declare symbol actionId
+declare symbol hatpActionName
+declare symbol actor
+declare symbol startTime
+declare symbol endTime
+declare symbol parameters
+declare predicate ACTION
+declare predicate ACTION-ID
+declare predicate ACTION-NAME
+declare predicate START-TIME
+declare predicate END-TIME
+declare predicate PARAMETERS
+declare symbol object
+declare symbol support
+declare symbol placement
+declare symbol currentParameter
+declare symbol type
+declare symbol tempLinkList
+declare symbol actionLinks
+declare symbol currentLink
+declare predicate LINK
+declare symbol id1
+declare symbol id2
+declare symbol actionParameters
+declare symbol action
+declare symbol completeAction

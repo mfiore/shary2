@@ -1,0 +1,72 @@
+;; -*-Lisp-*-
+;;author: Michelangelo Fiore
+;;this module contains utilities procedures to handle interactions with Genom..
+
+
+(
+ (defop |handleRequest|
+   :invocation (!(GenomInterface.handleRequest @module @request @exitFact @irAddFact @stopAddFact @waitTime @parameters $report $result))
+   :documentation "This procedure handles Genom Requestes. exictFact and irAddFact must be set to
+FALSE if they are not used"
+   :body (
+	  (IF(?(EQUAL @waitTime (FALSE)))
+	     (!(= @waitTime 1))
+	     (!(= @shouldWaitTime false))
+	     
+	     ELSE
+	     (!(= @shouldWaitTime true))
+	     )
+	  
+	  (!(= @timeElapsed FALSE))
+	  (! (RS-SEND-REQUEST @module @request @parameters @requestId))  ;;actual genom request
+	  
+	  (IF(? (~ (EQUAL @exitFact (FALSE))))
+	     (=> (GenomInterface.waitExitFact @module @request TRUE))
+	     
+	     ELSE
+	     (=> (GenomInterface.waitExitFact @module @request FALSE))
+	     )
+	  (IF(? (~ (EQUAL @irAddFact (FALSE))))
+	     (^ (||   (IR @module (VAL @request) (VAL @requestId) @actId) (&(EQUAL @shouldWaitTime true)(ELAPSED-TIME (TIME) (VAL @waitTime)))))
+	     (IF(?(IR (VAL @module) (VAL @request) (VAL @requestId) (VAL @actId)))
+		(=> (VAL @irAddFact))
+		(~> (IR @module (VAL @request) (VAL @requestId) (VAL @actId)))
+		
+		ELSE
+		(!(= @timeElapsed TRUE))
+		)	    
+	     )
+	  (IF(?(EQUAL (VAL @timeElapsed) FALSE))
+	    
+	     
+	     (^(|| (FR (VAL @module) (VAL @request) (VAL @requestId) @reportModule @resultModule)  (&(EQUAL @shouldWaitTime true)(ELAPSED-TIME (TIME) (VAL @waitTime)))
+		(& (GenomInterface.waitExitFact (VAL @module) (VAL @request) TRUE) (VAL @exitFact))))
+		
+	     (IF(?(FR (VAL @module) (VAL @request) (VAL @requestId) @reportModule @resultModule))
+		
+		(!(= $report @reportModule))
+		(!(= $result @resultModule))
+		
+		
+		(~> (FR @module @request @requestId @reportModule @result) )
+		(IF(?(~(EQUAL @stopAddFact FALSE)))
+		   (=> (VAL @stopAddFact))
+		   )
+		
+		ELSEIF(?(& (GenomInterface.waitExitFact (VAL @module) (VAL @request) TRUE) (VAL @exitFact)))
+		(!(= $report CANCELED))
+		
+		ELSE
+		(!(= $report ELAPSED-TIME))
+		)
+	     
+	     ELSE
+	     (!(= $report TIME-ELAPSED))
+	     
+	     )
+	  (~>(GenomInterface.waitExitFact (VAL @module) (VAL @request) @any))
+	  (~> (IR @module (VAL @request) (VAL @requestId) (VAL @actId)))
+
+	  )
+   )
+ )

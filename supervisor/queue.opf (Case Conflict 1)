@@ -1,0 +1,67 @@
+;; -*-Lisp-*-
+;;author: Michelangelo Fiore
+;;This file contains procedures to handle a queue in a thread-safe way.
+;;Each procedure takes as input a parameter with the name of the queue and updates in the database the corrisponding queue.
+;;The three operations are Init, which sets the standard parameters of the queue.
+;;a typical usage of the queue would be. (!(Queue.init ActionManager.queue)) (!(Queue.add (. action moveHead cup .) ActionManager.queue))
+
+
+(
+ 
+ (defop |init| 
+   :invocation (!(Queue.init $queueName))
+   :documentation "creates an empty queue"
+   :body (
+	  (=>($queueName (. .)))
+	  (=>(Queue.isEmpty $queueName TRUE))
+	  (=>(Queue.isInUse $queueName FALSE))
+	  )
+   )
+ (defop |push|
+  :invocation (!(Queue.push $element $queueName))
+  :documentation "adds an element to the queue"
+  :body (
+	 (^(Queue.isInUse $queueName FALSE))
+	 (=> (Queue.isInUse $queueName TRUE))
+	 (?($queueName @queue))
+	 (!(= @queue (CONS-TAIL $element @queue)))
+	 
+	 (=>($queueName @queue))
+	 (=> (Queue.isEmpty $queueName FALSE))
+	 (=> (Queue.isInUse $queueName FALSE))
+	 )
+  )
+ (defop |pop|
+   :invocation (!(Queue.pop $queueName))
+   :documentation "pops the first element of the queue"
+   :body (
+	  (^(Queue.isInUse $queueName FALSE))
+	  (=> (Queue.isInUse $queueName TRUE))
+	  (?($queueName @queue))
+	  (!(= @queue (CDR @queue)))
+
+	  (IF(?(NULL @queue))
+	     (=>(Queue.isEmpty $queueName TRUE))
+	     )
+	  (=>($queueName @queue))
+	  
+	  (=> (Queue.isEmpty $queueName FALSE))
+	  (=> (Queue.isInUse $queueName FALSE))
+	  
+	  )
+   )
+ (defop |head|
+   :invocation (!(Queue.head $queueName $head))
+   :documentation "returns in $head the first element of the queue."
+   :body (
+	  (^(Queue.isInUse $queueName FALSE))
+	  (=> (Queue.isInUse $queueName TRUE))
+	  (?($queueName @queue))
+	  (!(= $head (CAR @queue)))
+	  
+	  (=> (Queue.isInUse $queueName FALSE))
+	  
+	  
+	  )
+   )
+)

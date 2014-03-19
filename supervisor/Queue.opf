@@ -1,0 +1,69 @@
+;; -*-Lisp-*-
+;;author: Michelangelo Fiore
+;;This file contains procedures to handle a queue in a thread-safe
+;;way. 
+
+(
+ 
+ (defop |init| 
+   :invocation (!(Queue.init $queueName))
+   :documentation "creates an empty queue"
+   :body (
+	  (=>(Queue.queue $queueName (. .)))
+	  (=>(Queue.isEmpty $queueName TRUE))
+	  (!(SEM-CREATE $queueName 1 SEM-FIFO))  
+	  
+	  )
+   )
+ (defop |push|
+  :invocation (!(Queue.push @newElement @queueName))
+  :documentation "adds an element to the queue"
+  :body (
+	 (!(SEM-P (VAL @queueName))) 
+
+
+	 (?(Queue.queue (VAL @queueName) @originalQueue))  ;;get the queue
+
+
+	 (!(= @newQueue (CONS-TAIL (VAL @newElement) @originalQueue)))
+	  (IF(?(Queue.isEmpty (VAL @queueName) TRUE))
+	     (=> (Queue.isEmpty @queueName FALSE))   ;;the queue is not empty anymore
+	     )
+	  (=>(Queue.queue (VAL @queueName) (VAL @newQueue)))
+				  
+	  (!(SEM-V (VAL @queueName)))
+	  )
+ )
+ (defop |pop|
+   :invocation (!(Queue.pop @queueName))
+   :documentation "pops the first element of the queue"
+   :body (
+	 
+	  (!(SEM-P (VAL @queueName)))
+	  
+
+	  (?(Queue.queue (VAL @queueName) @queue))
+	  (!(= @newQueue (CDR @queue)))    
+	  (IF(?(NULL @newQueue))
+	     (=> (Queue.isEmpty @queueName TRUE))
+	     )
+	  (=>(Queue.queue (VAL @queueName) (VAL @newQueue)))
+	  (!(SEM-V (VAL @queueName)))
+	  )
+   )
+ (defop |head|
+   :invocation (!(Queue.head $head @queueName))
+   :documentation "returns in $head the first element of the queue."
+   :body (
+	  (!(SEM-P (VAL @queueName)))
+	  
+
+
+
+	  (?(Queue.queue (VAL @queueName) @queue))
+	  (!(= $head (CAR @queue)))
+	    
+	  (!(SEM-V (VAL @queueName)))
+	  )
+   )
+ )

@@ -1,0 +1,64 @@
+;; -*-Lisp-*-
+;;author: Michelangelo Fiore
+;; this file contains procedures for the ActionManager, the module responsible to manage the robot actions.
+(
+ (defop |ActionLoop|
+   :invocation (actionList.isEmpty FALSE)
+   :documentation "this procuder is the main loop for the Action Manager. The procedure starts automatically when there are actions to manage. It communicates with the Monitor Manager and Execution Manager to achieve them"
+   :body (
+	  
+	  (?(ExecutionManager @executionManager))  ;;get the name of the Execution Manager (which will be a ROS NODE)
+	  (WHILE(?(ActionManager.actionList.isEmpty FALSE))  ;;while there are actions to execute
+		(^ (&& (ActionManager.isStopped FALSE) (ActionManager.isCanceled FALSE) (ActionManager.actionList.isEmpty FALSE))   ;; wait until it's not stopped, not canceled and has still actions to execute. This canceled should be handled better and in some RARE cases could provide problems
+		   
+		(?(ActionManager.actionList @actionList))
+		(!(= @action (CAR @actionList)))
+		
+		;;get the values of the action
+		(! (== (VAL @action) (ACTION (ACTION-ID $actionId) (ACTION-NAME $actionName) (ACTOR $actor) (START-TIME $startTime) (END-TIME $endTime) (PARAMETERS $actionParameters))))
+		
+		;;get the actual parameters
+		(! (= @actor (CAR @actionParameters)))
+		(! (= @actionParameters (CDR @actionParameters)))
+		(! (= @subject (CAR @actionParameters)))
+		(! (= @actionParameters (CDR @actionParameters)))
+		(!(= @value (CAR @actionParameters)))
+		
+		;;NEED TO SET PRIORITY AND ID IN A WAY THAT MAKES SENSE. For now let's get the latest priority
+		(?(MonitorManager.lastPriority @priority)) ;;TO IMPLEMENT
+		(?(MonitorManager.lastId @monitorId))   ;;TO IMPLEMENT
+		(?(ExecutionManager.lastId @executionId)) ;;TO IMPLEMENT
+		
+		(!(MonitorManager.addActionsToQueue (. @action .) (. ExecutionManager.result @executionId FAILED .) @priority @monitorId))  ;;WHAT SHOULD THE FAILURE CONDITIONS BE? I would say a failure message from the ExecutionManager. PostConditions at the moment don't allow the robots to initiate an action and monitor something else. Maybe they should not be taken by the Database but set up from here.
+
+		(^(|| (MonitorManager.isMonitoringAction @monitorId) (ActionManager.isStopped TRUE) (ActionManager.isCanceled TRUE))) ;;TO IMPLEMENT
+		(IF(?(MonitorManager.isMonitoringAction @monitorId))
+		   (!(SEND-MESSAGE @executionManager (ACTION $actionName @subject @value)))
+		   (^(||(ExecutionManager.result @executionId @result) (ActionManager.isStopped TRUE) (ActionManager.isCanceled TRUE)))   ;;TO IMPLEMENT
+		   )
+		(IF(?(ActionManager.isStopped TRUE))
+		   (IF(?(MonitorManager.isMonitoringAction @monitorId))
+		      (!(MonitorManager.cancelMonitoring @monitorId))  ;;TO IMPLEMENT
+		      )
+		   (IF(?(ExecutionManager.isExecuting @id))
+		      ((!(SEND-MESSAGE @executionManager (STOP @executionId))))
+		      (^(ExecutionManager.result @executionId @result))
+		      
+		      )
+		   )
+		(IF(?(ExecutionManager.result @id ACHIEVED))
+		   (!(ActionManager.popActionFromList))    ;;TO IMPLEMENT
+		   )
+		(IF(?(ExecutionManager.result @id FAILED))
+		   (=> (ActionManager.actionList (. .))) ;;TO IMPLEMENT
+		   )
+		(IF(?(ActionManager.isCanceled TRUE))
+		   (=> (ActionManager.actionList (. .))) ;; TO IMPLEMENT
+		   )
+
+		(=> (ActionManager.result $actionId @result))
+
+		)
+	  )
+   )
+ )

@@ -1,0 +1,6 @@
+include "new-default.inc"
+include "semaphore.inc"
+
+include "Database.sym"
+load opf "Database.opf"
+load db "Database.db"

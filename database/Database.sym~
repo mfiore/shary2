@@ -1,0 +1,17 @@
+declare be Database.find
+declare be Database.findList
+declare be Database.add
+declare be Database.remove
+declare be Database.addMonitor
+declare be Database.removeMonitor
+
+declare symbol request
+declare symbol unboundVariables
+declare symbol result
+declare symbol fact
+declare symbol event
+declare symbol toMonitor
+declare symbol SUP_NAME
+declare symbol factToMonitor
+declare symbol TRUE
+declare symbol FALSE

@@ -1,0 +1,2 @@
+declare op_predicate Controller.initAll
+declare op_predicate Controller.stopAll

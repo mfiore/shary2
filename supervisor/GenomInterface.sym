@@ -1,0 +1,17 @@
+;;handle request
+declare op_predicate GenomInterface.handleRequest
+declare symbol module
+declare symbol request
+declare symbol exitFact
+declare symbol irAddFact
+declare symbol stopAddFact
+declare symbol waitTime
+declare symbol parameters
+declare symbol report
+declare symbol result
+declare symbol shouldWaitTime
+declare symbol requestId
+declare ff GenomInterface.waitExitFact 2
+declare symbol timeElapsed
+declare symbol reportModule
+declare symbol resultModule

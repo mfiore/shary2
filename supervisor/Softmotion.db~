@@ -1,0 +1,10 @@
+(
+(Softmotion.rightArm RARM)
+(Softmotion.leftArm LARM)
+(Softmotion.leftGripperClose LCLOSE)
+(Softmotion.leftGripperOpen LOPEN)
+(Softmotion.rightGripperClose RCLOSE)
+(Softmotion.rightGripperOpen ROPEN)
+(Softmotion.rightGripperRelease RRELEASE)
+(Softmotion.leftGripperRelease LRELEASE)
+)

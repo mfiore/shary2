@@ -1,0 +1,63 @@
+;; -*-Lisp-*-
+;;author: Michelangelo Fiore
+;;This file contains procedures to handle a queue in a thread-safe way.
+
+(
+ 
+ (defop |init| 
+   :invocation (!(Queue.init $queueName))
+   :documentation "creates an empty queue"
+   :body (
+	  (=>($queueName (. .)))
+	  (=>($queueName isEmpty TRUE))
+	  (=>($queueName isInUse FALSE))
+	  )
+   )
+ (defop |push|
+  :invocation (!(Queue.push $element $queueName))
+  :documentation "adds an element to the queue"
+  :body (
+	 (^($queueName isInUse FALSE))
+	 (=> ($queueName isInUse TRUE))
+	 (?($queueName @queue))
+	 (!(= @queue (CONS-TAIL $element @queue)))
+	 
+	 (=>($queueName @queue))
+	 (=> ($queueName isEmpty FALSE))
+	 (=> ($queueName isInUse FALSE))
+	 )
+  )
+ (defop |pop|
+   :invocation (!(Queue.pop $queueName))
+   :documentation "pops the first element of the queue"
+   :body (
+	  (^($queueName isInUse FALSE))
+	  (=> ($queueName isInUse TRUE))
+	  (?($queueName @queue))
+	  (!(= @queue (CDR @queue)))
+
+	  (IF(?(NULL @queue))
+	     (=>($queueName isEmpty TRUE))
+	     )
+	  (=>($queueName @queue))
+	  
+	  (=> ($queueName isEmpty FALSE))
+	  (=> ($queueName isInUse FALSE))
+	  
+	  )
+   )
+ (defop |head|
+   :invocation (!(Queue.head $queueName $head))
+   :documentation "returns in $head the first element of the queue."
+   :body (
+	  (^($queueName isInUse FALSE))
+	  (=> ($queueName isInUse TRUE))
+	  (?($queueName @queue))
+	  (!(= $head (CAR @queue)))
+	  
+	  (=> ($queueName isInUse FALSE))
+	  
+	  
+	  )
+   )
+)

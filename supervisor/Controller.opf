@@ -1,0 +1,45 @@
+;; -*-Lisp-*-
+;;author: Michelangelo Fiore
+;;this module contains procedures to handle spark requestes.
+
+(
+
+ (defop |stopAll|
+   :invocation (!(Controller.stopAll))
+   :documentation "Stops all the modules of the supervisor"
+   :body (
+	  (=>(MonitorManager.shouldRun FALSE))
+	  
+	  )
+   )
+
+ (defop |initAll|
+   :invocation (!(Controller.initAll))
+   :documentation "Starts all the modules of the supervisor"
+   :body (
+	  (!(MonitorManager.init))
+	  (!(Spark.init))
+	  (!(Mhp.init))
+	  (!(Viman.init))
+	  (!(Softmotion.init))
+	  (!(ExecutionManager.init))
+	  (!(Timer.init))
+	  (!(ArmActions.init))
+	  (!(HeadActions.init))
+	  (!(PlannerInterface.init))
+	  (!(AgentActionMonitor.init))
+	  (!(Acapela.init))
+
+	  (!(Spark.getFreeId @sparkId))
+	  (=>(Spark.request getJointAbsPose PR2_ROBOT Torso @sparkId))
+	  (^(Spark.report (VAL @sparkId) @report))
+	  (^(Spark.result (VAL @sparkId) @x @y @z @yaw @pitch @roll))
+	  (~>(Spark.result (VAL @sparkId) (VAL @x) (VAL @y) (VAL @z) (VAL @yaw) (VAL @pitch) (VAL @roll))) 
+	  (~>(Spark.report (VAL @sparkId) @report))
+	  (=>(Robot.position TORSO @x @y @z @yaw @pitch @roll))
+	  
+
+	  
+	  )
+   )
+)

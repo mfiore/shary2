@@ -1,0 +1,16 @@
+(
+
+Action.parameter GREY_TAPE OBJECT
+Action.parameter LOTR_TAPE OBJECT
+Action.parameter WALLE_TAPE OBJECT
+
+Action.parameter TABLE_4   SUPPORT
+Action.parameter IKEA_SHELF_LIGHT  SUPPORT
+Action.parameter IKEA_SHELF_DARK  SUPPORT
+
+Action.parameter GREY_TAPE OBJECT
+Action.parameter GREY_TAPE OBJECT
+Action.parameter GREY_TAPE OBJECT
+
+
+)
