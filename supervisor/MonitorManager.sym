@@ -1,4 +1,5 @@
-declare ff MonitorMAnager.highestAvailablePriority 0
+declare ff MonitorManager.highestAvailablePriority 0
+declare ff MonitorManager.startLoop 0
 
 ;OP DECLARATION
 

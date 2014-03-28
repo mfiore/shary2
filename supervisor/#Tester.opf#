@@ -521,14 +521,12 @@
 	  (!(= @executionId 1))
 	  (!(= @object GREY_TAPE))
 	  
-	  (!(= @monitorSuccessConditions (. (. (ExecutionManager.report 1 OK) .) (. .) .)))
-	  (!(= @monitorFailureConditions  (. (.(ExecutionManager.report 1 FAILURE) .) (. .) .)))
-	  (!(= @monitorSuccessConditions2 (. (. (ExecutionManager.report 2 OK) .) (. .) .)))
-					
-					;start the monitoring
-	  (!(MonitorManager.monitorTarget WALLE_TAPE "NO_NAME" (VAL @monitorSuccessConditions) (VAL @monitorFailureConditions) MEDIUM 1))
+	  (!(= @monitorSuccessConditions (. (. (ExecutionManager.report (VAL @executionId) OK) .) (. .) .)))
+	  (!(= @monitorFailureConditions  (. (.(ExecutionManager.report (VAL @executionId) FAILURE) .) (. .) .)))
 
-	  (!(MonitorManager.monitorTarget TABLE_4 "NO_NAME" (VAL @monitorSuccessConditions2) (VAL @monitorFailureConditions) HIGH 2))
+					;start the monitoring
+	  (!(MonitorManager.monitorTarget WALLE_TAPE "NO_NAME" (VAL @monitorSuccessConditions) (VAL @monitorFailureConditions) HIGH 1))
+	  (!(MonitorManager.monitorTarget TABLE_4 "NO_NAME" (VAL @monitorSuccessConditions) (VAL @monitorFailureConditions) MEDIUM 2))
 	  
 
 	  )

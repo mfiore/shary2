@@ -23,7 +23,7 @@ declare ff Robot.headTilt 0
 declare cwp Robot.position
 declare ff Robot.hasObject 1
 declare ff Robot.armPosition 1
-
+declare ff Robot.hasObjectForThrow 1
 
 
 ;symbols for the gripper

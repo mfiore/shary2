@@ -116,26 +116,45 @@
 	  (IF(?(~(NULL @actions)))
 	     (!(AgentActionMonitor.startMonitoringAgent @agent))
 	     (!(= @tempActions (VAL @actions)))
-	     
-	     (WHILE(?(~(NULL @tempActions))) ;;associate each action to a monitor sphereId
-		   (!(= @action (CAR @tempActions)))
-		   (!(= @tempActions (CDR @tempActions)))
+	     ;;loop until every action has been executed, we receive a stop commando or there is an unexpected action
+	     (WHILE(?(& 
+		      (~(NULL @actions))
+		      (~(PlanManager.agentReport (VAL @agent) @report))
+		      ))
+		   (!(= @action (CAR @actions)))
+		   (!(= @actions (CDR @actions)))
 		   ;;get the action parameters
 		   (!(== (VAL @action) (. @actionToExecute @actionId @actionLinks .)))
+		  
+		   (WHILE(?(~(NULL @actionLinks))) ;;TO REPUT STOPAGENT
+			 (!(= @currentLink (CAR @actionLinks)))
+			 (^(PlanManager.actionReport (VAL @currentLink) @report))
+			 (~>(PlanManager.actionReport (VAL @currentLink) @report))
+			 (IF(?(~(EQUAL @report OK)))
+			    (=>(PlanManager.agentReport (VAL @agent) FAILURE))
+			 (!(FAILED))
+			 )
+		      (!(= @actionLinks (CDR @actionLinks)))
+		      )
 		   (!(== (VAL @actionToExecute) (. @actionName @actionParameters .)))
-		   (!(= @checkMonitorSphere FALSE))
+		   
 
 		   (IF(?(Action.type (VAL @actionName) MANIPULATION))
 		      (!(== (VAL @actionParameters) (. @object .)))
-
 		      
 		      ELSEIF(?(Action.type (VAL @actionName) PLACEMENT))
 		      (!(== (VAL @actionParameters) (. @object @placement .)))
+		      
+		      ) 
+		      
 
-		      ;;if we haven't activated a monitor sphere activate it. Associate a monitor sphere id
+		   (!(= @message (TERM-STRING-CAT "Human executes" @actionName)))
+		   (!(Acapela.say @message))
+
+;;if we haven't activated a monitor sphere activate it. Associate a monitor sphere id
 		      ;; with the id of the action to monitor  (?(Spark.monitorParameter (VAL @actionName) @parameterType))
-		      )
-
+		      
+	     
 		   (?(Spark.monitorParameter (VAL @actionName) @parameterType))
 		   
 		   (IF(?(EQUAL (VAL @parameterType) OBJECT))
@@ -148,43 +167,12 @@
 		   (IF(?(~(AgentActionMonitor.sphere (VAL @agent) (VAL @target) @sphereId)))
 		      (!(AgentActionMonitor.activateMonitorSpheres (. @target .) @agent))
 		      )
-		   
-		   )
-	     ;;loop until every action has been executed, we receive a stop commando or there is an unexpected action
-	     (WHILE(?(& 
-		      (~(NULL @actions))
-		      (~(PlanManager.stopAgent (VAL @agent)))
-		      (~(PlanManager.agentReport (VAL @agent) @report))
-		      ))
-		   (!(= @action (CAR @actions)))
-		   (!(= @actions (CDR @actions)))
-		   ;;get the action parameters
-		   (!(== (VAL @action) (. @actionToExecute @actionId @actionLinks .)))
-		   (!(== (VAL @actionToExecute) (. @actionName @actionParameters .)))
-		   
-
-		   (IF(?(Action.type (VAL @actionName) MANIPULATION))
-		      (!(== (VAL @actionParameters) (. @object .)))
-		      
-		      ELSEIF(?(Action.type (VAL @actionName) PLACEMENT))
-		      (!(== (VAL @actionParameters) (. @object @placement .)))
-		      
-		      ) 
-		   (!(= @message (TERM-STRING-CAT "Human executes" @actionName)))
-		   (!(Acapela.say @message))
-
-		   (?(Spark.monitorParameter (VAL @actionName) @parameterType))
-		   (IF(?(EQUAL (VAL @parameterType) OBJECT))
-		      (?(AgentActionMonitor.sphere (VAL @agent) (VAL @object) @sphereId))
-		      ELSEIF(?(EQUAL (VAL @parameterType) PLACEMENT))
-		      (?(AgentActionMonitor.sphere (VAL @agent) (VAL @placement) @sphereId))
-		      )
-		   
+		   (?(AgentActionMonitor.sphere (VAL @agent) (VAL @target) @sphereId))
 		   (=>(AgentActionMonitor.monitorAction @agent @actionId @sphereId))
-		   (^(|| (AgentActionMonitor.actionCompleted (VAL @agent) (VAL @actinId)) 
+		   (^(|| (AgentActionMonitor.actionCompleted (VAL @agent) (VAL @actionId)) 
 		      (AgentActionMonitor.unexpectedAction (VAL @agent))
 		      (PlanManager.stopAgent (VAL @agent))))
-		   (!(Tester.breakpoint))
+		   
 		   (IF(?(AgentActionMonitor.actionCompleted (VAL @agent) (VAL @actionId)))
 		      (~>(AgentActionMonitor.actionCompleted (VAL @agent) (VAL @actionId)))
 		      (=>(PlanManager.actionReport @actionId OK))
@@ -195,7 +183,7 @@
 		      )
 		   
 		   )
-
+	     
 	     (IF(?(PlanManager.stopAgent (VAL @agent)))
 		(=>(PlanManager.agentReport @agent STOPPED))
 		(~>(PlanManager.agentReport @agent STOPPED))
@@ -221,10 +209,10 @@
 		
 		(!(== (VAL @currentAction) (. @actionToExecute @actionId @actionLinks .)))
 		;;wait for previous linked actions to be completed or to fail
-		(!(Tester.breakpoint))
+
 		(WHILE(?(~(NULL @actionLinks))) ;;TO REPUT STOPAGENT
 		      (!(= @currentLink (CAR @actionLinks)))
-		      (^(PlanManager.actionReport @currentLink @report))
+		      (^(PlanManager.actionReport (VAL @currentLink) @report))
 		      (~>(PlanManager.actionReport (VAL @currentLink) @report))
 		      (IF(?(~(EQUAL @report OK)))
 			 (=>(PlanManager.agentReport robot FAILURE))

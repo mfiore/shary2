@@ -20,7 +20,7 @@
 (Action.type throw PLACEMENT)
 (Action.type place PLACEMENT)
 (Action.type handover HANDOVER)
-
+(Action.type undefined UNDEFINED)
 
 
 )

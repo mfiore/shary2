@@ -63,7 +63,7 @@
 					       (PARAMETERS @parameters)
 					       )))
 		   
-		   (?(PlannerInterface.action hatp (VAL @hatpActionName) @actionName))    ;convert the action name from the domain name of hatp to the supervisor domain
+		   (IF(?(PlannerInterface.action hatp (VAL @hatpActionName) @actionName))    ;convert the action name from the domain name of hatp to the supervisor domain
 		   (IF(?(Action.type (VAL @actionName) MANIPULATION))               ;depending on the action we convert the parameters from the hatp domain to the supervisor odmain
 		      (!(= @object NO_NAME))
 		      (WHILE(?(~(NULL @parameters)))
@@ -156,8 +156,9 @@
 			   )
 			 
 			 )
+	     )
 		   
-		      )
+	     )
 	     (=>(PlannerInterface.result (. (VAL @robotActions) (VAL @humanActions) .)))  ;we have a result
 	     )
 	  )

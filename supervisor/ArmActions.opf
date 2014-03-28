@@ -49,6 +49,14 @@
 	  (=>(Softmotion.request moveArm @smArm @smId))
 	  (!(ArmActions.handleReport Softmotion.report @smId @actionId))
 	  (=>(ArmActions.report (VAL @actionId) "OK"))
+	  (IF(?(EQUAL @task MHP_ARM_PICK_GOTO))
+	     (=>(Robot.armPosition (VAL @arm) TABLE_4)) ;HACK. To substitute with actual support, taken
+	     ;from the database
+	     
+	     ELSE 
+	     (=>(Robot.armPosition (VAL @arm) FREE))
+
+	     )
 	  
 	  )
    )
@@ -74,7 +82,7 @@
 	     (!(= @object NO_NAME))
 	     )
 	  (?(Robot.armPosition (VAL @arm) @position))
-	  (IF(?(EQUAL @position FREE))
+	  (IF(?(&(EQUAL @position FREE) (EQUAL @object NO_NAME)))
 	     (!(= @task MHP_ARM_FREE))
 	     (!(= @support NO_NAME))
 	     
@@ -104,7 +112,7 @@
 	     (!(= @object NO_NAME))
 	     )
 	  (?(Robot.armPosition (VAL @arm) @position))
-	  (IF(?(EQUAL @position FREE))
+	  (IF(?(&(EQUAL @position FREE) (EQUAL @object NO_NAME)))
 	     (!(= @task MHP_ARM_FREE))
 	     (!(= @support NO_NAME))
 	     ELSE

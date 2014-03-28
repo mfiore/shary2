@@ -14,6 +14,7 @@
 	 (!(Queue.init MonitorManager.lowPriorityQueue))
 	 (=>(MonitorManager.shouldRun TRUE))   
 	 (=>(MonitorManager.freeId 0))
+	 (=>(MonitorManager.startLoop FALSE))
 	 )
   )
 
@@ -152,8 +153,14 @@ be moved in another class"
    :body (
 	  (=> (MonitorManager.freeId (+ @monitorId 1))) 
 
+
 	  (!(= @queueElement (. (VAL @target) (VAL @targetPart) (VAL @successConditions) (VAL @failureConditions) (VAL @monitorId) .) )) 
-	  
+	  (IF(?(NULL @successConditions))
+	     (!(FAILED))
+	     
+	     ELSEIF(?(NULL @failureConditions))
+	     (!(FAILED))
+	     )
 
 	  (IF(?(EQUAL @priority HIGH))
 	     (!(Queue.push (VAL @queueElement) MonitorManager.highPriorityQueue))
@@ -172,19 +179,22 @@ be moved in another class"
 		(=>(MonitorManager.highestAvailablePriority LOW))
 		
 		)
-	  
+	  (IF(?(MonitorManager.startLoop FALSE))
+	     (=>(MonitorManager.startLoop TRUE))
+	     )
 	  (=>(MonitorManager.target (VAL @target) (VAL @priority)))
    	  )
 
    )
 
  (defop |MonitorLoop|
-   :invocation (|| (Queue.isEmpty MonitorManager.highPriorityQueue FALSE) (Queue.isEmpty MonitorManager.mediumPriorityQueue FALSE) (Queue.isEmpty MonitorManager.lowPriorityQueue FALSE))
+   :invocation (MonitorManager.startLoop TRUE)
    :documentation "this is the main loop for the MonitorManager. It monitors the first element of the priority queue until there is a new first element, its postconditions are verified or its failing conditions are verified."
    :body (
 
 	  (WHILE(?(&(|| (Queue.isEmpty MonitorManager.highPriorityQueue FALSE) (Queue.isEmpty MonitorManager.mediumPriorityQueue FALSE) (Queue.isEmpty MonitorManager.lowPriorityQueue FALSE) ) (MonitorManager.shouldRun TRUE))) ;who should set this false? Is this fake and the loop should go on forever or until a shutdown? =)
 	
+		
 
 		(IF(?(Queue.isEmpty MonitorManager.highPriorityQueue FALSE))
 		   (!(= @queueInUse MonitorManager.highPriorityQueue))
@@ -232,6 +242,7 @@ be moved in another class"
 			 )
 
 		   (~>(MonitorManager.isMonitoringTarget (VAL @monitorId)))
+
 		   (IF(?(|| (VAL @successConditionsTrue) (VAL @failureConditionsTrue) (~(EQUAL @executionReport "OK")) (MonitorManager.cancelMonitoring (VAL @monitorId)) ))  ;;To Note here. If there is a new element with lowest priority we just get to the start of the loop again and get the new head
 		      ;;if the monitor has success or failure erase the element from the head and send and post the result
 		      
@@ -268,7 +279,7 @@ be moved in another class"
 		   )
 		
 		)
-	  
+	  (=>(MonitorManager.startLoop FALSE))
 	  )
    )
 )

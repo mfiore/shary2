@@ -56,8 +56,11 @@
 		 ELSE 
 		 (=>(ExecutionManager.execute handover GIVE @object @agent2 @executionId))
 		 )
+	    ELSEIF(?(EQUAL @actionName undefined))
+	    (=>(ExecutionManager.report (VAL @executionId) OK))
 	    
 	    )
+
 	 
 	 )
   )
@@ -244,7 +247,7 @@
 
 
 	  (=> (Robot.hasObject (VAL @armForPick) (VAL @object))) ;if we arrive here with no FAILED than we've got the item (hopefully XD)
-	  (=>(Robot.armPosition (VAL @armForPick) TABLE_4))
+
 	  (=>(ExecutionManager.report (VAL @executionId) OK))
 	  (~>(ExecutionManager.isExecutingAction (VAL @executionId)))
 
@@ -425,7 +428,7 @@
 	 (?(Spark.humanHead @humanHead))
 
 	 (!(= @monitorSuccessConditions (. (. (ExecutionManager.report (VAL @executionId) OK) .) (. .) .)))
-	 (!(= @monitorFailureConditions  (. (.(ExecutionManager.report (VAL @executionId) FALSE) .) (. .) .)))
+	 (!(= @monitorFailureConditions  (. (.(ExecutionManager.report (VAL @executionId) FAILURE) .) (. .) .)))
 
 
 	 (IF(?(EQUAL @type GIVE))
@@ -636,6 +639,49 @@
 			(!(ExecutionManager.handleReport ArmActions.report @actionId @executionId))
 			)
 		     (!(= @task completed))
+		     (IF(?(EQUAL @type GIVE))
+			(~>(Robot.hasObject (VAL @arm) (VAL @object)))
+			
+			(!(Spark.getFreeId @sparkId))
+			(=>(Spark.request placeObjectForSimu (VAL @object) 0 0 0 0 0 0 1 @sparkId)) 
+			(!(ExecutionManager.handleReport Spark.report @sparkId @executionId))
+	       
+			(!(Spark.getFreeId @sparkId))
+			(=>(Spark.request setObjectInHand (VAL @sparkRobotName) (VAL @object) (VAL @arm) FALSE (VAL @sparkId)))
+			(!(ExecutionManager.handleReport Spark.report @sparkId @executionId))
+
+			(!(Spark.getFreeId @sparkId))
+			(=>(Spark.request setObjectInHand (VAL @agent) (VAL @object) (VAL @arm) TRUE (VAL @sparkId)))
+			(!(ExecutionManager.handleReport Spark.report @sparkId @executionId))
+
+			(=>(Agent.hasObject (VAL @agent) (VAL @object)))
+			
+			ELSEIF(?(EQUAL @type GRAB))
+					;	       (=>(Robot.hasObject (VAL @arm)  (VAL @object)))  ;explanation in the next comment
+			(=>(Robot.hasObjectForThrow (VAL @arm) (VAL @object)))
+			(!(Spark.getFreeId @sparkId))
+			(=>(Spark.request placeObjectForSimu (VAL @object) 0 0 0 0 0 0 1 @sparkId)) 
+			(!(ExecutionManager.handleReport Spark.report @sparkId @executionId))
+
+			(!(Spark.getFreeId @sparkId))
+			(=>(Spark.request setObjectInHand (VAL @agent) (VAL @object) (VAL @arm) FALSE (VAL @sparkId)))
+			(!(ExecutionManager.handleReport Spark.report @sparkId @executionId))
+
+			(~>(Agent.hasObject (VAL @agent) (VAL @object)))
+			;;At this point we should put an inference to tell spark that the robot has an object. The problem is that with handover the robot usually doesn't see the object so it would be attached in the wrong
+			;;position. At the moment we just act like if the robot doesn't have the object.
+			;; (?(Spark.robotFinger (VAL @arm) @sparkRobotFinger))                
+
+			;; (!(HeadActions.getFreeId @headId))
+			;; (=>(HeadActions.action lookAt @sparkRobotName @sparkRobotFinger @headId))
+			;; (!(ExecutionManager.handleReport HeadActions.report @headId @executionId))
+
+			;; (!(Spark.getFreeId @sparkId))
+			;; (=>(Spark.request setObjectInHand @sparkRobotName (VAL @object) (VAL @arm) TRUE (VAL @sparkId)))
+			;; (!(ExecutionManager.handleReport Spark.report @sparkId @executionId))
+			
+			
+			)
 		     )
 		  )
 	       (IF(?(&(Timer.elapsedTime (VAL @timerId)) (~(EQUAL @task completed))))  ;check the timer
@@ -667,28 +713,7 @@
 	    (!(Acapela.say "Good! Thank you!"))
 	    
 	    (=>(ExecutionManager.report @executionId OK))
-	    (IF(?(EQUAL @type GIVE))
-	       (~>(Robot.hasObject (VAL @arm) (VAL @object)))
-	       (!(Spark.getFreeId @sparkId))
-
-	       (=>(Spark.request setObjectInHand @sparkRobotName (VAL @object) (VAL @arm) FALSE (VAL @sparkId)))
-	       (!(ExecutionManager.handleReport Spark.report @sparkId @executionId))
-
-	       (!(Spark.getFreeId @sparkId))
-	       (=>(Spark.request setObjectInHand @agent (VAL @object) (VAL @arm) TRUE (VAL @sparkId)))
-	       (!(ExecutionManager.handleReport Spark.report @sparkId @executionId))
-	       
-	       ELSEIF(?(EQUAL @type GRAB))
-	       (!(Tester.breakpoint))
-	       (=>(Robot.hasObject (VAL @arm)  (VAL @object)))
-	       (=>(Spark.request setObjectInHand @sparkRobotName (VAL @object) (VAL @arm) TRUE (VAL @sparkId)))
-	       (!(ExecutionManager.handleReport Spark.report @sparkId @executionId))
-
-	       (!(Spark.getFreeId @sparkId))
-	       (=>(Spark.request setObjectInHand @agent (VAL @object) (VAL @arm) FALSE (VAL @sparkId)))
-	       (!(ExecutionManager.handleReport Spark.report @sparkId @executionId))
-	       
-	       )
+	   
 	    (IF(?(Robot.gripper (VAL @arm) DETECTING_PRESSION))
 	       (!(ArmActions.getFreeId @detectPressionId))
 	       (=>(ArmActions.action stopDetectPression @arm @type @detectPressionId))
@@ -724,12 +749,16 @@
    :documentation "throw an object to a certain placement"
    :body (
 	  (!(SEM-P ExecutionManager.sem))
-	  (IF(?(~(Robot.hasObject @arm (VAL @object))))
+	  (IF(?(&(~(Robot.hasObject @arm (VAL @object))) (~(Robot.hasObjectForThrow @arm (VAL @object)))))
 	     (=>(ExecutionManager.report (VAL @executionId) FAILURE))
 	     (!(SEM-V ExecutionManager.sem))
 	     (!(FAILED))
 	     )
-	  (?(Robot.hasObject @arm (VAL @object) ))
+	  (IF(?(Robot.hasObject @arm (VAL @object)))
+	     
+	     ELSE
+	     (?(Robot.hasObjectForThrow @arm (VAL @object)))
+	     )
 
 	  ;;set the parameters for ehe monitor manager
 	  (!(= @failureConditions (. (. (ExecutionManager.report (VAL @executionId) FAILURE) .)  (. .) .) )) 	 ; item not there 
@@ -765,6 +794,7 @@
 	  
 	  (=>(ExecutionManager.report @executionId OK))
 	  (~>(Robot.hasObject (VAL @arm) (VAL @object)))
+	  (~>(Robot.hasObjectForThrow (VAL @arm) (VAL @object)))
 
 	  (!(Spark.getFreeId @sparkId))
 	  (=>(Spark.request setObjectInHand PR2_ROBOT (VAL @object) (VAL @armForPick) FALSE (VAL @sparkId)))
