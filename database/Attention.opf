@@ -131,7 +131,7 @@
 		  (!(Database.add (AGENT-STATEMENT (VAL @agentModel) (VAL @subject) (VAL @predicate) (VAL @value))))		     
 
 		  
-
+		  
 
 		  ;(^(Database.report @report))
 		  ;(~>(Database.report @report))

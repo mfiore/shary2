@@ -118,6 +118,33 @@
 	  )
   )
 
+(defop |handleReporForReachability|
+  :invocation(!(ExecutionManager.handleReportForReachibility @reportName @object @id @executionId))
+  :documentation "Utility function. It's the same as handleReport but it should be used for object oriented actions. If there is a failure it will change the reachibility value in the DB (probably this could be done better 
+since we're basically duplicating code"
+  :body (
+	  (^(|| (@reportName (VAL @id) @report)  (ExecutionManager.stop (VAL @executionId))))
+	  
+	  (IF(?(ExecutionManager.stop (VAL @executionId)))
+	     (~>(ExecutionManager.stop (VAL @executionId)))
+	     (=>(ExecutionManager.report (VAL @executionId) STOPPED))
+
+	     ELSE	 
+	     (~>( @reportName (VAL @id) (VAL @report)))
+	     (IF(?(~(EQUAL @report "OK")))
+		(!(PRINT @report))
+		(=> (ExecutionManager.report (VAL @executionId) FAILURE))
+		(!(= @fact (AGENT-STATEMENT PR2_ROBOT (VAL @object) isReachableBy PR2_ROBOT)))
+		(!(DatabaseInterface.remove (VAL @fact) @result))
+		(!(DatabaseInterface.add (FLAG (VAL @fact)) @result))
+		
+		(!(SEM-V ExecutionManager.sem))
+		(!(FAILED))
+		)
+	     )
+	    
+	 )
+  )
  (defop |handleReport|
    :invocation(!(ExecutionManager.handleReport @reportName @id @executionId))
    :documentation "Utility function to avoid some code duplication when waiting for the response of a genom module. This can't be used when we don't want to fail if the genom request fails"
@@ -790,6 +817,7 @@
 	  ;;execute the throw
 	  (!(ArmActions.getFreeId @actionId))
 	  (=>(ArmActions.action openGripper @arm @actionId))
+	  
 	  (!(ExecutionManager.handleReport ArmActions.report @actionId @executionId))
 	  
 	  (=>(ExecutionManager.report @executionId OK))

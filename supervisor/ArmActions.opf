@@ -143,8 +143,8 @@
 	  (=>(ArmActions.action moveTo @arm MHP_ARM_PICK_GOTO @armGoto @object NO_NAME NO_NAME 0 @objGoto @actionId))
 
 	  (^(ArmActions.report (VAL @actionId) @report))
-
-	
+	  
+	  
 	  )
    )
 

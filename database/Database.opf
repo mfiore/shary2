@@ -120,30 +120,38 @@ $unboundVariables= lisp-list containing the variables for which we want to find 
    :invocation (!(Database.add @fact))
    :body (
 	  (?(Database.supervisorName @supName))
-	  (!(Database.checkAndApplyDbRules @fact @newFactList))
-	  (=> (VAL @fact))	  
-	  (WHILE(?(~(NULL @newFactList)))
-		(!(= @newFact (CAR @newFactList)))
-		(!(= @newFactList (CDR @newFactList)))
-		(=>(VAL @newFact))
-		(IF(? (toMonitor (VAL @newFact) @event))
-		   (! (SEND-MESSAGE @supName @event))
+	  (IF(~(FLAG (VAL @fact)))
+	     (!(Database.checkAndApplyDbRules @fact @newFactList))
+	     (=> (VAL @fact))	  
+	     (WHILE(?(~(NULL @newFactList)))
+		   (!(= @newFact (CAR @newFactList)))
+		   (!(= @newFactList (CDR @newFactList)))
+		   (=>(VAL @newFact))
+		   (IF(? (toMonitor (VAL @newFact) @event))
+		      (! (SEND-MESSAGE @supName @event))
+		      )
 		   )
-		)
-	    
-	  (IF (? (toMonitor (VAL @fact) @event))
-	      (! (SEND-MESSAGE @supName @event))
-	      )
+	     
+	     (IF (? (toMonitor (VAL @fact) @event))
+		 (! (SEND-MESSAGE @supName @event))
+		 )
+	     
+	     )
 	  )
    )
    
  (defop |add|
    :invocation (Database.add @fact @caller)
    :documentation "this procedure adds $fact into the database and returns $result. $fact= a composed term like (isOn cup_0 table_0). SHOULD CHECK FOR RULES BEFORE ADDING (What are these rules? To check)" 
-   :body (
-	  (!(Database.add @fact)) 
-	  (!(SEND-MESSAGE @caller (Database.report OK)))
+   :body ( 
+	  (IF(~(FLAG (VAL @fact)))
+
+	     (!(Database.add @fact))	  
+	     (!(SEND-MESSAGE @caller (Database.report OK)))
 	  
+	     ELSE
+	     (!(SEND-MESSAGE @callare (Database.report FAILURE)))
+	     )
 	  )
 
    )

@@ -17,6 +17,7 @@
 	  (!(DatabaseInterface.getResult $result))
 	  )
    )
+
  (defop |findList|
    :invocation (! (DatabaseInterface.findList $request $unboundVariables $result))
    :documentation "this procedure returns in the variable $result a list of list, containing the values of the unbound variables. It's used parameters must be set as follows. $request= composed term like (fact 1 @b 3)  
