@@ -254,7 +254,7 @@
 			 (IF(?(EQUAL @sphereType SPARK_PICK_OBJECT))
 			    (IF(?(~(Agent.hasObject (VAL @agentName) @object)))
 			       ;;if we were monitoring this action then we say it was completed, else it was an unexpected action
-			       (!(Tester.breakpoint))
+
 			       (IF(?(AgentActionMonitor.isMonitoringAgent (VAL @agentName) @monitorId))
 				  (IF(?(AgentActionMonitor.monitorAction (VAL @agentName) @actionId (VAL @sphereId)))
 				     (~>(AgentActionMonitor.monitorAction (VAL @agentName) (VAL @actionId) (VAL @sphereId)))
