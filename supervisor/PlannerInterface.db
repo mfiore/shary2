@@ -8,6 +8,9 @@
 (PlannerInterface.action hatp PutObjectVisibleAndReachable putAccessible)
 (PlannerInterface.action hatp GiveObject handover)
 (PlannerInterface.action hatp ForceInformation undefined)
+(PlannerInterface.action hatp GiveInformationAbout undefined)
+(PlannerInterface.action hatp AskForInformation undefined)
+
 (PlannerInterface.bridgeName  hatp HATPSHARY)
 (PlannerInterface.usePlanner HATP)
 )

@@ -1,2 +1,3 @@
+declare cwp Flag.ignoreReachability
 declare ff Attention.lineIndex 0
 declare ff Attention.tableIter 0

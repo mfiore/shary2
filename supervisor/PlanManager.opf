@@ -106,7 +106,16 @@
 	 (WHILE(?(PlanManager.actionReport @action @report))
 	       (~>(PlanManager.actionReport (VAL @action) (VAL @report)))
 	       )
+	 (WHILE(?(PlanManager.agentReport @agent @report))
+	       (~>(PlanManager.agentReport (VAL @agent) (VAL @report)))
+	       )
+	 (WHILE(?(PlanManager.actionReport @link @report))
+	       (~>(PlanManager.actionReport (VAL @link) (VAL @report)))
+	       )
 	 )
+  
+		
+  
   )
 
  (defop |manageHumanActions|
@@ -129,7 +138,7 @@
 		   (WHILE(?(~(NULL @actionLinks))) ;;TO REPUT STOPAGENT
 			 (!(= @currentLink (CAR @actionLinks)))
 			 (^(PlanManager.actionReport (VAL @currentLink) @report))
-			 (~>(PlanManager.actionReport (VAL @currentLink) @report))
+
 			 (IF(?(~(EQUAL @report OK)))
 			    (=>(PlanManager.agentReport (VAL @agent) FAILURE))
 			 (!(FAILED))
@@ -213,7 +222,7 @@
 		(WHILE(?(~(NULL @actionLinks))) ;;TO REPUT STOPAGENT
 		      (!(= @currentLink (CAR @actionLinks)))
 		      (^(PlanManager.actionReport (VAL @currentLink) @report))
-		      (~>(PlanManager.actionReport (VAL @currentLink) @report))
+
 		      (IF(?(~(EQUAL @report OK)))
 			 (=>(PlanManager.agentReport robot FAILURE))
 			 (!(FAILED))

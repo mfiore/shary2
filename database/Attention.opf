@@ -126,43 +126,48 @@
 	       (!(= @subject (MAKE-ATOM @subject)))
 	       (!(= @predicate (MAKE-ATOM @predicate)))
 	       (!(= @value (MAKE-ATOM @value)))
+
 	       (IF(?(EQUAL @type SPARK_ADD_FACT))
-		 
+		  (!(PRINT "ADD FACT"))
+		  (!(PRINT @predicate))
 		  (!(Database.add (AGENT-STATEMENT (VAL @agentModel) (VAL @subject) (VAL @predicate) (VAL @value))))		     
-
-		  
-		  
-
-		  ;(^(Database.report @report))
-		  ;(~>(Database.report @report))
+ 
 		  
 		  ELSEIF(?(EQUAL @type SPARK_UPDATE_FACT))
-		  (IF(?(~(EQUAL @predicate isReachableBy)))
-		     (!(Database.update (AGENT-STATEMENT (VAL @agentModel) (VAL @subject) (VAL @predicate) (VAL @value))))
+		  ;;NOTE: not sure about isReachableBy
+		  (IF(?(&(EQUAL @predicate isMoving) (Flag.ignoreReachability (VAL @subject))))
+		     (!(PRINT "UPDATE FACT"))
+		     (!(PRINT @predicate))
+		     (!(Database.remove (Flag.ignoreReachability (VAL @subject))))
+		     (!(Database.add (AGENT-STATEMENT PR2_ROBOT (VAL @subject) isReachable true)))
+		     (!(Database.add (AGENT-STATEMENT PR2_ROBOT (VAL @subject) isReachableBy PR2_ROBOT)))
 		     )
+		  ;;NOTE: is something wrong here? 
+		  ELSEIF(?(~(EQUAL @predicate isReachableBy)))
+		  (!(PRINT "UPDATE FACT"))
+		  (!(PRINT @predicate))
+		  (!(Database.update (AGENT-STATEMENT (VAL @agentModel) (VAL @subject) (VAL @predicate) (VAL @value))))
+		  
 		  ELSE
+		  (!(PRINT "REMOVE FACT"))
+		  (!(PRINT @predicate))
 		  (!(Database.remove (AGENT-STATEMENT (VAL @agentModel) (VAL @subject) (VAL @predicate) (VAL @value))))
-		  ;(^(Database.report @report))
-		  ;(~>(Database.report @report))
+					;(^(Database.report @report))
+					;(~>(Database.report @report))
 		  )
 	       (!(= @i (+ @i 1)))
-
-	       )
-
-
+	       
+	 )
+	 
+	 
 	 
 
-
+	 
 	 )  
-  
+
   
   
   )
-
-
-
-
-
 
  
 )

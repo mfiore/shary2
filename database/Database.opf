@@ -120,7 +120,7 @@ $unboundVariables= lisp-list containing the variables for which we want to find 
    :invocation (!(Database.add @fact))
    :body (
 	  (?(Database.supervisorName @supName))
-	  (IF(~(FLAG (VAL @fact)))
+
 	     (!(Database.checkAndApplyDbRules @fact @newFactList))
 	     (=> (VAL @fact))	  
 	     (WHILE(?(~(NULL @newFactList)))
@@ -137,25 +137,19 @@ $unboundVariables= lisp-list containing the variables for which we want to find 
 		 )
 	     
 	     )
-	  )
    )
    
  (defop |add|
    :invocation (Database.add @fact @caller)
    :documentation "this procedure adds $fact into the database and returns $result. $fact= a composed term like (isOn cup_0 table_0). SHOULD CHECK FOR RULES BEFORE ADDING (What are these rules? To check)" 
    :body ( 
-	  (IF(~(FLAG (VAL @fact)))
-
 	     (!(Database.add @fact))	  
 	     (!(SEND-MESSAGE @caller (Database.report OK)))
 	  
-	     ELSE
-	     (!(SEND-MESSAGE @callare (Database.report FAILURE)))
+
+
 	     )
-	  )
-
    )
-
 (defop |removeLocal|
   :invocation(!(Database.remove @fact))
   :body (
@@ -183,8 +177,8 @@ $unboundVariables= lisp-list containing the variables for which we want to find 
    :invocation (Database.remove @fact @caller)
    :documentation "this procedure removes $fact from the database. $fact= a composed termi like (isOn cup_0 table_0)"
    :body (
-	  
-	  (!(Database.removeLocal @fact))
+	 
+	  (!(Database.remove @fact))
 	  
 	  (!(SEND-MESSAGE @caller (Database.report OK)))
 	  

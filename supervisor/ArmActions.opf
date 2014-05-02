@@ -43,7 +43,33 @@
 	  (!(Mhp.getFreeId @mhpId))
 	  
 	  (=>(Mhp.request setTrajectory GEN_TRUE (VAL @task) (VAL @mhpArm) (VAL @armStart) (VAL @armGoto) (VAL @object) (VAL @support) (VAL @placement) GEN_FALSE 0 (VAL @objStart) (VAL @useObjGoto) (VAL @objGoto) (VAL @mhpId)))
-	  (!(ArmActions.handleReport Mhp.report @mhpId @actionId))
+
+	  ;;we can't use handle report here if the @task is a pick because in case of failure we want to change reachability and handle report at the moment doesn't allow that. A solution could be editing handle report 
+	  ;;to add the possibility to add facts to the db in case of failure\success.
+	  (IF(?(EQUAL @task MHP_ARM_PICK_GOTO)) 
+	     (^(|| (Mhp.report (VAL @mhpId) @report)  (ArmActions.stop (VAL @actionId))))
+	     (IF(?(ArmActions.stop (VAL @actionId)))
+		(~>(ArmActions.stop (VAL @actionId)))
+	       (=>(ArmActions.report (VAL @actionId) STOPPED))
+	       
+	       ELSE	 
+	       (~>( Mhp.report (VAL @mhpId) (VAL @report)))
+	       (IF(?(~(EQUAL @report "OK")))
+	
+		  (!(DatabaseInterface.remove (AGENT-STATEMENT PR2_ROBOT (VAL @object) isReachable true) @result))
+		  (!(DatabaseInterface.remove (AGENT-STATEMENT PR2_ROBOT (VAL @object) isReachableBy PR2_ROBOT) @result))
+		  (!(DatabaseInterface.add (AGENT-STATEMENT PR2-ROBOT (VAL @object) isReachable false) @result))
+		  (!(DatabaseInterface.add (Flag.ignoreReachability (VAL @object)) @result))
+
+		  (=> (ArmActions.report (VAL @actionId) (VAL @report)))
+		  (!(FAILED))
+		  )
+	       )
+	     
+	     ELSE
+	     (!(ArmActions.handleReport Mhp.report @mhpId @actionId))
+	     )
+
 
 	  (!(Softmotion.getFreeId @smId))
 	  (=>(Softmotion.request moveArm @smArm @smId))
@@ -142,7 +168,6 @@
 	
 	  (=>(ArmActions.action moveTo @arm MHP_ARM_PICK_GOTO @armGoto @object NO_NAME NO_NAME 0 @objGoto @actionId))
 
-	  (^(ArmActions.report (VAL @actionId) @report))
 	  
 	  
 	  )
