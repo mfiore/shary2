@@ -116,6 +116,37 @@
 	   )
    )
 
+(defop |halt|
+  :invocation (Softmotion.request halt @id)
+  :documentation "Halts the execution, waiting for a resume"
+  :body (
+	  (!(SEM-P Softmotion.semStop))
+	  
+	  (=>(Softmotion.freeId (+ @id 1)))
+	  
+	  (!(GenomInterface.handleRequest PR2SOFTMOTION PR2SOFTMOTION_HALT (Softmotion.stop (VAL @id)) (FALSE) (FALSE) 300  NIL @report @result))
+	  (=>(Softmotion.report (VAL @id) (VAL @report)))
+
+	  (!(SEM-V Softmotion.semStop))
+	  )
+  )
+  
+
+(defop |resume|
+  :invocation (Softmotion.request resume @id)
+  :documentation "Halts the execution, waiting for a resume"
+  :body (
+	  (!(SEM-P Softmotion.semStop))
+	  
+	  (=>(Softmotion.freeId (+ @id 1)))
+	  
+	  (!(GenomInterface.handleRequest PR2SOFTMOTION PR2SOFTMOTION_RESUME (Softmotion.stop (VAL @id)) (FALSE) (FALSE) 300  NIL @report @result))
+	  (=>(Softmotion.report (VAL @id) (VAL @report)))
+
+	  (!(SEM-V Softmotion.semStop))
+	  )
+  )
+
  (defop |stop|
    :invocation (Softmotion.request stop @id)
    :documentation "Stops the robot. This is not really safe i guess. The user should cancel all ongoing softmotion requestes or prepare for some failure reports"

@@ -89,6 +89,7 @@
 	     (IF(?(~(EQUAL @sparkReport "OK")))
 		(=> (ExecutionManager.report (VAL @executionId) (VAL @sparkReport)))
 		(!(SEM-V ExecutionManager.sem))
+		(~>(ExecutionManager.isExecutingAction (VAL @executionId)))
 		(!(FAILED))
 		)
 	     (^(Spark.result (VAL @sparkId) @xOb @yOb @zOb @yawOb @pitchOb @rollOb))
@@ -101,6 +102,7 @@
 	     (IF(?(~(EQUAL @sparkReport "OK")))
 		(=> (ExecutionManager.report (VAL @executionId) (VAL @sparkReport)))
 		(!(SEM-V ExecutionManager.sem))
+		(~>(ExecutionManager.isExecutingAction (VAL @executionId)))
 		(!(FAILED))
 		)
 	     (^(Spark.result (VAL @sparkId) @xTorso @yTorso @zTorso @yawTorso @pitchTorso @rollTorso))
@@ -118,54 +120,119 @@
 	  )
   )
 
-(defop |handleReporForReachability|
-  :invocation(!(ExecutionManager.handleReportForReachibility @reportName @object @id @executionId))
+(defop |handleReportForReachability|
+  :invocation(!(ExecutionManager.handleReportForReachability @reportName @object @id @executionId))
   :documentation "Utility function. It's the same as handleReport but it should be used for object oriented actions. If there is a failure it will change the reachibility value in the DB (probably this could be done better 
 since we're basically duplicating code"
   :body (
-	  (^(|| (@reportName (VAL @id) @report)  (ExecutionManager.stop (VAL @executionId))))
-	  
-	  (IF(?(ExecutionManager.stop (VAL @executionId)))
-	     (~>(ExecutionManager.stop (VAL @executionId)))
-	     (=>(ExecutionManager.report (VAL @executionId) STOPPED))
-
-	     ELSE	 
-	     (~>( @reportName (VAL @id) (VAL @report)))
-	     (IF(?(~(EQUAL @report "OK")))
-		(!(PRINT @report))
-		(=> (ExecutionManager.report (VAL @executionId) FAILURE))
-		(!(= @fact (AGENT-STATEMENT PR2_ROBOT (VAL @object) isReachableBy PR2_ROBOT)))
-		(!(DatabaseInterface.remove (VAL @fact) @result))
-		(!(DatabaseInterface.add (FLAG (VAL @fact)) @result))
+	 (!(= @report (TERM-STRING-CAT (VAL @module) ".report")))
+	 (!(= @done FALSE))
+	 (WHILE(EQUAL @done FALSE)
+	       (^(|| (@reportName (VAL @id) @report) (ExecutionManager.halt (VAL @executionId)) (ExecutionManager.stop (VAL @executionId) )))
 		
-		(!(SEM-V ExecutionManager.sem))
-		(!(FAILED))
-		)
-	     )
-	    
+	       (IF(?(ExecutionManager.halt (VAL @executionId)))
+		  (~>(ExecutionManager.halt (VAL @executionId)))
+		  (IF(?(EQUAL @module Softmotion))
+		     (!(Softmotion.getFreeId @smId))
+		     (=>(Softmotion.request halt (VAL @smId)))
+		     (^(Softmotion.report (VAL @id) @smReport))
+		     (~>(Softmotion.report (VAL @id) (VAL @smReport)))
+		     )
+		  (^(|| (ExecutionManager.stop (VAL @executionId)) (ExecutionManager.resume (VAL @executionId))))
+		  
+		  )
+	       (IF(?(ExecutionManager.stop (VAL @executionId)))
+		  (~>(ExecutionManager.stop (VAL @executionId)))
+		  (IF(?(EQUAL @module Softmotion))
+		     (=>(Softmotion.stop (VAL @id)))
+		     (!(Softmotion.getFreeId @smId))
+		     (=>(Softmotion.request stop (VAL @smId)))
+		     (^(Softmotion.report (VAL @id) @smReport))
+		     (~>(Softmotion.report (VAL @id) (VAL @smReport)))
+
+		     
+		     ELSEIF(?(EQUAL @module Mhp))
+		     (=>(Mhp.stop (VAL @id)))
+
+		     ELSEIF(?(EQUAL @module Spark))
+		     (=>(Spark.stop (VAL @id)))
+
+		     ELSEIF(?(EQUAL @module Viman))
+		     (=>(Viman.stop (VAL @id)))      
+		     )
+
+		  
+		  ELSE	 
+		  (!(= @done TRUE))
+		  (~>( @reportName (VAL @id) (VAL @report)))
+		  (IF(?(~(EQUAL @report "OK")))
+		     (!(PRINT @report))
+		     (=> (ExecutionManager.report (VAL @executionId) FAILURE))
+		     (IF(?(~(EQUAL @report STOPPED)))
+			  (!(DatabaseInterface.setReachabilityFalse (VAL @object) @result))
+			  )
+		     (!(SEM-V ExecutionManager.sem))
+		     (~>(ExecutionManager.isExecutingAction (VAL @executionId)))
+		     (!(FAILED))
+		     )
+		  )
+	       )
 	 )
-  )
+)
  (defop |handleReport|
-   :invocation(!(ExecutionManager.handleReport @reportName @id @executionId))
+   :invocation(!(ExecutionManager.handleReport @module @id @executionId))
    :documentation "Utility function to avoid some code duplication when waiting for the response of a genom module. This can't be used when we don't want to fail if the genom request fails"
    :body (
-	  (^(|| (@reportName (VAL @id) @report)  (ExecutionManager.stop (VAL @executionId))))
-	  
-	  (IF(?(ExecutionManager.stop (VAL @executionId)))
-	     (~>(ExecutionManager.stop (VAL @executionId)))
-	     (=>(ExecutionManager.report (VAL @executionId) STOPPED))
+	  (!(= @report (TERM-STRING-CAT (VAL @module) ".report")))
+	  (!(= @done FALSE))
+	  (WHILE(EQUAL @done FALSE)
+		(^(|| (@reportName (VAL @id) @report) (ExecutionManager.halt (VAL @executionId)) (ExecutionManager.stop (VAL @executionId) )))
+		
+		(IF(?(ExecutionManager.halt (VAL @executionId)))
+		   (~>(ExecutionManager.halt (VAL @executionId)))
+		   (IF(?(EQUAL @module Softmotion))
+		      (!(Softmotion.getFreeId @smId))
+		      (=>(Softmotion.request halt (VAL @smId)))
+		      (^(Softmotion.report (VAL @id) @smReport))
+		      (~>(Softmotion.report (VAL @id) (VAL @smReport)))
+		      )
+		   (^(|| (ExecutionManager.stop (VAL @executionId)) (ExecutionManager.resume (VAL @executionId))))
+		   
+		   )
+		(IF(?(ExecutionManager.stop (VAL @executionId)))
+		   (~>(ExecutionManager.stop (VAL @executionId)))
+		   (IF(?(EQUAL @module Softmotion))
+		      (=>(Softmotion.stop (VAL @id)))
+		      (!(Softmotion.getFreeId @smId))
+		      (=>(Softmotion.request stop (VAL @smId)))
+		      (^(Softmotion.report (VAL @id) @smReport))
+		      (~>(Softmotion.report (VAL @id) (VAL @smReport)))
 
-	     ELSE	 
-	     (~>( @reportName (VAL @id) (VAL @report)))
-	     (IF(?(~(EQUAL @report "OK")))
-		(!(PRINT @report))
-		(=> (ExecutionManager.report (VAL @executionId) FAILURE))
-		(!(SEM-V ExecutionManager.sem))
-		(!(FAILED))
+		      
+		      ELSEIF(?(EQUAL @module Mhp))
+		      (=>(Mhp.stop (VAL @id)))
+
+		      ELSEIF(?(EQUAL @module Spark))
+		      (=>(Spark.stop (VAL @id)))
+
+		      ELSEIF(?(EQUAL @module Viman))
+		      (=>(Viman.stop (VAL @id)))      
+		      )
+
+		   
+		   ELSE	 
+		   (!(= @done TRUE))
+		   (~>( @reportName (VAL @id) (VAL @report)))
+		   (IF(?(~(EQUAL @report "OK")))
+		      (!(PRINT @report))
+		      (=> (ExecutionManager.report (VAL @executionId) FAILURE))
+		      (!(SEM-V ExecutionManager.sem))
+		      (~>(ExecutionManager.isExecutingAction (VAL @executionId)))
+		      (!(FAILED))
+		      )
+		   )
 		)
-	     )
 	  )
-   
    )
 
  (defop |take|
@@ -173,21 +240,15 @@ since we're basically duplicating code"
    :documentation "this procedure takes the object @object. @arm can be setted to one of the two arms (RIGHT or LEFT) or to NO_NAME. In that case the robot chooses the arm to compute the action"
    :body (	  
 	  (!(SEM-P ExecutionManager.sem))
-	  ;;find the support where the object is placed
-	  (!(DatabaseInterface.findList (AGENT-STATEMENT PR2_ROBOT (VAL @object) isOn @support) (. @support .) @result))
-	  (IF(?(EQUAL @result ERROR))
-	     (=>(ExecutionManager.report (VAL @executionId) FAILURE))
-	     (!(SEM-V ExecutionManager.sem))
-	     (!(FAILED))
-	     )
-	  (!(= @support (CAR @result)))
-	  (!(= @support (CAR @support)))
-	  
+	  	 
+
+
 	  ;;check if the action has already been realized
 	  (IF(?(~(EQUAL @arm NO_NAME)))
 	     (IF(?(Robot.hasObject (VAL @arm) (VAL @object)))
 		(=>(ExecutionManager.report (VAL @executionId) OK))
 		(!(SEM-V ExecutionManager.sem))
+
 		(!(FAILED))
 		
 		)
@@ -209,7 +270,7 @@ since we're basically duplicating code"
 	     (!(SEM-V ExecutionManager.sem))
 	     (!(FAILED))
 	     )
-
+	  (=>(ExecutionManager.isExecutingAction (VAL @executionId)))
 	  ;;set the parameters for the monitor manager
 	   (!(= @failureConditions (. (. (ExecutionManager.report (VAL @executionId) FAILURE) .)  (. .) .) )) 	 ; item not there 
 	  (!(= @successConditions (. (. (ExecutionManager.report (VAL @executionId) OK) .)  (. .) .) ))     ; look at the item until execution is completed
@@ -231,11 +292,13 @@ since we're basically duplicating code"
 		      ELSEIF(?(EQUAL @report CANCELED))
 		      (=> (ExecutionManager.report (VAL @executionId) FAILURE))  ;we fail
 		      (!(SEM-V ExecutionManager.sem))
+		      (~>(ExecutionManager.isExecutingAction (VAL @executionId)))
 		      (!(FAILED))
 		      
 		      ELSE  ;unhandled report
 		      (=> (ExecutionManager.report (VAL @executionId) @report)) 
 		      (!(SEM-V ExecutionManager.sem))
+		      (~>(ExecutionManager.isExecutingAction (VAL @executionId)))
 		      (!(FAILED))
 		      )
 		   )	
@@ -261,7 +324,7 @@ since we're basically duplicating code"
 	  (!(ArmActions.getFreeId @actionId))
 	  (=>(ArmActions.action moveToObject @armForPick @object @actionId))
 
-	  (!(ExecutionManager.handleReport ArmActions.report @actionId @executionId))
+	  (!(ExecutionManager.handleReportForReachability ArmActions.report @object @actionId @executionId))
 
 	  
 
@@ -282,7 +345,7 @@ since we're basically duplicating code"
 	  (=>(Spark.request setObjectInHand PR2_ROBOT (VAL @object) (VAL @armForPick) TRUE (VAL @sparkId)))
 	  (!(ExecutionManager.handleReport Spark.report @sparkId @executionId))
 	  
-
+	  (~>(ExecutionManager.isExecutingAction (VAL @executionId)))
 	  (!(SEM-V ExecutionManager.sem))
 	  )
    
@@ -458,6 +521,7 @@ since we're basically duplicating code"
 	 (!(= @monitorFailureConditions  (. (.(ExecutionManager.report (VAL @executionId) FAILURE) .) (. .) .)))
 
 
+
 	 (IF(?(EQUAL @type GIVE))
 	    (IF(?(Robot.hasObject @arm  (VAL @object)))  ;if the robot doesn't have the object fail
 	       ELSE 
@@ -487,7 +551,7 @@ since we're basically duplicating code"
 	       )
 	    )
 	 
-	 
+	 (=>(ExecutionManager.isExecutingAction (VAL @executionId)))
 	 (?(Spark.robotName @sparkRobotName))
 	
 	 ;;get the robot torso position (to compute distance from the user)
@@ -764,6 +828,8 @@ since we're basically duplicating code"
 	 (IF(?(Timer.elapsedTime (VAL @timerId)))
 	    (~>(ExecutionManager.elapsedTime (VAL @timerId)))
 	    )
+
+	 (~>(ExecutionManager.isExecutingAction (VAL @executionId)))
 	 (!(SEM-V ExecutionManager.sem))
 	 )
   )
@@ -776,6 +842,7 @@ since we're basically duplicating code"
    :documentation "throw an object to a certain placement"
    :body (
 	  (!(SEM-P ExecutionManager.sem))
+
 	  (IF(?(&(~(Robot.hasObject @arm (VAL @object))) (~(Robot.hasObjectForThrow @arm (VAL @object)))))
 	     (=>(ExecutionManager.report (VAL @executionId) FAILURE))
 	     (!(SEM-V ExecutionManager.sem))
@@ -786,6 +853,8 @@ since we're basically duplicating code"
 	     ELSE
 	     (?(Robot.hasObjectForThrow @arm (VAL @object)))
 	     )
+
+	  (=>(ExecutionManager.isExecutingAction (VAL @executionId)))
 
 	  ;;set the parameters for ehe monitor manager
 	  (!(= @failureConditions (. (. (ExecutionManager.report (VAL @executionId) FAILURE) .)  (. .) .) )) 	 ; item not there 
@@ -817,9 +886,8 @@ since we're basically duplicating code"
 	  ;;execute the throw
 	  (!(ArmActions.getFreeId @actionId))
 	  (=>(ArmActions.action openGripper @arm @actionId))
-	  
-	  (!(ExecutionManager.handleReport ArmActions.report @actionId @executionId))
-	  
+	  (!(ExecutionManager.handleReportForReachability ArmActions.report @placement @actionId @executionId))
+
 	  (=>(ExecutionManager.report @executionId OK))
 	  (~>(Robot.hasObject (VAL @arm) (VAL @object)))
 	  (~>(Robot.hasObjectForThrow (VAL @arm) (VAL @object)))
@@ -839,7 +907,8 @@ since we're basically duplicating code"
 	  (!(ExecutionManager.handleReport Spark.report @sparkId @executionId))
 
 	  (!(SEM-V ExecutionManager.sem))
-
+	  
+	  (~>(ExecutionManager.isExecutingAction (VAL @executionId)))
 	  )
    
    )
@@ -849,12 +918,16 @@ since we're basically duplicating code"
   :documentation "Places an object on a support in a specific placement or a casual one if placement is NO_NAME. For now the casual version is not implemented"
   :body (
 	 (!(SEM-P ExecutionManager.sem))
+
+
 	 (IF(?(~(Robot.hasObject @arm  (VAL @object))))
 	    (=>(ExecutionManager.report (VAL @executionId) FAILURE))
 	    (!(SEM-V ExecutionManager.sem))
 	    (!(FAILED))
 	    )
 	 (?(Robot.hasObject @arm (VAL @object)))
+	 
+	 (=>(ExecutionManager.isExecutingAction (VAL @executionId)))
 
 
 					;move the arm over the placement
@@ -874,8 +947,9 @@ since we're basically duplicating code"
 	  (!(Spark.getFreeId @sparkId))
 	  (=>(Spark.request setObjectInHand (VAL @object) (VAL @armForPick) FALSE (VAL @sparkId)))
 	  (!(ExecutionManager.handleReport Spark.report @sparkId @executionId))
-	  
-	 
+
+	  (~>(ExecutionManager.isExecutingAction (VAL @executionId)))
+		  
 	 (!(SEM-V ExecutionManager.sem))	 
 	 )
   )

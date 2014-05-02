@@ -1,7 +1,15 @@
-Calcolare le posizioni del braccio per l'handover. Per mo in maniera semplice.
-Comunicazione ROS-OPRS
-Parametri per il POMDP
+-Improving Speed
+	   -wait for HATP (how to deal with reactivityto humans?)
+	   -wait for SPARK 2 for knowledge
+-Improving robustness
+	   -Work on unexpected human actions. May require better
+	    monitoring (ex. hand instead of head when he has an item)
+	   -wait for MHP to add more actions (put after failed handover)
+	   -robust user interruption of plans. 
+	   	   -wait for spark for human events
+		   -tablet interruptions
+-Better perception
+	-wait for people
+-Add movement
 
-
-Reingegnerizzare MonitorManager e in generale tutto. Per ora pensiamo
-solo alla situazione Table per semplificare
+-Test halt stop resume

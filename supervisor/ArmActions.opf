@@ -32,7 +32,12 @@
    :documentation "generic procedure to move arm (note that arm start and objstart are not supported)"
    :body (
 
-
+	  (IF(?(~(EQUAL @object NO_NAME)))
+	     ;;this is done because in take requestes MHP doesn't need the support that the object is on.
+	     (!(DatabaseInterface.findList (AGENT-STATEMENT PR2_ROBOT (VAL @object) isOn @realSupport) (. @realSupport .) @result) )
+	     (!(= @result (CAR @result)))
+	     (!(= @realSupport (CAR @result)))
+	     )
 	  (=>(ArmActions.freeId (+ @actionId 1)))
 
 	  (?(Mhp.arm (VAL @arm) @mhpArm))
@@ -44,31 +49,8 @@
 	  
 	  (=>(Mhp.request setTrajectory GEN_TRUE (VAL @task) (VAL @mhpArm) (VAL @armStart) (VAL @armGoto) (VAL @object) (VAL @support) (VAL @placement) GEN_FALSE 0 (VAL @objStart) (VAL @useObjGoto) (VAL @objGoto) (VAL @mhpId)))
 
-	  ;;we can't use handle report here if the @task is a pick because in case of failure we want to change reachability and handle report at the moment doesn't allow that. A solution could be editing handle report 
-	  ;;to add the possibility to add facts to the db in case of failure\success.
-	  (IF(?(EQUAL @task MHP_ARM_PICK_GOTO)) 
-	     (^(|| (Mhp.report (VAL @mhpId) @report)  (ArmActions.stop (VAL @actionId))))
-	     (IF(?(ArmActions.stop (VAL @actionId)))
-		(~>(ArmActions.stop (VAL @actionId)))
-	       (=>(ArmActions.report (VAL @actionId) STOPPED))
-	       
-	       ELSE	 
-	       (~>( Mhp.report (VAL @mhpId) (VAL @report)))
-	       (IF(?(~(EQUAL @report "OK")))
-	
-		  (!(DatabaseInterface.remove (AGENT-STATEMENT PR2_ROBOT (VAL @object) isReachable true) @result))
-		  (!(DatabaseInterface.remove (AGENT-STATEMENT PR2_ROBOT (VAL @object) isReachableBy PR2_ROBOT) @result))
-		  (!(DatabaseInterface.add (AGENT-STATEMENT PR2-ROBOT (VAL @object) isReachable false) @result))
-		  (!(DatabaseInterface.add (Flag.ignoreReachability (VAL @object)) @result))
-
-		  (=> (ArmActions.report (VAL @actionId) (VAL @report)))
-		  (!(FAILED))
-		  )
-	       )
-	     
-	     ELSE
-	     (!(ArmActions.handleReport Mhp.report @mhpId @actionId))
-	     )
+	  (!(ArmActions.handleReport Mhp.report @mhpId @actionId))
+	  
 
 
 	  (!(Softmotion.getFreeId @smId))
@@ -76,7 +58,7 @@
 	  (!(ArmActions.handleReport Softmotion.report @smId @actionId))
 	  (=>(ArmActions.report (VAL @actionId) "OK"))
 	  (IF(?(EQUAL @task MHP_ARM_PICK_GOTO))
-	     (=>(Robot.armPosition (VAL @arm) TABLE_4)) ;HACK. To substitute with actual support, taken
+	     (=>(Robot.armPosition (VAL @arm) @realSupport)) ;HACK. To substitute with actual support, taken
 	     ;from the database
 	     
 	     ELSE 

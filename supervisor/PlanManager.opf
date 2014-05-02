@@ -48,9 +48,18 @@
 			    (=>(PlanManager.manageRobotActions (VAL @robotActions)))   
 			    (=>(PlanManager.manageHumanActions (VAL @humanAgent) (VAL @humanActions)))
 			    
-			    (^(|| (PlanManager.agentReport robot @report) (PlanManager.agentReport (VAL @humanAgent) @report)))
-			    ;;we treat every possible case. If one of the two agent has failed it's execution we stop the other one and try replanning. If one of the two agents has completed we wait for the other one.
-			    (IF(?(PlanManager.agentReport robot FAILURE)) 
+			    (^(|| (PlanManager.agentReport robot @report) (PlanManager.agentReport (VAL @humanAgent) @report)) (PlanManager.stop) )
+			    ;;we treat every possible case. If one of the two agent has failed it's execution we stop the other one and try replanning. If one of the two agents has completed we wait for the other one. If the robot is stopped we abort planning.
+			    (IF(?(PlanManager.stop))
+			       (=>(PlanManager.stopAgent @humanAgent))
+			       (=>(PlanManager.stopAgent robot))
+			       (!(= @planningFailures @maxPlanningFailures))
+
+			       ELSEIF(?(PlanManager.agentReport robot STOPPED))
+			       (=>(PlanManager.stopAgent @humanAgent))
+			       (!(= @planningFailures @maxPlanningFailures))
+			       
+			       ELSEIF(?(PlanManager.agentReport robot FAILURE)) 
 			       (=>(PlanManager.stopAgent @humanAgent))
 			       (!(= @planningFailures (+ @planningFailures 1)))
 			       
@@ -236,17 +245,28 @@
 		      (!(Acapela.say @message))
 
 		      (=>(ExecutionManager.executeAction @actionName @actionParameters @executionId))
-		      (^(ExecutionManager.report (VAL @executionId) @report))
-		      (!(PRINT "GOT REPORT"))
-		      (IF(?(~(EQUAL @report OK)))
-			 (=>(PlanManager.agentReport robot FAILURE))
-			 (!(FAILED))
+		      (^(|| (ExecutionManager.report (VAL @executionId) @report) (PlanManager.stopAgent robot)))
+		      (IF(?(ExecutionManager.report (VAL @executionId) @report))
+			 (!(PRINT "GOT REPORT"))
+			 (IF(?(EQUAL @report STOPPED))
+			    (=>(PlanMAnager.agentReport robot STOPPED))
+			    (!(FAILED))
+			    )
+			 (IF(?(~(EQUAL @report OK)))
+			    (=>(PlanManager.agentReport robot FAILURE))
+			    (!(FAILED))
+			    )
+			 (=>(PlanManager.actionReport @actionId OK))
 			 )
-		      (=>(PlanManager.actionReport @actionId OK))
 		      )
 	  (IF(?(PlanManager.stopAgent robot))
 	     (~>(PlanManager.stopAgent robot))
 	     (=>(PlanManager.agentReport robot STOPPED))
+	     (IF(?(ExecutionManager.isExecutingAction @executionId))
+		(=>(ExecutionManager.stop @executionId))
+		(^(ExecutionManager.report @executionId @report))
+		(~>(ExecutionManager.report (VAL @executionId) (VAL @report)))
+		)
 	     
 	     ELSE
 	     (=>(PlanManager.agentReport robot OK))		

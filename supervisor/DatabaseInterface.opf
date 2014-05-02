@@ -6,6 +6,16 @@
 
 (
  
+(defop |setReachabilityFalse|
+  :invocation(!(Database.setReachabilityFalse @object $result))
+  :documentation "Used to change the reachability of an object from the supervisor. This is used because sometimes (often) SPARK overestimates the capacity of the robot to reach objects"
+  :body (
+	 (? (ONTO_NAME $ONTO_NAME))
+	 (? (SUP_NAME $SUP_NAME))
+	 (!(SEND-MESSAGE $ONTO_NAME (Database.setReachabilityFalse (VAL @object) $SUP_NAME)))
+	 (!(DatabaseInterface.getResult $result))
+	 )
+  )
 
  (defop |find|
    :invocation (! (DatabaseInterface.find $fact $result))

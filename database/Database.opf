@@ -7,7 +7,19 @@
 
 (
 
- 
+(defop |setReachabilityFalse| 
+  :invocation(Database.setReachabilityFalse @object @caller)
+  :documentation "Used to change the reachability of an object from the supervisor. This is used because sometimes (often) SPARK overestimates the capacity of the robot to reach objects"
+  :body (
+	 (~>(AGENT_STATEMENT PR2_ROBOT (VAL @object) isReachable true))
+	 (~>(AGENT_STATEMENT PR2_ROBOT (VAL @object) isReachableBy PR2_ROBOT))
+	 (=>(AGENT-STATEMENT PR2_ROBOT (VAL @object) isReachable false))
+	 (=>(Flag.ignoreReachability (VAL @object)))
+	 (!(SEND-MESSAGE @caller (Database.report OK)))
+	 
+	 )
+  )
+
  
  (defop |checkAndApplyDbRules| 
    :invocation (!(Database.checkAndApplyDbRules @fact $newFactList))

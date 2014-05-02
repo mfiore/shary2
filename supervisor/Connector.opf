@@ -80,6 +80,9 @@
 		  (^(order stop))
 		  (~>(order stop))	
 
+		  ELSEIF(?(EQUAL @command stop))
+		  (=>(PlanManager.stop))
+
 	  
 		  ELSEIF(?(EQUAL @command list))
 		  (^(parameter type @listType))

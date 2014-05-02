@@ -54,7 +54,7 @@ FALSE if they are not used"
 		   )
 		
 		ELSEIF(?(& (GenomInterface.waitExitFact (VAL @module) (VAL @request) TRUE) (VAL @exitFact)))
-		(!(= $report CANCELED))
+		(!(= $report STOPPED))
 		
 		ELSE
 		(!(= $report ELAPSED-TIME))

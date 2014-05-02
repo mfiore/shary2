@@ -5,6 +5,7 @@ declare be Database.remove
 declare be Database.addMonitor
 declare be Database.removeMonitor
 declare be Database.update
+declare be Database.setReachabilityFalse
 declare be DbCopyBM
 
 declare ff Database.lastAgent 0
