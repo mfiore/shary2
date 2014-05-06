@@ -121,13 +121,15 @@
   )
 
 (defop |handleReportForReachability|
-  :invocation(!(ExecutionManager.handleReportForReachability @reportName @object @id @executionId))
+  :invocation(!(ExecutionManager.handleReportForReachability @module @object @id @executionId))
   :documentation "Utility function. It's the same as handleReport but it should be used for object oriented actions. If there is a failure it will change the reachibility value in the DB (probably this could be done better 
 since we're basically duplicating code"
   :body (
-	 (!(= @report (TERM-STRING-CAT (VAL @module) ".report")))
-	 (!(= @done FALSE))
-	 (WHILE(EQUAL @done FALSE)
+	 (!(= @reportName (TERM-STRING-CAT (VAL @module) ".report")))
+	 (!(= @reportName (MAKE-ATOM @reportName)))
+	 (!(=  @done FALSE))
+
+	 (WHILE(?(EQUAL @done FALSE))
 	       (^(|| (@reportName (VAL @id) @report) (ExecutionManager.halt (VAL @executionId)) (ExecutionManager.stop (VAL @executionId) )))
 		
 	       (IF(?(ExecutionManager.halt (VAL @executionId)))
@@ -163,7 +165,7 @@ since we're basically duplicating code"
 
 		  
 		  ELSE	 
-		  (!(= @done TRUE))
+		  (!(=  @done TRUE))
 		  (~>( @reportName (VAL @id) (VAL @report)))
 		  (IF(?(~(EQUAL @report "OK")))
 		     (!(PRINT @report))
@@ -183,10 +185,12 @@ since we're basically duplicating code"
    :invocation(!(ExecutionManager.handleReport @module @id @executionId))
    :documentation "Utility function to avoid some code duplication when waiting for the response of a genom module. This can't be used when we don't want to fail if the genom request fails"
    :body (
-	  (!(= @report (TERM-STRING-CAT (VAL @module) ".report")))
-	  (!(= @done FALSE))
-	  (WHILE(EQUAL @done FALSE)
-		(^(|| (@reportName (VAL @id) @report) (ExecutionManager.halt (VAL @executionId)) (ExecutionManager.stop (VAL @executionId) )))
+	  (!(= @reportName (TERM-STRING-CAT (VAL @module) ".report")))
+	  (!(= @reportName (MAKE-ATOM @reportName)))
+	  (!(=  @done FALSE))
+
+	  (WHILE(?(EQUAL  @done FALSE))
+		(^(|| (@reportName (VAL @id) @report))); (ExecutionManager.halt (VAL @executionId)) (ExecutionManager.stop (VAL @executionId) )))
 		
 		(IF(?(ExecutionManager.halt (VAL @executionId)))
 		   (~>(ExecutionManager.halt (VAL @executionId)))
@@ -221,11 +225,11 @@ since we're basically duplicating code"
 
 		   
 		   ELSE	 
-		   (!(= @done TRUE))
+		   (!(=  @done TRUE))
 		   (~>( @reportName (VAL @id) (VAL @report)))
 		   (IF(?(~(EQUAL @report "OK")))
 		      (!(PRINT @report))
-		      (=> (ExecutionManager.report (VAL @executionId) FAILURE))
+		      (=> (ExecutionManager.report (VAL @executionId) @report))
 		      (!(SEM-V ExecutionManager.sem))
 		      (~>(ExecutionManager.isExecutingAction (VAL @executionId)))
 		      (!(FAILED))
@@ -317,21 +321,23 @@ since we're basically duplicating code"
 	  (IF(?(Robot.gripper (VAL @armForPick) CLOSE))
 	     (!(ArmActions.getFreeId @actionId))
 	     (=>(ArmActions.action openGripper @armForPick @actionId))
-	     (!(ExecutionManager.handleReport ArmActions.report @actionId @executionId))
+	     (!(ExecutionManager.handleReport ArmActions @actionId @executionId))
 	     )
-	  
+
+
 	  ;;plan and execute the trajectory
 	  (!(ArmActions.getFreeId @actionId))
 	  (=>(ArmActions.action moveToObject @armForPick @object @actionId))
 
-	  (!(ExecutionManager.handleReportForReachability ArmActions.report @object @actionId @executionId))
+	  (!(Tester.breakpoint))
+	  (!(ExecutionManager.handleReportForReachability ArmActions @object @actionId @executionId))
 
 	  
 
 					;close the gripper
 	  (!(ArmActions.getFreeId @actionId))
 	  (=>(ArmActions.action closeGripper @armForPick @actionId))
-	  (!(ExecutionManager.handleReport ArmActions.report @actionId @executionId))
+	  (!(ExecutionManager.handleReport ArmActions @actionId @executionId))
 	  
 					;updates knowledge of the robot
 
@@ -343,7 +349,7 @@ since we're basically duplicating code"
 
 	  (!(Spark.getFreeId @sparkId))
 	  (=>(Spark.request setObjectInHand PR2_ROBOT (VAL @object) (VAL @armForPick) TRUE (VAL @sparkId)))
-	  (!(ExecutionManager.handleReport Spark.report @sparkId @executionId))
+	  (!(ExecutionManager.handleReport Spark @sparkId @executionId))
 	  
 	  (~>(ExecutionManager.isExecutingAction (VAL @executionId)))
 	  (!(SEM-V ExecutionManager.sem))
@@ -387,7 +393,7 @@ since we're basically duplicating code"
 					;get the human wrist position
 	     (!(Spark.getFreeId @sparkId))
 	     (=>(Spark.request getJointAbsPose (VAL @agent) (VAL @hWrist) (VAL @sparkId)))
-	     (!(ExecutionManager.handleReport Spark.report @sparkId @executionId))
+	     (!(ExecutionManager.handleReport Spark @sparkId @executionId))
 	     (^(Spark.result (VAL @sparkId) @humanWristX @humanWristY @humanWristZ @humanWristYaw @humanWristPitch @humanWristRoll))
 	     (~>(Spark.result (VAL @sparkId) (VAL @humanWristX) (VAL @humanWristY) (VAL @humanWristZ) (VAL @humanWristYaw) (VAL @humanWristPitch) (VAL @humanWristRoll)))
 	     
@@ -540,14 +546,14 @@ since we're basically duplicating code"
 		  (!(= @arm LEFT))
 		  (!(ArmActions.getFreeId @actionId))
 		  (=>(ArmActions.action openGripper @arm @actionId))
-		  (!(ExecutionManager.handleReport ArmActions.report @actionId @executionId))
+		  (!(ExecutionManager.handleReport ArmActions @actionId @executionId))
 		  )
 		    
 	       ELSE
 	       (!(= @arm RIGHT))
 	       (!(ArmActions.getFreeId @actionId))
 	       (=>(ArmActions.action openGripper @arm @actionId))
-	       (!(ExecutionManager.handleReport ArmActions.report @actionId @executionId))
+	       (!(ExecutionManager.handleReport ArmActions @actionId @executionId))
 	       )
 	    )
 	 
@@ -557,7 +563,7 @@ since we're basically duplicating code"
 	 ;;get the robot torso position (to compute distance from the user)
 	 (?(Spark.freeId @sparkId))
 	 (=>(Spark.request getJointAbsPose (VAL @sparkRobotName) (VAL @rTorso) (VAL @sparkId)))
-	 (!(ExecutionManager.handleReport Spark.report @sparkId @executionId))
+	 (!(ExecutionManager.handleReport Spark @sparkId @executionId))
 	 (?(Spark.result (VAL @sparkId) @robotTorsoX @robotTorsoY @robotTorsoZ @robotTorsoYaw @robotTorsoPitch @robotTorsoRoll))
 	 (~>(Spark.result (VAL @sparkId) (VAL @robotTorsoX) (VAL @robotTorsoY) (VAL @robotTorsoZ) (VAL @robotTorsoYaw) (VAL @robotTorsoPitch) (VAL @robotTorsoRoll)))
 
@@ -566,7 +572,7 @@ since we're basically duplicating code"
 	 ;move to rest position
 	 (!(ArmActions.getFreeId @actionId))
 	 (=>(ArmActions.action moveToRestPosition (VAL @arm) (VAL @actionId)))
-	 (!(ExecutionManager.handleReport ArmActions.report @actionId @executionId))
+	 (!(ExecutionManager.handleReport ArmActions @actionId @executionId))
 	
 
 	 ;;Set the starting variables. We only compute observations to set inRange at the start.
@@ -607,12 +613,12 @@ since we're basically duplicating code"
 		  (IF(?(EQUAL @task waitingGrasp)) ;if we are waiting for grasp we close the gripper, move and then relaunch release to avoid it opening because of the arm moving.
 		     (!(ArmActions.getFreeId @detectPressionId))
 		     (=>(ArmActions.action stopDetectPression @arm @type @detectPressionId))
-		     (!(ExecutionManager.handleReport ArmActions.report @detectPressionId @executionId))
+		     (!(ExecutionManager.handleReport ArmActions @detectPressionId @executionId))
 		     )
 
 		  (!(ArmActions.getFreeId @armPositionId))
 		  (=>(ArmActions.action moveToExtendedPosition @arm @q0 @actionId))
-		  (!(ExecutionManager.handleReport ArmActions.report @actionId @executionId))
+		  (!(ExecutionManager.handleReport ArmActions @actionId @executionId))
 		       
 		  (!(ArmActions.getFreeId @detectPressionId))
 		  (=>(ArmActions.action detectPression @arm @type @detectPressionId))
@@ -632,11 +638,11 @@ since we're basically duplicating code"
 		  (IF(?(EQUAL @task waitingGrasp))
 		     (!(ArmActions.getFreeId @detectPressionId))
 		     (=>(ArmActions.action stopDetectPression @arm @type @detectPressionId))
-		     (!(ExecutionManager.handleReport ArmActions.report @detectPressionId @executionId))
+		     (!(ExecutionManager.handleReport ArmActions @detectPressionId @executionId))
 		     )
 		  (!(ArmActions.getFreeId @actionId))
 		  (=>(ArmActions.action moveToReadyPosition (VAL @arm) @q0 @actionId))
-		  (=>(ExecutionManager.handleReport ArmActions.report @actionId @executionId))
+		  (=>(ExecutionManager.handleReport ArmActions @actionId @executionId))
 		  
 		  (!(ArmActions.getFreeId @detectPressionId))
 		  (=>(ArmActions.action detectPression @arm @type @detectPressionId))
@@ -652,7 +658,7 @@ since we're basically duplicating code"
 		  (IF(?(EQUAL @task waitingGrasp))
 		     (!(ArmActions.getFreeId @detectPressionId))
 		     (=>(ArmActions.action stopDetectPression @arm @type @detectPressionId))
-		     (!(ExecutionManager.handleReport ArmActions.report @detectPressionId @executionId))
+		     (!(ExecutionManager.handleReport ArmActions @detectPressionId @executionId))
 		     )
 		  
 		  (!(ArmActions.getFreeId @actionId))
@@ -722,12 +728,12 @@ since we're basically duplicating code"
 		     (IF(?(EQUAL @type GIVE))
 			(!(ArmActions.getFreeId @actionId))
 			(=>(ArmActions.action openGripper @arm @actionId))
-			(!(ExecutionManager.handleReport ArmActions.report @actionId @executionId))
+			(!(ExecutionManager.handleReport ArmActions @actionId @executionId))
 					     	     
 			ELSEIF(?(EQUAL @type GRAB))
 			(!(ArmActions.getFreeId @actionId))
 			(=>(ArmActions.action closeGripper @arm @actionId))
-			(!(ExecutionManager.handleReport ArmActions.report @actionId @executionId))
+			(!(ExecutionManager.handleReport ArmActions @actionId @executionId))
 			)
 		     (!(= @task completed))
 		     (IF(?(EQUAL @type GIVE))
@@ -735,15 +741,15 @@ since we're basically duplicating code"
 			
 			(!(Spark.getFreeId @sparkId))
 			(=>(Spark.request placeObjectForSimu (VAL @object) 0 0 0 0 0 0 1 @sparkId)) 
-			(!(ExecutionManager.handleReport Spark.report @sparkId @executionId))
+			(!(ExecutionManager.handleReport Spark @sparkId @executionId))
 	       
 			(!(Spark.getFreeId @sparkId))
 			(=>(Spark.request setObjectInHand (VAL @sparkRobotName) (VAL @object) (VAL @arm) FALSE (VAL @sparkId)))
-			(!(ExecutionManager.handleReport Spark.report @sparkId @executionId))
+			(!(ExecutionManager.handleReport Spark @sparkId @executionId))
 
 			(!(Spark.getFreeId @sparkId))
 			(=>(Spark.request setObjectInHand (VAL @agent) (VAL @object) (VAL @arm) TRUE (VAL @sparkId)))
-			(!(ExecutionManager.handleReport Spark.report @sparkId @executionId))
+			(!(ExecutionManager.handleReport Spark @sparkId @executionId))
 
 			(=>(Agent.hasObject (VAL @agent) (VAL @object)))
 			
@@ -752,11 +758,11 @@ since we're basically duplicating code"
 			(=>(Robot.hasObjectForThrow (VAL @arm) (VAL @object)))
 			(!(Spark.getFreeId @sparkId))
 			(=>(Spark.request placeObjectForSimu (VAL @object) 0 0 0 0 0 0 1 @sparkId)) 
-			(!(ExecutionManager.handleReport Spark.report @sparkId @executionId))
+			(!(ExecutionManager.handleReport Spark @sparkId @executionId))
 
 			(!(Spark.getFreeId @sparkId))
 			(=>(Spark.request setObjectInHand (VAL @agent) (VAL @object) (VAL @arm) FALSE (VAL @sparkId)))
-			(!(ExecutionManager.handleReport Spark.report @sparkId @executionId))
+			(!(ExecutionManager.handleReport Spark @sparkId @executionId))
 
 			(~>(Agent.hasObject (VAL @agent) (VAL @object)))
 			;;At this point we should put an inference to tell spark that the robot has an object. The problem is that with handover the robot usually doesn't see the object so it would be attached in the wrong
@@ -796,7 +802,7 @@ since we're basically duplicating code"
 	    (^(ELAPSED-TIME (TIME) 2)) ;wait some seconds before leaving
 	    (!(ArmActions.getFreeId @actionId))
 	    (=>(ArmActions.action moveToRestPosition @arm @actionId))
-	    (!(ExecutionManager.handleReport ArmActions.report @actionId @executionId))
+	    (!(ExecutionManager.handleReport ArmActions @actionId @executionId))
 	    )
 
 
@@ -808,7 +814,7 @@ since we're basically duplicating code"
 	    (IF(?(Robot.gripper (VAL @arm) DETECTING_PRESSION))
 	       (!(ArmActions.getFreeId @detectPressionId))
 	       (=>(ArmActions.action stopDetectPression @arm @type @detectPressionId))
-	       (!(ExecutionManager.handleReport ArmActions.report @detectPressionId @executionId))
+	       (!(ExecutionManager.handleReport ArmActions @detectPressionId @executionId))
 	       )
 	    ELSE
 	    (=>(ExecutionManager.report @executionId FAILURE))
@@ -869,7 +875,7 @@ since we're basically duplicating code"
 					;get coordinates of the placement
 	  (!(Spark.getFreeId @sparkId))
 	  (=>(Spark.request getJointAbsPose (VAL @placement) NO_NAME (VAL @sparkId)))
-	  (!(ExecutionManager.handleReport Spark.report (VAL @sparkId) (VAL @executionId)))
+	  (!(ExecutionManager.handleReport Spark (VAL @sparkId) (VAL @executionId)))
 	  (^(Spark.result (VAL @sparkId) @xp @yp @zp @yawp @pitchp @rollp))
 	  (~>(Spark.result (VAL @sparkId) (VAL @xp) (VAL @yp) (VAL @zp) (VAL @yawp) (VAL @pitchp) (VAL @rollp)))
 
@@ -880,13 +886,13 @@ since we're basically duplicating code"
 	  ;move the arm over the placement
 	  (!(ArmActions.getFreeId @actionId))
 	  (=>(ArmActions.action moveToX @arm @xp @yp @zf @actionId))
-	  (!(ExecutionManager.handleReport ArmActions.report @actionId @executionId))
+	  (!(ExecutionManager.handleReport ArmActions @actionId @executionId))
 	  
 	  
 	  ;;execute the throw
 	  (!(ArmActions.getFreeId @actionId))
 	  (=>(ArmActions.action openGripper @arm @actionId))
-	  (!(ExecutionManager.handleReportForReachability ArmActions.report @placement @actionId @executionId))
+	  (!(ExecutionManager.handleReportForReachability ArmActions @placement @actionId @executionId))
 
 	  (=>(ExecutionManager.report @executionId OK))
 	  (~>(Robot.hasObject (VAL @arm) (VAL @object)))
@@ -894,17 +900,17 @@ since we're basically duplicating code"
 
 	  (!(Spark.getFreeId @sparkId))
 	  (=>(Spark.request setObjectInHand PR2_ROBOT (VAL @object) (VAL @armForPick) FALSE (VAL @sparkId)))
-	  (!(ExecutionManager.handleReport Spark.report @sparkId @executionId))
+	  (!(ExecutionManager.handleReport Spark @sparkId @executionId))
 
 
 	  (!(Spark.getFreeId @sparkId))
 	  (=>(Spark.request getJointAbsPose @placement NO_NAME @sparkId))
-	  (!(ExecutionManager.handleReport Spark.report @sparkId @executionId))
+	  (!(ExecutionManager.handleReport Spark @sparkId @executionId))
 	  (^(Spark.result (VAL @sparkId) @x @y @z @yaw @pitch @roll))
 
 	  (!(Spark.getFreeId @sparkId))
 	  (=>(Spark.request setInferrenceForObject @object 1 @placement 0 SPARK_IS_IN 1.0 @sparkId))
-	  (!(ExecutionManager.handleReport Spark.report @sparkId @executionId))
+	  (!(ExecutionManager.handleReport Spark @sparkId @executionId))
 
 	  (!(SEM-V ExecutionManager.sem))
 	  
@@ -933,20 +939,20 @@ since we're basically duplicating code"
 					;move the arm over the placement
 	  (!(ArmActions.getFreeId @actionId))
 	  (=>(ArmActions.action moveToPlaceObject @arm @object @support @placement @actionId))
-	  (!(ExecutionManager.handleReport ArmActions.report @actionId @executionId))
+	  (!(ExecutionManager.handleReport ArmActions @actionId @executionId))
 	  
 	  
 	  ;;open the gripper
 	  (!(ArmActions.getFreeId @actionId))
 	  (=>(ArmActions.action openGripper @arm @actionId))
-	  (!(ExecutionManager.handleReport ArmActions.report @actionId @executionId))
+	  (!(ExecutionManager.handleReport ArmActions @actionId @executionId))
 	  
 	  (=>(ExecutionManager.report @executionId OK))
 	  (~>(Robot.hasObject (VAL @arm) (VAL @object)))
   
 	  (!(Spark.getFreeId @sparkId))
 	  (=>(Spark.request setObjectInHand (VAL @object) (VAL @armForPick) FALSE (VAL @sparkId)))
-	  (!(ExecutionManager.handleReport Spark.report @sparkId @executionId))
+	  (!(ExecutionManager.handleReport Spark @sparkId @executionId))
 
 	  (~>(ExecutionManager.isExecutingAction (VAL @executionId)))
 		  

@@ -6,6 +6,18 @@
 
 (
 
+ (defop |testWeirdError|
+   :invocation(!(Tester.testWeirdError))
+   :body (
+
+	  (!(=  @done FALSE))
+	  (WHILE(?(EQUAL @done FALSE))
+		(!(PRINT "a"))
+		)
+	  )
+   )
+ 
+
  (defop |testGenericAddDb|
    :invocation(!(Tester.testGenericAddDb))
    :body (
@@ -352,14 +364,14 @@
    :body (
 	  (!(Controller.initAll))
 	  (?(Spark.freeId @sparkId))
-	  (=>(Spark.request setGraspedObject GREY_TAPE 0 0 (VAL @sparkId)))
+	  (=>(Spark.request setGraspedObject LOTR_TAPE 0 0 (VAL @sparkId)))
 	  (!(ExecutionManager.handleReport Spark.report @sparkId @executionId))
 
 	  (?(Spark.freeId @sparkId))
-	  (=>(Spark.request setInferrenceForObject GREY_TAPE 0 PR2_ROBOT 0 SPARK_PRECISE_ROBOT_HAND 1.0 (VAL @sparkId)))  
+	  (=>(Spark.request setInferrenceForObject LOTR_TAPE 0 PR2_ROBOT 0 SPARK_PRECISE_ROBOT_HAND 1.0 (VAL @sparkId)))  
 	  (!(ExecutionManager.handleReport Spark.report @sparkId @executionId))
 	  
-	  (=>(ExecutionManager.execute take WALLE_TAPE RIGHT 1))
+	  (=>(ExecutionManager.execute take LOTR_TAPE RIGHT 1))
 
 	  )
    )

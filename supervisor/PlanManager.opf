@@ -48,7 +48,7 @@
 			    (=>(PlanManager.manageRobotActions (VAL @robotActions)))   
 			    (=>(PlanManager.manageHumanActions (VAL @humanAgent) (VAL @humanActions)))
 			    
-			    (^(|| (PlanManager.agentReport robot @report) (PlanManager.agentReport (VAL @humanAgent) @report)) (PlanManager.stop) )
+			    (^(|| (PlanManager.agentReport robot @report) (PlanManager.agentReport (VAL @humanAgent) @report)  (PlanManager.stop)))
 			    ;;we treat every possible case. If one of the two agent has failed it's execution we stop the other one and try replanning. If one of the two agents has completed we wait for the other one. If the robot is stopped we abort planning.
 			    (IF(?(PlanManager.stop))
 			       (=>(PlanManager.stopAgent @humanAgent))
@@ -243,6 +243,7 @@
 		      (!(PRINT "starting execution"))
 		      (!(= @message (TERM-STRING-CAT "I'm executing " @actionName)))
 		      (!(Acapela.say @message))
+
 
 		      (=>(ExecutionManager.executeAction @actionName @actionParameters @executionId))
 		      (^(|| (ExecutionManager.report (VAL @executionId) @report) (PlanManager.stopAgent robot)))

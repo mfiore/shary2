@@ -4,11 +4,13 @@ declare symbol ExecutionManager.sem
 declare ff ExecutionManager.freeId 0
 declare cwp ExecutionManager.report
 declare cwp ExecutionManager.stop
+declare cwp ExecutionManager.halt
 declare be ExecutionManager.execute
 declare be ExecutionManager.executeAction
 declare cwp ExecutionManager.isExecutingAction
 declare ff ExecutionManager.oldArmPosition 0
 declare ff ExecutionManager.oldDistance 0
+
 
 ;;init
 declare op_predicate ExecutionManager.init

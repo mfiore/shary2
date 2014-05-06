@@ -254,7 +254,7 @@
 	 (IF(?(EQUAL @value TRUE))
 	      (?(Spark.freeId @sparkId))
 	      (=>(Spark.request placeObjectForSimu (VAL @object) 0 0 0 0 0 0 1 (VAL @sparkId)))
-	      (!(ExecutionManager.handleReport Spark.report @sparkId @executionId))
+	      (!(ExecutionManager.handleReport Spark @sparkId @executionId))
 	      (!(= @flag 1))
 	      
 	    ELSE 
