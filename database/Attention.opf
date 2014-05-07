@@ -142,12 +142,9 @@
 		     (!(Database.add (AGENT-STATEMENT PR2_ROBOT (VAL @subject) isReachable true)))
 		     (!(Database.add (AGENT-STATEMENT PR2_ROBOT (VAL @subject) isReachableBy PR2_ROBOT)))
 		     )
-		  ;;NOTE: is something wrong here? 
-		  ELSEIF(?(~(EQUAL @predicate isReachableBy)))
-		  (!(PRINT "UPDATE FACT"))
 		  (!(PRINT @predicate))
 		  (!(Database.update (AGENT-STATEMENT (VAL @agentModel) (VAL @subject) (VAL @predicate) (VAL @value))))
-		  
+	       
 		  ELSE
 		  (!(PRINT "REMOVE FACT"))
 		  (!(PRINT @predicate))

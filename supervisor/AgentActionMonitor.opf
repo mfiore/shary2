@@ -144,9 +144,23 @@
    )
  
  
- 
- (defop |objectAppears|
-   :invocation(objectAppears @object)
+(defop |addThrowInference|
+  :invocation(Agent.hasObject @agent @object)
+  :documentation "when an agent takes an object we add throw inference to the trashbins. Should be generalized"
+  :body (
+	 (!(SEM-P AgentActionMonitor.sem))
+	 (!(DatabaseInterface.find (AGENT-STATEMENT PR2_ROBOT PINK_TRASHBIN hasKnownLocation true)) @result)
+	 (!(= @result (CAR @result)))
+	 (!(= @result (CAR @result)))
+	 (IF(?(EQUAL @result TRUE))
+	    (!(AgentActionMonitor.activateMonitorSpheres (. PINK_TRASHBIN .) @agent))
+	    )
+	 
+	 (!(SEM-V AgentActionMonitor.sem))
+	 )
+  )
+ (defop |addPickInference|
+   :invocation(Monitor.objectAppears @object)
    :documentation "when an object appears we check if a human had it and in that case remove the inference" 
    :body (
 	  (!(SEM-P AgentActionMonitor.sem ))
