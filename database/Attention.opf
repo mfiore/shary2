@@ -54,7 +54,6 @@
 	     (!(= @linesToSkip (+ @lineStart 1)))
 	     (!(Attention.skipLinesInFactPoster @factList @linesToSkip @facts2))
 
-
 	     (!(= @linesToParse  (- @lineEnd @lineStart)))
 	     (!(Attention.parseFactPoster @facts2 @linesToParse @facts3))
 	
@@ -130,21 +129,45 @@
 	       (IF(?(EQUAL @type SPARK_ADD_FACT))
 		  (!(PRINT "ADD FACT"))
 		  (!(PRINT @predicate))
-		  (!(Database.add (AGENT-STATEMENT (VAL @agentModel) (VAL @subject) (VAL @predicate) (VAL @value))))		     
- 
+		  (!(Database.add (AGENT-STATEMENT (VAL @agentModel) (VAL @subject) (VAL @predicate) (VAL @value))))	
+		  (IF(?(EQUAL @predicate isOn))
+		     (!(SEND-MESSAGE OPRS_SUP (Monitor.objectAppears (VAL @subject))))
+		     )
+ 		  (IF(?(EQUAL @predicate isPresent))
+		     (IF(?(EQUAL @value true))
+		  	(!(SEND-MESSAGE OPRS_SUP (Monitor.agentAppears (VAL @subject))))
+			
+		  	ELSE
+		  	(!(SEND-MESSAGE OPRS_SUP (Monitor.agentDisappears (VAL @subject))))
+		  	)
+		     )
+		  
+
 		  
 		  ELSEIF(?(EQUAL @type SPARK_UPDATE_FACT))
 		  ;;NOTE: not sure about isReachableBy
 		  (IF(?(&(EQUAL @predicate isMoving) (Flag.ignoreReachability (VAL @subject))))
 		     (!(PRINT "UPDATE FACT"))
 		     (!(PRINT @predicate))
-		     (!(Database.remove (Flag.ignoreReachability (VAL @subject))))
-		     (!(Database.add (AGENT-STATEMENT PR2_ROBOT (VAL @subject) isReachable true)))
-		     (!(Database.add (AGENT-STATEMENT PR2_ROBOT (VAL @subject) isReachableBy PR2_ROBOT)))
+		     ;; (!(Database.remove (Flag.ignoreReachability (VAL @subject))))
+		     ;; (!(Database.add (AGENT-STATEMENT PR2_ROBOT (VAL @subject) isReachable true)))
+		     ;; (!(Database.add (AGENT-STATEMENT PR2_ROBOT (VAL @subject) isReachableBy PR2_ROBOT)))
+		     ;; (!(Database.add (AGENT-STATEMENT HERAKLES_HUMAN1 (VAL @subject) isReachableBy PR2_ROBOT)))
+		     ;; (!(Database.add (AGENT-STATEMENT HERAKLES_HUMAN1 (VAL @subject) isReachable true)))
+		     ;; (!(Database.remove (AGENT-STATEMENT PR2_ROBOT (VAL @subject) isReachable false)))
+		     ;; (!(Database.remove (AGENT-STATEMENT HERAKLES_HUMAN1 (VAL @subject) isReachable false)))
 		     )
 		  (!(PRINT @predicate))
 		  (!(Database.update (AGENT-STATEMENT (VAL @agentModel) (VAL @subject) (VAL @predicate) (VAL @value))))
-	       
+		  (IF(?(EQUAL @predicate isPresent))
+		     (IF(?(EQUAL @value true))
+		  	(!(SEND-MESSAGE OPRS_SUP (Monitor.agentAppears (VAL @subject))))
+			
+		  	ELSE
+		  	(!(SEND-MESSAGE OPRS_SUP (Monitor.agentDisappears (VAL @subject))))
+		  	)
+		     )
+		  
 		  ELSE
 		  (!(PRINT "REMOVE FACT"))
 		  (!(PRINT @predicate))

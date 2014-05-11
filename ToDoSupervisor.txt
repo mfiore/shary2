@@ -12,4 +12,18 @@
 	-wait for people
 -Add movement
 
--Test halt stop resume
+
+-Stop in armActions 
+
+
+-Things to talk in meeting
+	-new supervisor features:
+	     -affordances
+	     -reachabilities
+	     -replanning 
+	-requested behaviors
+             -replanning
+		-robot finishes action or does it interrupt it?
+	     -planning and interaction
+	     	       -robot observes human or is proactive? A.K.A. what triggers planning?
+        -future supervisor features	     

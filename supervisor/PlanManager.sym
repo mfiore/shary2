@@ -1,9 +1,11 @@
 ;general
+declare cwp PlanManager.isManagingAgent
 declare ff PlanManager.agentReport 1
 declare cwp PlanManager.stopAgent
 declare ff PlanManage.actionReport 1
 declare cwp PlannerInterface.report 
 declare be PlanManager.managePlans
+declare cwp PlanManager.stop
 
 ;manage plans
 declare be PlanManager.managePlans

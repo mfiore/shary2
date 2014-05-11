@@ -1,3 +1,5 @@
+declare cwp Robot.closeToObject
+
 ;;global
 declare ff ArmActions.freeId 0
 declare be ArmActions.action ;;used for every invocation of an action

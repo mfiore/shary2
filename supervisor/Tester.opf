@@ -9,11 +9,11 @@
  (defop |testWeirdError|
    :invocation(!(Tester.testWeirdError))
    :body (
-
-	  (!(=  @done FALSE))
-	  (WHILE(?(EQUAL @done FALSE))
-		(!(PRINT "a"))
-		)
+	  (!(= @stoppable TRUE))
+	  (IF(?(&(ExecutionManager.stop 0) (EQUAL @stoppable TRUE)))
+	     (!(PRINT "OK"))
+	     )
+	  
 	  )
    )
  
@@ -297,15 +297,15 @@
    :documentation " "
    :body (
 	  (!(Controller.initAll))
-	  (!(Spark.getFreeId @sparkId))
-	  (=>(Spark.request placeObjectForSimu (VAL @object) 0 0 0 0 0 0 1 @sparkId)) 
-	  (!(ExecutionManager.handleReport Spark.report @sparkId @executionId))
+	  ;; (!(Spark.getFreeId @sparkId))
+	  ;; (=>(Spark.request placeObjectForSimu (VAL @object) 0 0 0 0 0 0 1 @sparkId)) 
+	  ;; (!(ExecutionManager.handleReport Spark.report @sparkId @executionId))
 
 	  (!(Spark.getFreeId @sparkId))
-	  (=>(Spark.request setObjectInHand HERAKLES_HUMAN1 WALLE_TAPE RIGHT TRUE (VAL @sparkId)))
-	  (!(ExecutionManager.handleReport Spark.report @sparkId @executionId))
+	  (=>(Spark.request setObjectInHand HERAKLES_HUMAN1 LOTR_TAPE RIGHT TRUE (VAL @sparkId)))
+	  (!(ExecutionManager.handleReport Spark @sparkId @executionId TRUE NO_NAME))
 
-	  (=>(ExecutionManager.execute handover GRAB WALLE_TAPE HERAKLES_HUMAN1 1))
+	  (=>(ExecutionManager.execute handover GRAB LOTR_TAPE HERAKLES_HUMAN1 1))
 
 	    
 	  )

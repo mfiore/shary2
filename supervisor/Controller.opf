@@ -38,8 +38,10 @@
 	  (~>(Spark.report (VAL @sparkId) @report))
 	  (=>(Robot.position TORSO @x @y @z @yaw @pitch @roll))
 	  
-
+	  (!(AgentActionMonitor.calculateInferences))
 	  
+
+
 	  )
    )
 )

@@ -24,7 +24,6 @@
 		   ;;we loop until we try planning and the planner returns an "achieved" or we've failed enough times
 		   
 		   (!(= @status notStarted))
-		   
 		   (WHILE(?(& 
 			    (~(EQUAL @status completed)) 
 			    (< @planningFailures @maxPlanningFailures)
@@ -32,8 +31,17 @@
 			 (=>(PlannerInterface.getPlan (VAL @goal) (VAL @parameters)))   ;;we ask for a plan
 			 (^(PlannerInterface.report @report))
 			 (~>(PlannerInterface.report (VAL @report)))
-			 (IF(?(EQUAL @report OK))
+			 (IF(?(EQUAL @report ACHIEVED))
+			    (!(= @status completed))
+			 ELSEIF(?(EQUAL @report OK))
 			    (!(Acapela.say "I've got a plan!"))
+
+			    (!(ArmActions.getFreeId @actionId))
+			    (=>(ArmActions.action moveToManipulationPosition @actionId))
+			    (^(ArmActions.report (VAL @actionId) @report))
+			    (~>(ArmActions.report (VAL @actionId) @report))
+
+			    (!(AgentActionMonitor.startMonitoringAgent @humanAgent))
 			    (^(PlannerInterface.result @plan))
 			    (~>(PlannerInterface.result (VAL @plan)))
 
@@ -41,42 +49,88 @@
 			    
 			    (IF(?(PlanManager.shouldTellPlan TRUE))
 			       (!(PlanManager.tellPlan @plan))
-			       )
-			    
-			    
+			       )			    
 			    ;;we launch the managing of the two planning lines
+
 			    (=>(PlanManager.manageRobotActions (VAL @robotActions)))   
 			    (=>(PlanManager.manageHumanActions (VAL @humanAgent) (VAL @humanActions)))
 			    
-			    (^(|| (PlanManager.agentReport robot @report) (PlanManager.agentReport (VAL @humanAgent) @report)  (PlanManager.stop)))
+			    (^(|| (PlanManager.agentReport robot @report) (PlanManager.agentReport (VAL @humanAgent) @report)  (PlanManager.stop) (AgentActionMonitor.unexpectedAction @agent)))
 			    ;;we treat every possible case. If one of the two agent has failed it's execution we stop the other one and try replanning. If one of the two agents has completed we wait for the other one. If the robot is stopped we abort planning.
-			    (IF(?(PlanManager.stop))
+			    (IF(?(AgentActionMonitor.unexpectedAction @agent))
 			       (=>(PlanManager.stopAgent @humanAgent))
 			       (=>(PlanManager.stopAgent robot))
+			       (^(PlanManager.agentReport robot @report))
+			       (^(PlanManager.agentReport (VAL @humanAgent) @report))
+			       			    
+			       ELSEIF(?(PlanManager.stop))
+			       (IF(?(PlanManager.isManagingAgent (VAL @humanAgent)))
+				  (=>(PlanManager.stopAgent @humanAgent))
+				  (^(PlanManager.agentReport (VAL @humanAgent) @report))
+				  )
+			       (IF(?(PlanManager.isManagingAgent robot))
+				  (=>(PlanManager.stopAgent robot))
+				  (^(PlanManager.agentReport robot @report))
+				  )
 			       (!(= @planningFailures @maxPlanningFailures))
 
 			       ELSEIF(?(PlanManager.agentReport robot STOPPED))
-			       (=>(PlanManager.stopAgent @humanAgent))
+			       (IF(?(PlanManager.isManagingAgent (VAL @humanAgent)))
+				  (=>(PlanManager.stopAgent @humanAgent))
+				  (^(PlanManager.agentReport (VAL @humanAgent) @report))
+				  )
 			       (!(= @planningFailures @maxPlanningFailures))
 			       
 			       ELSEIF(?(PlanManager.agentReport robot FAILURE)) 
-			       (=>(PlanManager.stopAgent @humanAgent))
+			       (IF(?(PlanManager.isManagingAgent (VAL @humanAgent)))
+				  (=>(PlanManager.stopAgent @humanAgent))
+				  (^(PlanManager.agentReport (VAL @humanAgent) @report))
+				  )
 			       (!(= @planningFailures (+ @planningFailures 1)))
 			       
 			       ELSEIF(?(PlanManager.agentReport (VAL @humanAgent) FAILURE))
-			       (=>(PlanerManager.stopAgent robot))
-			       (!(= @planningFailures (+ @planningFailures 1)))
+			       (IF(?(PlanManager.isManagingAgent robot))
+				  (=>(PlanManager.stopAgent robot))
+				  (^(PlanManager.agentReport robot @report))
+				  )
 			       
 			       ELSEIF(?(PlanManager.agentReport robot OK))
-			       (^(PlanManager.agentReport (VAL @humanAgent) @report))
+			       (^(|| (PlanManager.agentReport (VAL @humanAgent) @report) (PlanManager.stop) (AgentActionMonitor.unexpectedAction @agent)))
 			       (IF(?(PlanManager.agentReport (VAL @humanAgent) FAILURE))
 				  (!(= @planningFailures (+ @planningFailures 1)))
+				  
+				  ELSEIF(?(PlanManager.stop))
+				  (IF(?(PlanManager.isManagingAgent (VAL @humanAgent)))
+				     (=>(PlanManager.stopAgent @humanAgent))
+				     (^(PlanManager.agentReport (VAL @humanAgent) @report))
+				     )
+				  (!(= @planningFailures @maxPlanningFailures))
+
+				  ELSEIF(?(AgentActionMonitor.unexpectedAction @agent))
+				  (IF(?(PlanManager.isManagingAgent (VAL @humanAgent)))
+				     (=>(PlanManager.stopAgent @humanAgent))
+				     (^(PlanManager.agentReport (VAL @humanAgent) @report))
+				     )
 				  )
 
 			       ELSEIF(?(PlanManager.agentReport (VAL @humanAgent) OK))
-			       (^(PlanManager.agentReport robot @report))
-			       (IF(?(~(EQUAL @report OK)))
+			       (^(|| (PlanManager.agentReport robot @robotReport)(PlanManager.stop) (AgentActionMonitor.unexpectedAction @agent)))
+			       (IF(?(PlanManager.agentReport robot FAILURE))
 				  (!(= @planningFailures (+ @planningFailures 1)))
+				  
+				  ELSEIF(?(AgentActionMonitor.unexpectedAction @agent))
+				  (IF(?(PlanManager.isManagingAgent robot))
+				     (=>(PlanManager.stopAgent robot))
+				     (^(PlanManager.agentReport robot @report))
+				     )
+				  
+				  ELSEIF(?(PlanManager.stop))
+				  (IF(?(PlanManager.isManagingAgent robot))
+				     (=>(PlanManager.stopAgent robot))
+				     (^(PlanManager.agentReport robot @report))
+				     )
+				  (!(= @planningFailures @maxPlanningFailures))
+
 				  )
 			       )
 
@@ -92,7 +146,9 @@
 			    )
 			 
 			 (!(PlanManager.clean))
+			 (!(AgentActionMonitor.stopMonitoringAgent @humanAgent))
 			 )
+		   (!(PRINT "stopping monitoring agent"))
 		   (IF(?(EQUAL @status completed))
 		      (=>(PlanManager.report OK))
 		      (!(Acapela.say "Task completed"))
@@ -121,6 +177,14 @@
 	 (WHILE(?(PlanManager.actionReport @link @report))
 	       (~>(PlanManager.actionReport (VAL @link) (VAL @report)))
 	       )
+	 (WHILE(?(PlanManager.stopAgent @agent))
+	       (~>(PlanManager.stopAgent (VAL @agent)))
+	       )
+	 (WHILE(?(AgentActionMonitor.unexpectedAction @agent))
+	       (~>(AgentActionMonitor.unexpectedAction @agent))
+	       )
+	 (~>(PlanManager.stop))
+	 
 	 )
   
 		
@@ -132,10 +196,10 @@
    :documentation "Procedure to handle the human actions into a plan"
    :body (
 	  (IF(?(~(NULL @actions)))
-	     (!(AgentActionMonitor.startMonitoringAgent @agent))
+	     (=>(PlanManager.isManagingAgent @agent))
 	     (!(= @tempActions (VAL @actions)))
 	     ;;loop until every action has been executed, we receive a stop commando or there is an unexpected action
-	     (WHILE(?(& 
+	     	     (WHILE(?(& 
 		      (~(NULL @actions))
 		      (~(PlanManager.agentReport (VAL @agent) @report))
 		      ))
@@ -146,12 +210,16 @@
 		  
 		   (WHILE(?(~(NULL @actionLinks))) ;;TO REPUT STOPAGENT
 			 (!(= @currentLink (CAR @actionLinks)))
-			 (^(PlanManager.actionReport (VAL @currentLink) @report))
-
+			 (^(|| (PlanManager.actionReport (VAL @currentLink) @report) (PlanManager.stopAgent (VAL @agent))))
+			 
+			 (IF(?(PlanManager.stopAgent (VAL @agent)))
+			    (=>(PlanManager.agentReport @agent STOPPED))
+			    (!(FAILED))
+			    )
 			 (IF(?(~(EQUAL @report OK)))
 			    (=>(PlanManager.agentReport (VAL @agent) FAILURE))
-			 (!(FAILED))
-			 )
+			    (!(FAILED))
+			    )
 		      (!(= @actionLinks (CDR @actionLinks)))
 		      )
 		   (!(== (VAL @actionToExecute) (. @actionName @actionParameters .)))
@@ -188,16 +256,15 @@
 		   (?(AgentActionMonitor.sphere (VAL @agent) (VAL @target) @sphereId))
 		   (=>(AgentActionMonitor.monitorAction @agent @actionId @sphereId))
 		   (^(|| (AgentActionMonitor.actionCompleted (VAL @agent) (VAL @actionId)) 
-		      (AgentActionMonitor.unexpectedAction (VAL @agent))
 		      (PlanManager.stopAgent (VAL @agent))))
-		   
+			 
 		   (IF(?(AgentActionMonitor.actionCompleted (VAL @agent) (VAL @actionId)))
 		      (~>(AgentActionMonitor.actionCompleted (VAL @agent) (VAL @actionId)))
 		      (=>(PlanManager.actionReport @actionId OK))
 		      
-		      ELSEIF(?(AgentActionMonitor.unexpectedAction (VAL @agent)))
-		      (=>(PlanManager.agentReport @agent UNEXPECTED))
-		      (~>(AgentActionMonitor.unexpectedAction (VAL @agent)))
+		      ELSEIF(?(PlanManager.stopAgent (VAL @agent)))
+		      (=>(PlanManager.agentReport @agent STOPPED))
+		      (!(FAILED))      
 		      )
 		   
 		   )
@@ -206,14 +273,14 @@
 		(=>(PlanManager.agentReport @agent STOPPED))
 		(~>(PlanManager.agentReport @agent STOPPED))
 		
-		ELSEIF(?(~(PlanManager.agentReport (VAL @agent))))
+		ELSEIF(?(~(PlanManager.agentReport (VAL @agent) @agentReport)))
 		(=>(PlanManager.agentReport @agent OK))
 		)
-	     (!(AgentActionMonitor.stopMonitoringAgent @agent))
 	     
 	     ELSE
 	     (=>(PlanManager.agentReport @agent OK))
 	     )
+	  (~>(PlanManager.isManagingAgent @agent))
 	  )
 
    )
@@ -222,6 +289,7 @@
    :documentation "Manages the execution of the robot actions"
    :body (
 	  (WHILE(?(& (~ (NULL @actions)) (~ (PlanManager.stopAgent robot))))
+		(=>(PlanManager.isManagingAgent robot))
 		(!(= @currentAction (CAR @actions)))
 		(!(= @actions (CDR @actions)))
 		
@@ -230,9 +298,14 @@
 
 		(WHILE(?(~(NULL @actionLinks))) ;;TO REPUT STOPAGENT
 		      (!(= @currentLink (CAR @actionLinks)))
-		      (^(PlanManager.actionReport (VAL @currentLink) @report))
+		      (^(|| (PlanManager.actionReport (VAL @currentLink) @report)
+			 (PlanManager.stopAgent robot)))
 
-		      (IF(?(~(EQUAL @report OK)))
+		      (IF(?(PlanManager.stopAgent robot))
+			 (=>(PlanManager.agentReport robot STOPPED))
+			 (!(FAILED))
+			 )
+		      (IF(?(~(PlanManager.actionReport (VAL @currentLink) OK)))
 			 (=>(PlanManager.agentReport robot FAILURE))
 			 (!(FAILED))
 			 )
@@ -248,9 +321,8 @@
 		      (=>(ExecutionManager.executeAction @actionName @actionParameters @executionId))
 		      (^(|| (ExecutionManager.report (VAL @executionId) @report) (PlanManager.stopAgent robot)))
 		      (IF(?(ExecutionManager.report (VAL @executionId) @report))
-			 (!(PRINT "GOT REPORT"))
 			 (IF(?(EQUAL @report STOPPED))
-			    (=>(PlanMAnager.agentReport robot STOPPED))
+			    (=>(PlanManager.agentReport robot STOPPED))
 			    (!(FAILED))
 			    )
 			 (IF(?(~(EQUAL @report OK)))
@@ -258,6 +330,10 @@
 			    (!(FAILED))
 			    )
 			 (=>(PlanManager.actionReport @actionId OK))
+			 
+			 ELSE
+			 (=>(ExecutionManager.stop @executionId))
+			 (^(ExecutionManager.report (VAL @executionId) @report))
 			 )
 		      )
 	  (IF(?(PlanManager.stopAgent robot))
@@ -272,7 +348,7 @@
 	     ELSE
 	     (=>(PlanManager.agentReport robot OK))		
 	     )
-
+	  (~>(PlanManager.isManagingAgent robot))
 	  )
    
    )

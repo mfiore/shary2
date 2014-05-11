@@ -45,7 +45,7 @@ declare op_predicate AgentActionMonitor.cleanAgentMonitorSpheres
 
 
 ;objectAppeaqrs
-declare be objectAppears
+declare be Monitor.objectAppears
 declare symbol object
 declare symbol agent
 declare symbol object

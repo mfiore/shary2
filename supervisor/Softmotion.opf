@@ -304,11 +304,11 @@
   :documentation "Request for detect pression. It accepts as @state every possibile state of the gripper, but for some of these states I don't know what the procedure will actually do. Release and Grab are tested and fine."
   :body (
 	  (IF(?(||(EQUAL @state ROPEN) (EQUAL @state RCLOSE) (EQUAL @state RCANCEL) (EQUAL @state RGRAB) (EQUAL @state RRELEASE)))
-	     (!(SEM-P Softmotion.semRGripper))
+
 	     (!(= @stopFact (Robot.gripper RIGHT DETECTED_PRESSION)))
 	     (!(= @irAddFact (Robot.gripper RIGHT DETECTING_PRESSION)))	     
 	     ELSE
-	     (!(SEM-P Softmotion.semLGripper))
+
 	     (!(= @stopFact (Robot.gripper LEFT DETECTED_PRESSION)))
 	     (!(= @irAddFact (Robot.gripper LEFT DETECTING_PRESSION)))	     
 	     )
@@ -317,12 +317,7 @@
 	 (!(GenomInterface.handleRequest PR2SOFTMOTION PR2SOFTMOTION_DETECTPRESSION (Softmotion.stop (VAL @id)) @irAddFact @stopFact (FALSE) @parameters @report @result)) 
 	 (=>(Softmotion.report (VAL @id) (VAL @report)))
 	 
-	 (IF(?(||(EQUAL @state ROPEN) (EQUAL @state RGRAB) (EQUAL @state RCLOSE) (EQUAL @state RCANCEL) (EQUAL @state RRELEASE)))
-	    (!(SEM-V Softmotion.semRGripper))
-	     
-	     ELSE
-	     (!(SEM-V Softmotion.semLGripper))
-	     )
+
 	  
 	 )
 

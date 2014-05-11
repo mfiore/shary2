@@ -11,9 +11,12 @@
   :invocation(Database.setReachabilityFalse @object @caller)
   :documentation "Used to change the reachability of an object from the supervisor. This is used because sometimes (often) SPARK overestimates the capacity of the robot to reach objects"
   :body (
-	 (~>(AGENT_STATEMENT PR2_ROBOT (VAL @object) isReachable true))
-	 (~>(AGENT_STATEMENT PR2_ROBOT (VAL @object) isReachableBy PR2_ROBOT))
 	 (=>(AGENT-STATEMENT PR2_ROBOT (VAL @object) isReachable false))
+	 (~>(AGENT-STATEMENT PR2_ROBOT (VAL @object isReachable true)))
+	 (~>(AGENT-STATEMENT PR2_ROBOT (VAL @object) isReachableBy PR2_ROBOT))
+	 (=>(AGENT-STATEMENT HERAKLES_HUMAN1 (VAL @object) isReachable false))
+	 (~>(AGENT-STATEMENT HERAKLES_HUMAN1 (VAL @object isReachable true)))
+	 (~>(AGENT-STATEMENT HERAKLES_HUMAN1 (VAL @object) isReachableBy PR2_ROBOT))
 	 (=>(Flag.ignoreReachability (VAL @object)))
 	 (!(SEND-MESSAGE @caller (Database.report OK)))
 	 
@@ -90,12 +93,12 @@ The result is returned into $newFact. If it's not bounded than no rules have bee
 or FALSE to the supervisor"
    :body
    (
-    
+    (!(SEND-MESSAGE @caller (Database.report OK)))
     (IF(?(VAL @fact))
-       (!(= @message (Database.report TRUE)))
+       (!(= @message (Database.result TRUE)))
        
        ELSE
-       (!(= @message (Database.report FALSE)))
+       (!(= @message (Database.result FALSE)))
        )
     (!(SEND-MESSAGE @caller @message))
     
@@ -106,6 +109,7 @@ or FALSE to the supervisor"
    :invocation (!(Database.findListLocal @request @unboundVariables $result))
    :body (
 	  (!(= $result (N-ALL @unboundVariables @request)))
+	  
 	  )
    )
  (defop |findList|
