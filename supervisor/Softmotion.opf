@@ -62,6 +62,39 @@
 	     ) 
 	  (!(Mhp.cleanTrajectories))
 	  )
+)
+
+ (defop |moveArmWithoutMhpClean|
+   :invocation(Softmotion.request moveArmWithoutMhpClean @armId @id)
+   :documentation "Executes the trajectory calculated previously by MHP and not delete this trajectory"
+   :body (
+	  (?(Softmotion.arm @arm (VAL @armId)))
+	  (IF(?(EQUAL @arm RIGHT))
+	     (!(SEM-P Softmotion.semRArm))
+	     
+	     ELSE
+	     (!(SEM-P Softmotion.semLArm))
+	     )
+	  
+	  (=>(Softmotion.freeId (+ @id 1)))
+	  
+	  (!(= @parameters 
+	       (PR2SM_TRACK_STR 
+		(posterName 
+		 (name  "mhpArmTraj"))	     
+		(trackMode PR2SM_TRACK_POSTER )
+		(robotPart (VAL @armId)))))
+
+	  (!(GenomInterface.handleRequest  PR2SOFTMOTION PR2SOFTMOTION_TRACKQ (Softmotion.stop (VAL @id)) (Robot.isMovingArm (VAL @arm) TRUE) (Robot.isMovingArm (VAL @arm) FALSE) 300 (VAL @parameters) @report @result))
+	  (=>(Softmotion.report (VAL @id) (VAL @report)))
+	  (=>(Softmotion.freeId (+ @id 1)))
+	 
+	  (IF(?(EQUAL @arm RIGHT))
+	     (!(SEM-V Softmotion.semRArm))
+	     ELSE
+	     (!(SEM-V Softmotion.semLArm))
+	     ) 
+	  )
    
    )
 
@@ -116,37 +149,6 @@
 	   )
    )
 
-(defop |halt|
-  :invocation (Softmotion.request halt @id)
-  :documentation "Halts the execution, waiting for a resume"
-  :body (
-	  (!(SEM-P Softmotion.semStop))
-	  
-	  (=>(Softmotion.freeId (+ @id 1)))
-	  
-	  (!(GenomInterface.handleRequest PR2SOFTMOTION PR2SOFTMOTION_HALT (Softmotion.stop (VAL @id)) (FALSE) (FALSE) 300  NIL @report @result))
-	  (=>(Softmotion.report (VAL @id) (VAL @report)))
-
-	  (!(SEM-V Softmotion.semStop))
-	  )
-  )
-  
-
-(defop |resume|
-  :invocation (Softmotion.request resume @id)
-  :documentation "Halts the execution, waiting for a resume"
-  :body (
-	  (!(SEM-P Softmotion.semStop))
-	  
-	  (=>(Softmotion.freeId (+ @id 1)))
-	  
-	  (!(GenomInterface.handleRequest PR2SOFTMOTION PR2SOFTMOTION_RESUME (Softmotion.stop (VAL @id)) (FALSE) (FALSE) 300  NIL @report @result))
-	  (=>(Softmotion.report (VAL @id) (VAL @report)))
-
-	  (!(SEM-V Softmotion.semStop))
-	  )
-  )
-
  (defop |stop|
    :invocation (Softmotion.request stop @id)
    :documentation "Stops the robot. This is not really safe i guess. The user should cancel all ongoing softmotion requestes or prepare for some failure reports"
@@ -160,6 +162,52 @@
 	  (=> (Robot.isMovingArm RIGHT FALSE))
 	  (=> (Robot.isMovingArm LEFT FALSE))
 	  (=> (Robot.isMoving FALSE))
+	  (=>(Softmotion.report (VAL @id) (VAL @report)))
+
+	  (!(SEM-V Softmotion.semStop))
+	  )
+   )
+
+ (defop |halt|
+   :invocation (Softmotion.request halt @id)
+   :documentation "Halt the robot. For resume we should use this and not stop"
+   :body (
+	  (!(SEM-P Softmotion.semStop))
+	  
+	  (=>(Softmotion.freeId (+ @id 1)))
+	  
+	  (!(GenomInterface.handleRequest PR2SOFTMOTION PR2SOFTMOTION_HALT (Softmotion.stop (VAL @id)) (FALSE) (FALSE) 300  NIL @report @result))
+	  (=> (Robot.isMovingHead FALSE))
+	  (=> (Robot.isMovingArm RIGHT FALSE))
+	  (=> (Robot.isMovingArm LEFT FALSE))
+	  (=> (Robot.isMoving FALSE))
+	  (=>(Softmotion.report (VAL @id) (VAL @report)))
+
+	  (!(SEM-V Softmotion.semStop))
+	  )
+   )
+
+ (defop |resume|
+   :invocation (Softmotion.request resume @joint @id)
+   :documentation "Restart the movment of the robot : NOT TESTED, @joint : joint which will move after"
+   :body (
+	  (!(SEM-P Softmotion.semStop))
+	  
+	  (=>(Softmotion.freeId (+ @id 1)))
+	  
+	  (!(GenomInterface.handleRequest PR2SOFTMOTION PR2SOFTMOTION_RESUME (Softmotion.stop (VAL @id)) (FALSE) (FALSE) 300  NIL @report @result))
+	  (IF(?(EQUAL @joint "HEAD"))
+	 	 (=> (Robot.isMovingHead TRUE))
+		)
+	  (IF(?(EQUAL @joint "RARM"))
+	  	(=> (Robot.isMovingArm RIGHT TRUE))
+		)
+	  (IF(?(EQUAL @joint "LARM"))
+	  	(=> (Robot.isMovingArm LEFT TRUE))
+		)
+	  (IF(?(EQUAL @joint "TORSO"))
+	  	(=> (Robot.isMoving TRUE))
+		)
 	  (=>(Softmotion.report (VAL @id) (VAL @report)))
 
 	  (!(SEM-V Softmotion.semStop))

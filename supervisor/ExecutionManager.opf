@@ -923,4 +923,989 @@
 	 (!(SEM-V ExecutionManager.sem))	 
 	 )
   )
+
+(defop |takeSandra|
+   :invocation(ExecutionManager.execute takeSandra @object @arm @executionId)
+   :documentation "this procedure takes the object @object. @arm can be setted to one of the two arms (RIGHT or LEFT) or to NO_NAME. In that case the robot chooses the arm to compute the action, execution mecanism of action with state machine is used"
+   :body (
+	(=>(ExecutionManager.haveToRun (VAL @executionId)))
+	(=>(ExecutionManager.verifyPrec (VAL @executionId)))
+
+	;;execution loop
+	(WHILE(?(ExecutionManager.haveToRun (VAL @executionId) ))
+		;; Verification of pre-conditions
+		(IF(?(ExecutionManager.verifyPrec (VAL @executionId) ))
+			(~>(ExecutionManager.verifyPrec (VAL @executionId)))
+	 		(IF(?(ExecutionManager.stop (VAL @executionId) )) ;; stop of the action
+				(~>(ExecutionManager.stop (VAL @executionId)))
+				(=>(ExecutionManager.goToStop (VAL @executionId) PRE NO_NAME NO_ID))
+				ELSEIF(?(ExecutionManager.suspend (VAL @executionId)))
+					(~>(ExecutionManager.suspend (VAL @executionId)))
+					(=>(ExecutionManager.goToSuspend (VAL @executionId) PRE NO_NAME NO_ID))
+				ELSEIF(?(Robot.hasObject @anyArm (VAL @object))) ;;action already done
+					(!(PRINT "Object already in hand"))
+					(~>(ExecutionManager.haveToRun (VAL @executionId)))
+					(=>(ExecutionManager.done (VAL @executionId)))
+						ELSE
+							(IF(?(EQUAL @arm NO_NAME)) ;; if no arm is choosen we look at the two hands
+								(IF(?(Robot.hasObject RIGHT @anyObject))
+									(IF(?(Robot.hasObject LEFT @anyObject)) ;; if the two hands are busy the action is impossible
+										(!(PRINT "Hand busy"))
+										(~>(ExecutionManager.haveToRun (VAL @executionId)))
+		 	    							(=> (ExecutionManager.failed (VAL @executionId) PRE HAND))
+										ELSE
+											(!(= @armFree LEFT))
+										)
+									ELSEIF(?(Robot.hasObject LEFT @anyObject)) ;; else, if there is an object in only one hand we choose the other
+										(!(= @armFree RIGHT))
+										ELSE
+											(!(= @armFree NO_NAME))
+									)
+								ELSEIF(?(EQUAL @arm RIGHT)) ;; if a hand is choose, we llok only this hand
+									(IF(?(Robot.hasObject RIGHT @anyObject))
+										(!(PRINT "Hand busy"))
+										(~>(ExecutionManager.haveToRun (VAL @executionId)))
+										(=> (ExecutionManager.failed (VAL @executionId) PRE HAND))
+										ELSE
+											(!(= @armFree RIGHT))
+										)
+									ELSEIF(?(EQUAL @arm LEFT))
+										(IF(?(Robot.hasObject LEFT @anyObject))
+											(!(PRINT "Hand busy"))
+											(~>(ExecutionManager.haveToRun (VAL @executionId)))
+											(=> (ExecutionManager.failed (VAL @executionId) PRE HAND))
+											ELSE
+												(!(= @armFree LEFT))
+											)
+								)
+							(IF(?(ExecutionManager.haveToRun (VAL @executionId)))
+								(!(HeadActions.getFreeId @headId))
+								(=>(HeadActions.action isLookingAt (VAL @object) NO_NAME (VAL @headId)))
+								(^(HeadActions.report (VAL @headId) @report))
+								(~>(HeadActions.report (VAL @headId) @report))
+								(IF(?(EQUAL @report "FALSE")) ;; we want that the object be looking before planning 
+									(=>(ExecutionManager.fixePre (VAL @executionId) OBJECT (VAL @object) PRE)) ;; call fonction for find and look the object
+									ELSEIF(?(EQUAL @report "FAILED"))
+										(~>(ExecutionManager.haveToRun (VAL @executionId)))
+		 	    							(=> (ExecutionManager.failed (VAL @executionId) PRE HEAD_ACTION))
+							       		ELSE
+										        (!(DatabaseInterface.findList (AGENT-STATEMENT PR2_ROBOT (VAL @object) isReachable @reachability) (. @reachability .) @result)) ;; the object need to be reachable
+											(IF(?(EQUAL (CAR (CAR @result)) true))
+												(IF(?(EQUAL @armFree NO_NAME))
+													(!(ExecutionManager.chooseArmForTake (VAL @object) (VAL @executionId) @armForPick))	;; we choose an arm with thi function but we always know that there is a choice if the planning failed
+													ELSE
+													(!(= @armForPick (VAL @armFree)))
+													)
+												(IF(?(Robot.gripper (VAL @armForPick) CLOSE)) ;;if the gripper of the hand choosen is close we open it
+													(=>(ExecutionManager.fixePre (VAL @executionId) GRIPPER (VAL @armForPick) PRE))
+													ELSE ;;pre-conditions ok, we can plan
+														(!(PRINT "Pre-conditions ok"))
+														(=> (ExecutionManager.plan (VAL @executionId)))
+													)
+												ELSE      
+												        (!(PRINT "Object non reachable"))
+												        (~>(ExecutionManager.haveToRun (VAL @executionId)))
+		 	    									        (=> (ExecutionManager.failed (VAL @executionId) PRE REACHABLE))
+												)
+	 								)
+		    	 							
+											
+								)
+				)
+			)
+
+		;; Fixe pre-conditions at begining or at a restart, possibly by calling other actions
+		(IF(?(ExecutionManager.fixePre (VAL @executionId) @problem @param @state)) ;; @problem can be GRIPPER to open a gripper or OBJECT to find and look an object, @param : for gripper close the arm of the gripper for OBJECT is the object to look, @state is the state were the function is called
+			(~>(ExecutionManager.fixePre (VAL @executionId) @problem @param @state))
+			(IF(?(EQUAL @problem GRIPPER)) 
+				(!(ArmActions.getFreeId @actionId))
+	  			(=>(ArmActions.action openGripper (VAL @param) (VAL @actionId)))
+				(^(ArmActions.report (VAL @actionId) @result))
+				(~>(ArmActions.report (VAL @actionId) @result))
+				(IF(?(EQUAL @result "OK"))
+					(IF(?(EQUAL @state PRE))
+						(=>(ExecutionManager.verifyPrec (VAL @executionId)))
+						ELSEIF(?(EQUAL @state RESTART))
+							(=>(ExecutionManager.goToRestart (VAL @executionId)))
+						)
+					ELSE
+						(~>(ExecutionManager.haveToRun (VAL @executionId)))
+		 	    			(=> (ExecutionManager.failed (VAL @executionId) FIXE GRIPPER))
+					)
+				ELSEIF(?(EQUAL @problem OBJECT))
+					(=>(ExecutionManager.shearchObject (VAL @executionId)))
+					(WHILE(?(ExecutionManager.shearchObject (VAL @executionId)))
+						(IF(?(Executionmanager.stop (VAL @executionId)))
+							(~>(ExecutionManager.shearchObject (VAL @executionId)))
+							(~>(ExecutionManager.stop (VAL @executionId)))
+							(=>(ExecutionManager.goToStop (VAL @executionId) FIXE NO_NAME NO_ID))
+							ELSEIF(?(ExecutionManager.suspend (VAL @executionId)))
+								(~>(ExecutionManager.shearchObject (VAL @executionId)))
+								(~>(ExecutionManager.suspend (VAL @executionId)))
+								(=>(ExecutionManager.goToSuspend (VAL @executionId) FIXE NO_NAME NO_ID))
+							ELSE
+								(!(DatabaseInterface.findList (AGENT-STATEMENT PR2_ROBOT (VAL @object) isVisible @visibility) (. @visibility .) @result))
+								(IF(?(EQUAL (CAR (CAR @result)) true))
+									(!(HeadActions.getFreeId @headId))
+									(=>(HeadActions.action isLookingAt (VAL @param) NO_NAME (VAL @headId)))
+									(^(HeadActions.report (VAL @headId) @report))
+									(~>(HeadActions.report (VAL @headId) @report))
+									(IF(?(EQUAL @report "FALSE"))
+										(!(HeadActions.getFreeId @headId))
+										(=>(HeadActions.action lookAt (VAL @param) NO_NAME (VAL @headId)))
+										(^(HeadActions.report (VAL @headId) @report))
+										(~>(HeadActions.report (VAL @headId) @report))
+										(IF(?(EQUAL @report "FAILED"))
+											(~>(ExecutionManager.shearchObject (VAL @executionId)))
+											(~>(ExecutionManager.haveToRun (VAL @executionId)))
+				 	    						(=> (ExecutionManager.failed (VAL @executionId) FIXE HEAD_ACTION))
+											)
+										ELSEIF(?(EQUAL @report "TRUE"))
+											(~>(ExecutionManager.shearchObject (VAL @executionId)))
+											ELSEIF(?(EQUAL @report "FAILED"))
+												(~>(ExecutionManager.shearchObject (VAL @executionId)))
+												(~>(ExecutionManager.haveToRun (VAL @executionId)))
+				 	    							(=> (ExecutionManager.failed (VAL @executionId) FIXE HEAD_ACTION))
+										)
+									ELSE ;; if the object is not visible we look around to find it
+										(!(HeadActions.getFreeId @headId))
+										(=>(HeadActions.action headExplore (VAL @headId)))
+										(^(|| (|| (HeadActions.report (VAL @headId) @report) (ExecutionManager.stop (VAL @executionId))) (ExecutionManager.suspend (VAL @executionId))))
+										(IF(?(Execution.Manager.stop (VAL @executionId)))
+											(~>(ExecutionManager.shearchObject (VAL @executionId)))
+											(~>(ExecutionManager.stop (VAL @executionId)))
+											(=>(ExecutionManager.goToStop (VAL @executionId) FIXE HEAD_ACTION (VAL @headId)))
+											ELSEIF(?(ExecutionManager.suspend (VAL @executionId)))
+												(~>(ExecutionManager.shearchObject (VAL @executionId)))
+												(~>(ExecutionManager.suspend (VAL @executionId)))
+												(=>(ExecutionManager.goToSuspend (VAL @executionId) FIXE HEAD_ACTION (VAL @headId)))
+												ELSE
+													(~>(HeadActions.report (VAL @headId) @report))
+													(IF(?(EQUAL @report "FAILED"))
+														(~>(ExecutionManager.shearchObject (VAL @executionId)))
+														(~>(ExecutionManager.haveToRun (VAL @executionId)))
+							 	    						(=> (ExecutionManager.failed (VAL @executionId) FIXE HEAD_ACTION))
+														ELSE
+															(!(DatabaseInterface.findList (AGENT-STATEMENT PR2_ROBOT (VAL @object) isVisible @location) (. @location .) @result))
+															(IF(?(EQUAL (CAR (CAR @result)) true));;if the object isnot visible after we failed because the object can't be seen
+																(~>(ExecutionManager.shearchObject (VAL @executionId)))
+																(~>(ExecutionManager.haveToRun (VAL @executionId)))
+							 	    								(=> (ExecutionManager.failed (VAL @executionId) FIXE OBJECT))
+																)						
+														)
+											)
+									)
+							)
+						)
+					(IF(?(ExecutionManager.haveToRun (VAL @executionId)))
+						(IF(?(EQUAL @state PRE)) ;; we return t othe state were the function was called
+							(=>(ExecutionManager.verifyPrec (VAL @executionId)))
+							ELSEIF(?(EQUAL @state RESTART))
+								(=>(ExecutionManager.goToRestart (VAL @executionId)))
+								ELSEIF(?(EQUAL @state PLAN))
+							 	    (=>(ExecutionManager.plan (VAL @executionId)))
+							)
+						)		
+				)
+			)
+
+		;; Planification
+		(IF(?(ExecutionManager.plan (VAL @executionId)))
+			(~>(ExecutionManager.plan (VAL @executionId)))
+			(!(PRINT "Planification"))
+			(?(Mhp.arm (VAL @armForPick) @mhpArm))
+
+	 		(!(Mhp.makeArmStartParameter 0 0 0 0 0 0 0 @armStart))
+	  		(!(= @objStart (objStart 0.0 0.0 0.0 0.0 0.0 0.0)))
+	  		(!(Mhp.getFreeId @mhpId))
+	  
+			(!(= @objGoto (objGoto 0.0 0.0 0.0 0.0 0.0 0.0)))
+			(!(Mhp.makeArmGotoParameter 0 0 0 0 0 0 0 @armGoto))
+
+	 		(=>(Mhp.request setTrajectory GEN_TRUE MHP_ARM_PICK_GOTO (VAL @mhpArm) (VAL @armStart) (VAL @armGoto) (VAL @object) NO_NAME NO_NAME GEN_FALSE 0 (VAL @objStart) 0 (VAL @objGoto) (VAL @mhpId)))
+			
+			(^(|| (Mhp.report (VAL @mhpId) @report) (ExecutionManager.stop (VAL @executionId))))
+			(IF(?(ExecutionManager.stop (VAL @executionId)))
+				(~>(ExecutionManager.stop (VAL @executionId)))
+				(=>(ExecutionManager.goToStop (VAL @executionId) PLAN MHP NO_ID))
+				ELSE
+					(~>(Mhp.report (VAL @mhpId) @report))
+					(IF(?(~(EQUAL @report "OK"))) ;; no plan found
+						(IF(?(EQUAL @armFree NO_NAME)) ;;if we have choosen a arm before, we retry with the other
+							(IF(?(EQUAL @armForPick RIGHT))
+								(!(= @armForPick LEFT))
+								(!(= @armFree LEFT))
+								(=> (ExecutionManager.plan (VAL @executionId)))
+								ELSE
+									(!(= @armForPick RIGHT))
+									(!(= @armFree RIGHT))
+									(=> (ExecutionManager.plan (VAL @executionId)))
+								)
+							(IF(?(Robot.gripper (VAL @armForPick) CLOSE)) ;;if the gripper of the hand choosen is close we open it
+					       		    	(=>(ExecutionManager.fixePre (VAL @executionId) GRIPPER (VAL @armForPick) PLAN))
+								)
+							ELSE
+								(!(PRINT "No plan found"))
+								(~>(ExecutionManager.haveToRun (VAL @executionId)))
+		  	    					(=> (ExecutionManager.failed (VAL @executionId) PLAN (VAL @armForPick)))
+							)
+						ELSEIF(?(& (EQUAL @report "OK") (ExecutionManager.suspend (VAL @executionId)))) ;; plan found but suspend order, we go to suspend state before execution
+							(~>(ExecutionManager.suspend (VAL @executionId)))
+							(!(PRINT "Plan found"))
+							(=>(ExecutionManager.goToSuspend (VAL @executionId) PLAN NO_NAME NO_ID)) ;; plan found and no suspend order, we go to execution
+							ELSEIF(?(EQUAL @report "OK"))
+								(!(PRINT "Plan found"))
+								(=>(ExecutionManager.exec (VAL @executionId) 0))
+						)
+				)
+			)
+
+     
+		;; Execution
+		(IF(?(ExecutionManager.exec (VAL @executionId) @restart))
+			(~>(ExecutionManager.exec (VAL @executionId) @restart));; @restart : 0 if the action begin, 1 if it is a restart of the arm movement and 2 if there is only the gripper to close
+			(IF(?(EQUAL @restart 0));; if it isn't a restart we do the movement plan by mhp, else 
+				(?(Softmotion.arm (VAL @armForPick) @smArm))
+				(!(Softmotion.getFreeId @execId))
+	 			(=>(Softmotion.request moveArmWithoutMhpClean (VAL @smArm) (VAL @execId)))
+				)
+			(IF(?(|| (EQUAL @restart 0) (EQUAL @restart 1)))
+				(^(|| (||(Softmotion.report (VAL @execId) @report) (ExecutionManager.stop (VAL @executionId))) (ExecutionManager.suspend (VAL @executionId)) ))
+				(IF(?(ExecutionManager.stop (VAL @executionId)))
+					(~>(ExecutionManager.stop (VAL @executionId)))
+					(=>(ExecutionManager.goToStop (VAL @executionId) EXEC ARM_ACTION (VAL @execId)))
+					ELSEIF(?(ExecutionManager.suspend (VAL @executionId)))
+						(~>(ExecutionManager.suspend (VAL @executionId)))
+						(=>(ExecutionManager.goToSuspend (VAL @executionId) EXEC ARM_ACTION (VAL @execId)))
+						ELSE
+							(~>(Softmotion.report (VAL @execId) @report))
+							(IF(?(EQUAL @report "OK")) ;; execution ok, we have to verify the post conditions
+								(=>(ExecutionManager.closeGripper (VAL @executionId)))
+								(!(Mhp.cleanTrajectories)) ;; if the movement succeed we can cleen the mhp trajectory
+								ELSEIF(?(EQUAL @report "FAILED"))
+									(!(PRINT "Movement failed"))
+									(!(Mhp.cleanTrajectories))
+									(~>(ExecutionManager.haveToRun (VAL @executionId)))
+			  	    					(=> (ExecutionManager.failed (VAL @executionId) EXEC ARM_ACTION))
+									ELSE ;;TO BE REMOVED : when there will be a report from restart
+									     (^(ELAPSED-TIME(TIME) 3))
+									     (=>(ExecutionManager.closeGripper (VAL @executionId)))
+									     (!(Mhp.cleanTrajectories)) ;; if the movement succeed we can cleen the mhp trajectory
+								)
+					)
+				)
+			(IF(?(ExecutionManager.closeGripper (VAL @executionId)))
+			   (~>(ExecutionManager.closeGripper (VAL @executionId)))
+		  	   (!(ArmActions.getFreeId @actionId))
+	  		   (=>(ArmActions.action closeGripper @armForPick @actionId))
+	  		   (^(|| (||(ArmActions.report (VAL @actionId) @report) (ExecutionManager.stop (VAL @executionId))) (ExecutionManager.suspend (VAL @executionId)) ))
+			   (IF(?(ExecutionManager.stop (VAL @executionId)))
+				(~>(ExecutionManager.stop (VAL @executionId)))
+				(=>(ExecutionManager.goToStop (VAL @executionId) EXEC GRIPPER (VAL @actionId)))
+				ELSEIF(?(ExecutionManager.suspend (VAL @executionId)))
+					(~>(ExecutionManager.suspend (VAL @executionId)))
+					(=>(ExecutionManager.goToSuspend (VAL @executionId) EXEC GRIPPER (VAL @actionId)))
+					ELSE
+						(~>(ArmActions.report (VAL @actionId) @report))
+						(IF(?(EQUAL @report "OK")) ;; execution ok, we have to verify the post conditions
+							(!(PRINT "Execution ok"))
+							(=>(ExecutionManager.verifyPost (VAL @executionId)))
+							ELSE
+								(!(PRINT "Close gripper failed"))
+								(~>(ExecutionManager.haveToRun (VAL @executionId)))
+		  	    					(=> (ExecutionManager.failed (VAL @executionId) EXEC GRIPPER))
+								)
+					)
+			   )
+			)
+
+		;; Verification Post-conditions
+		(IF(?(ExecutionManager.verifyPost (VAL @executionId))) ;;actualy more a set post-condition....
+			(~>(ExecutionManager.verifyPost (VAL @executionId)))
+
+			(=> (Robot.hasObject (VAL @armForPick) (VAL @object)))
+
+	 		(!(Spark.getFreeId @sparkId))
+	 		(=>(Spark.request setObjectInHand PR2_ROBOT (VAL @object) (VAL @armForPick) TRUE (VAL @sparkId)))
+			(^(Spark.report (VAL @sparkId) @etat))
+			(~>(Spark.report (VAL @sparkId) @etat))
+	
+			(IF(?(EQUAL @etat "OK")) ;; we don't look the stop and suspend order because the action is finished
+				(!(PRINT "Post conditions ok"))
+				(=>(ExecutionManager.done (VAL @executionId)))
+				(~>(ExecutionManager.haveToRun (VAL @executionId)))
+				ELSE
+					(!(PRINT "Post conditions not ok"))
+					(~>(ExecutionManager.haveToRun (VAL @executionId)))
+		  	    		(=> (ExecutionManager.failed (VAL @executionId) POST SPARK))
+				)
+			)
+
+
+		;; Suspended state
+		(IF(?(ExecutionManager.suspended (VAL @executionId) @state @param @xObj @yObj @zObj @yawObj @pitchObj @rollObj))
+			(IF(?(|| (Robot.isMovingArm (VAL @armForPick) TRUE) (Robot.isMoving TRUE))) ;; we look if the arm for pick move during the suspend time
+				(!(= @armMove TRUE))
+				)
+			(IF(?(ExecutionManager.stop))
+			        (~>(ExecutionManager.suspended (VAL @executionId) @state @param @xObj @yObj @zObj @yawObj @pitchObj @rollObj))
+				(~>(ExecutionManager.stop (VAL @executionId)))
+				(=>(ExecutionManager.goToStop (VAL @executionId) SUSPEND NO_NAME))
+				ELSEIF(?(ExecutionManager.restart (VAL @executionId)))
+				        (~>(ExecutionManager.suspended (VAL @executionId) @state @param @xObj @yObj @zObj @yawObj @pitchObj @rollObj))
+					(~>(ExecutionManager.restart (VAL @executionId)))
+					(=>(ExecutionManager.goToRestart (VAL @executionId) (VAL @state) (VAL @param) (VAL @xObj) (VAL @yObj) (VAL @zObj) (VAL @yawObj) (VAL @pitchObj) (VAL @rollObj) (VAL @armMove)))
+				)
+			)
+
+
+		;; Go to stop state
+		(IF(?(ExecutionManager.goToStop (VAL @executionId) @state @param @id))
+			(~>(ExecutionManager.goToStop (VAL @executionId) @state @param @id))
+			(!(PRINT "Go to stop"))
+			(IF(?(EQUAL @param NO_NAME))
+				(~>(ExecutionManager.haveToRun (VAL @executionId)))
+				(=>(ExecutionManager.stopped (VAL @executionId)))
+				ELSEIF(?(EQUAL @param MHP))
+					(!(Mhp.cleanTrajectories))
+					(~>(ExecutionManager.haveToRun (VAL @executionId)))
+					(=>(ExecutionManager.stopped (VAL @executionId)))
+					ELSEIF(?(EQUAL @param ARM_ACTION))
+						(!(Softmotion.getFreeId @smId))
+		 				(=>(Softmotion.request stop (VAL @smId)))
+						(^(Softmotion.report (VAL @smId) @report))
+						(~>(Softmotion.report (VAL @smId) @report))
+						(!(Mhp.cleanTrajectories))
+						(IF(?(EQUAL @report "OK"))
+							(!(PRINT "Stop ok"))
+							(~>(ExecutionManager.haveToRun (VAL @executionId)))
+							(=>(ExecutionManager.stopped (VAL @executionId)))
+							ELSEIF(?(EQUAL @report "FAILED"))
+								(!(PRINT "stop failed"))
+								(~>(ExecutionManager.haveToRun (VAL @executionId)))
+					  	    		(=> (ExecutionManager.failed (VAL @executionId) STOP ARM_ACTION))
+							)
+						ELSEIF(?(EQUAL @param HEAD_ACTION))
+							(=>(HeadActions.stop (VAL @id)))
+							(^(HeadActions.report (VAL @id) @report))
+							(~>(HeadActions.report (VAL @id) @report))
+							(IF(?(EQUAL @report "OK"))
+								(!(PRINT "Stop ok"))
+								(~>(ExecutionManager.haveToRun (VAL @executionId)))
+								(=>(ExecutionManager.stopped (VAL @executionId)))
+								ELSEIF(?(EQUAL @report "FAILED"))
+									(!(PRINT "stop failed"))
+									(~>(ExecutionManager.haveToRun (VAL @executionId)))
+						  	    		(=> (ExecutionManager.failed (VAL @executionId) STOP HEAD_ACTION))
+								)
+				)
+			)
+
+		;; Go to suspend state
+		(IF(?(ExecutionManager.goToSuspend (VAL @executionId) @state @param @id))
+			(~>(ExecutionManager.goToSuspend (VAL @executionId) @state @param @id))
+			(!(PRINT "Go to suspend"))
+			(!(Spark.getFreeId @sparkId))
+			(=>(Spark.request getJointAbsPose (VAL @object) NO_NAME (VAL @sparkId))) ;; we save the position of the object
+			(^(Spark.result (VAL @sparkId) @xObj @yObj @zObj @yawObj @pitchObj @rollObj))
+			(!(= @armMove FALSE))
+			(IF(?(||(EQUAL @state PRE) (EQUAL @state PLAN)))
+			        (!(PRINT "Suspended"))
+				(=>(ExecutionManager.report (VAL @executionId) SUSPEND))
+				(=>(ExecutionManager.suspended (VAL @executionId) (VAL @state) (VAL @param) (VAL @xObj) (VAL @yObj) (VAL @zObj) (VAL @yawObj) (VAL @pitchObj) (VAL @rollObj)))
+				ELSEIF(?(EQUAL @state FIXE))
+					(IF(?(EQUAL @param NO_NAME))
+					        (!(PRINT "Suspended"))
+						(=>(ExecutionManager.report (VAL @executionId) SUSPEND))
+						(=>(ExecutionManager.suspended (VAL @executionId) (VAL @state) (VAL @param) (VAL @xObj) (VAL @yObj) (VAL @zObj) (VAL @yawObj) (VAL @pitchObj) (VAL @rollObj)))
+						ELSEIF(?(EQUAL @param HEAD_ACTION))
+							(=>(HeadActions.stop (VAL @id)))
+							(^(HeadActions.report (VAL @id) @report))
+							(~>(HeadActions.report (VAL @id) @report))
+							(IF(?(EQUAL @report "OK"))
+							        (!(PRINT "Suspended"))
+								(=>(ExecutionManager.report (VAL @executionId) SUSPEND))
+								(=>(ExecutionManager.suspended (VAL @executionId) (VAL @state) (VAL @param) (VAL @xObj) (VAL @yObj) (VAL @zObj) (VAL @yawObj) (VAL @pitchObj) (VAL @rollObj)))
+								ELSEIF(?(EQUAL @report "FAILED"))
+									(!(PRINT "suspend failed"))
+									(~>(ExecutionManager.haveToRun (VAL @executionId)))
+						  	    		(=> (ExecutionManager.failed (VAL @executionId) SUSPEND HEAD_ACTION))
+								)
+						)
+					ELSEIF(?(EQUAL @state EXEC))
+						(!(Softmotion.getFreeId @smId))
+		 				(=>(Softmotion.request halt (VAL @smId)))
+						(^(Softmotion.report (VAL @smId) @report))
+						(~>(Softmotion.report (VAL @smId) @report))
+						(IF(?(EQUAL @report "OK"))
+							(=>(ExecutionManager.suspended (VAL @executionId) (VAL @state) (VAL @param) (VAL @xObj) (VAL @yObj) (VAL @zObj) (VAL @yawObj) (VAL @pitchObj) (VAL @rollObj)))
+							(!(PRINT "Suspended"))
+							(=>(ExecutionManager.report (VAL @executionId) SUSPEND))
+							ELSEIF(?(EQUAL @report "FAILED"))
+								(!(PRINT "suspend failed"))
+								(~>(ExecutionManager.haveToRun (VAL @executionId)))
+					  	    		(=> (ExecutionManager.failed (VAL @executionId) SUSPEND ARM_ACTION))
+							)	
+				)
+			)
+
+		;; Restart
+		(IF(?(|| (ExecutionManager.goToRestart (VAL @executionId) @stateRestart @paramRestart @xObj @yObj @zObj @yawObj @pitchObj @rollObj @armMove) (ExecutionManager.goToRestart (VAL @executionId)))) 
+			(~>(ExecutionManager.goToRestart (VAL @executionId) @state @param @xObj @yObj @zObj @yawObj @pitchObj @rollObj @armMove))
+			(~>(ExecutionManager.goToRestart (VAL @executionId)))
+			(!(PRINT "Restarting"))
+			(IF(?(||(EQUAL @stateRestart PRE) (EQUAL @stateRestart FIXE))) ;; no plan before, we restart from pre-conditions
+				(=>(ExecutionManager.verifyPrec (VAL @executionId)))
+				ELSEIF(?(||(EQUAL @stateRestart PLAN) (EQUAL @stateRestart EXEC)))
+					(IF(?(EQUAL @armMove TRUE)) ;; the arm for pick has moved, we restart from pre-conditions
+						(!(Mhp.cleanTrajectories))
+						(=>(ExecutionManager.verifyPrec (VAL @executionId)))
+						ELSE
+							(!(HeadActions.getFreeId @headId))
+							(=>(HeadActions.action isLookingAt (VAL @object) NO_NAME (VAL @headId)))
+							(^(HeadActions.report (VAL @headId) @report))
+							(~>(HeadActions.report (VAL @headId) @report))
+							(IF(?(EQUAL @report "FALSE")) ;; we want to look the object 
+								(=>(ExecutionManager.fixePre (VAL @executionId) OBJECT (VAL @object) RESTART))
+								ELSEIF(?(EQUAL @report "FAILED"))
+									(~>(ExecutionManager.haveToRun (VAL @executionId)))
+		 	    						(=> (ExecutionManager.failed (VAL @executionId) RESTART HEAD_ACTION))
+							       		ELSE
+										(!(Spark.getFreeId @sparkId))
+										(=>(Spark.request getJointAbsPose (VAL @object) NO_NAME (VAL @sparkId)))
+										(^(Spark.result (VAL @sparkId) @xNew @yNew @zNew @yawNew @pitchNew @rollNew))
+										(IF(?(& (& (& (& (& (EQUAL @xNew @xObj) (EQUAL @yNew @yObj)) (EQUAL @zNew @zObj)) (EQUAL @yawNew @yawObj)) (EQUAL @pitchNew @pitchObj)) (EQUAL @rollNew @rollObj))) ;; the object has not moved
+												(IF(?(Robot.gripper (VAL @armForPick) CLOSE));; we open the gripper if it is close
+													(=>(ExecutionManager.fixePre (VAL @executionId) GRIPPER (VAL @armForPick) FIXE))
+													ELSE ;;we can restart the old mhp plan
+														(IF(?(EQUAL @stateRestart PLAN))
+															(=>(ExecutionManager.exec (VAL @executionId) 0))
+															ELSEIF(?(& (EQUAL @stateRestart EXEC) (EQUAL @paramRestart ARM_ACTION)))
+																(!(Softmotion.getFreeId @smId))
+																(IF(?(EQUAL @armForPick RIGHT))
+		 															(=>(Softmotion.request resume RARM (VAL @smId)))
+																	ELSE
+																		(=>(Softmotion.request resume LARM (VAL @smId)))
+																	)
+																(^(Softmotion.report (VAL @smId) @report))
+																(~>(Softmotion.report (VAL @smId) @report))
+																(IF(?(EQUAL @report "OK"))
+																	(=>(ExecutionManager.exec (VAL @executionId) 1))
+																	ELSE
+																		(!(PRINT "restart failed"))
+																		(~>(ExecutionManager.haveToRun (VAL @executionId)))
+					  	    												(=> (ExecutionManager.failed (VAL @executionId) RESTART ARM_ACTION))
+																	)
+																ELSEIF(?(& (EQUAL @stateRestart EXEC) (EQUAL @paramRestart GRIPPER)))
+																	(=>(ExecutionManager.exec (VAL @executionId) 1))
+															)						
+													)
+											ELSE ;; the object has moved, we have to restart from pre conditions
+												(!(Mhp.cleanTrajectories))
+												(=>(ExecutionManager.verifyPrec (VAL @executionId)))
+											)
+								)
+						)
+				)
+			)
+
+		)	
+
+	;; FINAL STATES
+
+	;;Action ok	
+	(IF(?(ExecutionManager.done (VAL @executionId)))
+		(~>(ExecutionManager.done (VAL @executionId)))
+		(!(PRINT "Action ok"))
+		(=> (ExecutionManager.report (VAL @executionId) OK))
+		)
+
+	;;Action failed	
+	(IF(?(ExecutionManager.failed (VAL @executionId) @state @problem))
+		(~>(ExecutionManager.failed (VAL @executionId) @state @problem))
+		(!(PRINT "Action FAILED"))
+		(=> (ExecutionManager.report (VAL @executionId) FAILED (VAL @state) (VAL @problem)))
+		)
+
+	;;Action stopped	
+	(IF(?(ExecutionManager.stopped (VAL @executionId)))
+		(~>(ExecutionManager.stopped (VAL @executionId)))
+		(!(PRINT "Action stopped"))
+		(=> (ExecutionManager.report (VAL @executionId) STOPPED))
+		)
+
+	
+	)
+
+
+)
+
+(defop |placeSandra|
+   :invocation(ExecutionManager.execute placeSandra @object @support @placement @executionId)
+   :documentation "this procedure place the object @object in the placement @placement, execution mecanism of action with state machine is used"
+   :body (
+	(=>(ExecutionManager.haveToRun (VAL @executionId)))
+	(=>(ExecutionManager.verifyPrec (VAL @executionId)))
+
+	;;execution loop
+	(WHILE(?(ExecutionManager.haveToRun (VAL @executionId) ))
+		;; Verification of pre-conditions
+		(IF(?(ExecutionManager.verifyPrec (VAL @executionId) ))
+			(~>(ExecutionManager.verifyPrec (VAL @executionId)))
+	 		(IF(?(ExecutionManager.stop (VAL @executionId) )) ;; stop of the action
+				(~>(ExecutionManager.stop (VAL @executionId)))
+				(=>(ExecutionManager.goToStop (VAL @executionId) PRE NO_NAME NO_ID))
+				ELSEIF(?(ExecutionManager.suspend (VAL @executionId)))
+					(~>(ExecutionManager.suspend (VAL @executionId)))
+					(=>(ExecutionManager.goToSuspend (VAL @executionId) PRE NO_NAME NO_ID))
+				ELSE
+					(!(DatabaseInterface.findList (AGENT-STATEMENT PR2_ROBOT (VAL @object) isOn @place) (. @place .) @result))
+					(IF(?(EQUAL (CAR (CAR @result)) @placement)) ;;action already done
+						(!(PRINT "Object already in the placement"))
+						(~>(ExecutionManager.haveToRun (VAL @executionId)))
+						(=>(ExecutionManager.done (VAL @executionId)))
+							ELSEIF(?(~(Robot.hasObject @anyArm (VAL @object)))) ;; the robot have to have the object
+								(!(PRINT "The robot don't have the object"))
+								(~>(ExecutionManager.haveToRun (VAL @executionId)))
+			 	    				(=> (ExecutionManager.failed (VAL @executionId) PRE OBJECT))
+								ELSE
+									(!(= @armForPlace @anyArm))
+									
+									(!(HeadActions.getFreeId @headId))
+									(=>(HeadActions.action isLookingAt (VAL @placement) NO_NAME (VAL @headId)))
+									(^(HeadActions.report (VAL @headId) @report))
+									(~>(HeadActions.report (VAL @headId) @report))
+									(IF(?(EQUAL @report "FALSE")) ;; we want that the placement be looking before planning 
+										(=>(ExecutionManager.fixePre (VAL @executionId) OBJECT (VAL @placement) PRE)) ;; call fonction for find and look the placement
+										ELSEIF(?(EQUAL @report "FAILED"))
+											(~>(ExecutionManager.haveToRun (VAL @executionId)))
+			 	    							(=> (ExecutionManager.failed (VAL @executionId) PRE HEAD_ACTION))
+								       		ELSE
+												(!(DatabaseInterface.findList (AGENT-STATEMENT PR2_ROBOT (VAL @placement) isReachable @reachability) (. @reachability .) @result)) ;; the object need to be reachable
+												(IF(?(EQUAL (CAR (CAR @result)) true))
+													(!(PRINT "Pre-conditions ok"))
+													(=> (ExecutionManager.plan (VAL @executionId)))
+													ELSE      
+														(!(PRINT "Placement non reachable"))
+														(~>(ExecutionManager.haveToRun (VAL @executionId)))
+			 	    									        (=> (ExecutionManager.failed (VAL @executionId) PRE REACHABLE))
+													)
+		 								)
+						)
+				)
+			)
+
+		;; Fixe pre-conditions at begining or at a restart, possibly by calling other actions
+		(IF(?(ExecutionManager.fixePre (VAL @executionId) @problem @param @state)) ;; @problem can be GRIPPER to open a gripper or OBJECT to find and look an object, @param : for gripper close the arm of the gripper for OBJECT is the object to look, @state is the state were the function is called
+			(~>(ExecutionManager.fixePre (VAL @executionId) @problem @param @state))
+			(IF(?(EQUAL @problem OBJECT))
+				(=>(ExecutionManager.shearchObject (VAL @executionId)))
+				(WHILE(?(ExecutionManager.shearchObject (VAL @executionId)))
+					(IF(?(Executionmanager.stop (VAL @executionId)))
+						(~>(ExecutionManager.shearchObject (VAL @executionId)))
+						(~>(ExecutionManager.stop (VAL @executionId)))
+						(=>(ExecutionManager.goToStop (VAL @executionId) FIXE NO_NAME NO_ID))
+						ELSEIF(?(ExecutionManager.suspend (VAL @executionId)))
+							(~>(ExecutionManager.shearchObject (VAL @executionId)))
+							(~>(ExecutionManager.suspend (VAL @executionId)))
+							(=>(ExecutionManager.goToSuspend (VAL @executionId) FIXE NO_NAME NO_ID))
+							ELSE
+								(!(DatabaseInterface.findList (AGENT-STATEMENT PR2_ROBOT (VAL @param) isVisible @visibility) (. @visibility .) @result))
+								(IF(?(EQUAL (CAR (CAR @result)) true))
+									(!(HeadActions.getFreeId @headId))
+									(=>(HeadActions.action isLookingAt (VAL @param) NO_NAME (VAL @headId)))
+									(^(HeadActions.report (VAL @headId) @report))
+									(~>(HeadActions.report (VAL @headId) @report))
+									(IF(?(EQUAL @report "FALSE"))
+										(!(HeadActions.getFreeId @headId))
+										(=>(HeadActions.action lookAt (VAL @param) NO_NAME (VAL @headId)))
+										(^(HeadActions.report (VAL @headId) @report))
+										(~>(HeadActions.report (VAL @headId) @report))
+										(IF(?(EQUAL @report "FAILED"))
+											(~>(ExecutionManager.shearchObject (VAL @executionId)))
+											(~>(ExecutionManager.haveToRun (VAL @executionId)))
+				 	    						(=> (ExecutionManager.failed (VAL @executionId) FIXE HEAD_ACTION))
+											)
+										ELSEIF(?(EQUAL @report "TRUE"))
+											(~>(ExecutionManager.shearchObject (VAL @executionId)))
+											ELSEIF(?(EQUAL @report "FAILED"))
+												(~>(ExecutionManager.shearchObject (VAL @executionId)))
+												(~>(ExecutionManager.haveToRun (VAL @executionId)))
+				 	    							(=> (ExecutionManager.failed (VAL @executionId) FIXE HEAD_ACTION))
+										)
+									ELSE ;; if the object is not visible we look around to find it
+										(!(HeadActions.getFreeId @headId))
+										(=>(HeadActions.action headExplore (VAL @headId)))
+										(^(|| (|| (HeadActions.report (VAL @headId) @report) (ExecutionManager.stop (VAL @executionId))) (ExecutionManager.suspend (VAL @executionId))))
+										(IF(?(Execution.Manager.stop (VAL @executionId)))
+											(~>(ExecutionManager.shearchObject (VAL @executionId)))
+											(~>(ExecutionManager.stop (VAL @executionId)))
+											(=>(ExecutionManager.goToStop (VAL @executionId) FIXE HEAD_ACTION (VAL @headId)))
+											ELSEIF(?(ExecutionManager.suspend (VAL @executionId)))
+												(~>(ExecutionManager.shearchObject (VAL @executionId)))
+												(~>(ExecutionManager.suspend (VAL @executionId)))
+												(=>(ExecutionManager.goToSuspend (VAL @executionId) FIXE HEAD_ACTION (VAL @headId)))
+											ELSE
+												(~>(HeadActions.report (VAL @headId) @report))
+												(IF(?(EQUAL @report "FAILED"))
+													(~>(ExecutionManager.shearchObject (VAL @executionId)))
+													(~>(ExecutionManager.haveToRun (VAL @executionId)))
+							 	    					(=> (ExecutionManager.failed (VAL @executionId) FIXE HEAD_ACTION))
+													ELSE
+														(!(DatabaseInterface.findList (AGENT-STATEMENT PR2_ROBOT (VAL @param) isVisible @location) (. @location .) @result))
+														(IF(?(EQUAL (CAR (CAR @result)) true));;if the placement is not visible after we failed because the object can't be seen
+															(~>(ExecutionManager.shearchObject (VAL @executionId)))
+															(~>(ExecutionManager.haveToRun (VAL @executionId)))
+							 	    							(=> (ExecutionManager.failed (VAL @executionId) FIXE PLACEMENT))
+															)						
+													)
+											)
+									)
+							)
+						)
+					(IF(?(ExecutionManager.haveToRun (VAL @executionId)))
+						(IF(?(EQUAL @state PRE)) ;; we return to the state were the function was called
+							(=>(ExecutionManager.verifyPrec (VAL @executionId)))
+							ELSEIF(?(EQUAL @state RESTART))
+								(=>(ExecutionManager.goToRestart (VAL @executionId)))
+							)
+						)		
+				)
+			)
+
+		;; Planification
+		(IF(?(ExecutionManager.plan (VAL @executionId)))
+			(~>(ExecutionManager.plan (VAL @executionId)))
+			(!(PRINT "Planification"))
+			(?(Robot.armPosition (VAL @armForPlace) @position))
+	 		(IF(?(EQUAL @position FREE))
+	     			(!(= @task MHP_ARM_PLACE_FROM_FREE))
+	   		  	(!(= @support NO_NAME))
+	     			ELSE
+	     				(!(= @task MHP_ARM_TAKE_TO_PLACE))
+	     				(!(= @support @position))
+	     			)
+	  		(!(Mhp.makeArmGotoParameter 0 0 0 0 0 0 0 @armGoto))
+	  
+	  		(!(Spark.getFreeId @sparkId))
+	  		(=>(Spark.request getJointAbsPose @placement NO_NAME @sparkId))
+	  		(!(ArmActions.handleReport Spark.report @sparkId @actionId))
+	  		(^(Spark.result (VAL @sparkId) @xp @yp @zp @yawp @pitchp @rollp))
+	  		(~>(Spark.result (VAL @sparkId) (VAL @xp) (VAL @yp) (VAL @zp) (VAL @yawp) (VAL @pitchp) (VAL @rollp))) 
+	  		(!(= @objGoto (objGoto @xp @yp @zp 0.0 0.0 0.0)))
+
+			(?(Mhp.arm (VAL @armForPlace) @mhpArm))
+
+	  		(!(Mhp.makeArmStartParameter 0 0 0 0 0 0 0 @armStart))
+	  		(!(= @objStart (objStart 0.0 0.0 0.0 0.0 0.0 0.0)))
+	  		(!(Mhp.getFreeId @mhpId))
+
+	 		(=>(Mhp.request setTrajectory GEN_TRUE (VAL @task) (VAL @mhpArm) (VAL @armStart) (VAL @armGoto) (VAL @object) (VAL @support) (VAL @placement) GEN_FALSE 0 (VAL @objStart) (VAL @useObjGoto) (VAL @objGoto) (VAL @mhpId)))
+			
+			(^(|| (Mhp.report (VAL @mhpId) @report) (ExecutionManager.stop (VAL @executionId))))
+			(IF(?(ExecutionManager.stop (VAL @executionId)))
+				(~>(ExecutionManager.stop (VAL @executionId)))
+				(=>(ExecutionManager.goToStop (VAL @executionId) PLAN MHP NO_ID))
+				ELSE
+					(~>(Mhp.report (VAL @mhpId) @report))
+					(IF(?(~(EQUAL @report "OK"))) ;; no plan found
+						(!(PRINT "No plan found"))
+						(~>(ExecutionManager.haveToRun (VAL @executionId)))
+		  	    			(=> (ExecutionManager.failed (VAL @executionId) PLAN (VAL @armForPlace)))
+						ELSEIF(?(& (EQUAL @report "OK") (ExecutionManager.suspend (VAL @executionId)))) ;; plan found but suspend order, we go to suspend state before execution
+							(~>(ExecutionManager.suspend (VAL @executionId)))
+							(!(PRINT "Plan found"))
+							(=>(ExecutionManager.goToSuspend (VAL @executionId) PLAN NO_NAME NO_ID)) ;; plan found and no suspend order, we go to execution
+							ELSEIF(?(EQUAL @report "OK"))
+								(!(PRINT "Plan found"))
+								(=>(ExecutionManager.execute (VAL @executionId) 0))
+						)
+				)
+			)
+
+		;; Execution
+		(IF(?(ExecutionManager.execute (VAL @executionId) @restart))
+			(~>(ExecutionManager.execute (VAL @executionId) @restart));; @restart : 0 if the action begin, 1 if it is a restart of the arm movement and 2 if there is only the gripper to close
+			(IF(?(EQUAL @restart 0));; if it isn't a restart we do the movement plan by mhp, else 
+				(?(Softmotion.arm (VAL @armForPick) @smArm))
+				(!(Softmotion.getFreeId @execId))
+	 			(=>(Softmotion.request moveArmWithoutMhpClean (VAL @smArm) (VAL @execId)));; if the movement have been restart we have not to wait the report
+				(^(|| (||(Softmotion.report (VAL @execId) @report) (ExecutionManager.stop (VAL @executionId))) (ExecutionManager.suspend (VAL @executionId)) ))
+				(IF(?(ExecutionManager.stop (VAL @executionId)))
+					(~>(ExecutionManager.stop (VAL @executionId)))
+					(=>(ExecutionManager.goToStop (VAL @executionId) EXEC ARM_ACTION (VAL @execId)))
+					ELSEIF(?(ExecutionManager.suspend (VAL @executionId)))
+						(~>(ExecutionManager.suspend (VAL @executionId)))
+						(=>(ExecutionManager.goToSuspend (VAL @executionId) EXEC ARM_ACTION (VAL @execId)))
+						ELSE
+							(~>(Softmotion.report (VAL @execId) @report))
+							(IF(?(EQUAL @report "OK")) ;; execution ok, we have to verify the post conditions
+								(=>(ExecutionManager.closeGripper (VAL @executionId)))
+								(!(Mhp.cleanTrajectories)) ;; if the movment succeed we can cleen the mhp trajectory
+								ELSE
+									(!(PRINT "Movement failed"))
+									(!(Mhp.cleanTrajectories))
+									(~>(ExecutionManager.haveToRun (VAL @executionId)))
+			  	    					(=> (ExecutionManager.failed (VAL @executionId) EXEC ARM_ACTION))
+								)
+					)
+				)
+			(IF(?(EQUAL @restart 1))
+			   (=>(ExecutionManager.closeGripper (VAL @executionId)))
+			   )
+			(IF(?(ExecutionManager.closeGripper (VAL @executionId)))
+			   (~>(ExecutionManager.closeGripper (VAL @executionId)))
+		  	   (!(ArmActions.getFreeId @actionId))
+	  		   (=>(ArmActions.action openGripper @arm @actionId))
+	  		   (^(|| (||(ArmActions.report (VAL @actionId) @report) (ExecutionManager.stop (VAL @executionId))) (ExecutionManager.suspend (VAL @executionId)) ))
+			   (IF(?(ExecutionManager.stop (VAL @executionId)))
+				(~>(ExecutionManager.stop (VAL @executionId)))
+				(=>(ExecutionManager.goToStop (VAL @executionId) EXEC GRIPPER (VAL @actionId)))
+				ELSEIF(?(ExecutionManager.suspend (VAL @executionId)))
+					(~>(ExecutionManager.suspend (VAL @executionId)))
+					(=>(ExecutionManager.goToSuspend (VAL @executionId) EXEC GRIPPER (VAL @actionId)))
+					ELSE
+						(~>(ArmActions.report (VAL @actionId) @report))
+						(IF(?(EQUAL @report "OK")) ;; execution ok, we have to verify the post conditions
+							(!(PRINT "Execution ok"))
+							(=>(ExecutionManager.verifyPost (VAL @executionId)))
+							ELSE
+								(!(PRINT "Open gripper failed"))
+								(~>(ExecutionManager.haveToRun (VAL @executionId)))
+		  	    					(=> (ExecutionManager.failed (VAL @executionId) EXEC GRIPPER))
+								)
+					)
+			   )
+			)
+
+		;; Verification Post-conditions
+		(IF(?(ExecutionManager.verifyPost (VAL @executionId))) ;;actualy more a set post-condition....
+			(~>(ExecutionManager.verifyPost (VAL @executionId)))
+
+			(~>(Robot.hasObject (VAL @arm) (VAL @object)))
+  
+	  		(!(Spark.getFreeId @sparkId))
+	  		(=>(Spark.request setObjectInHand (VAL @object) (VAL @armForPick) FALSE (VAL @sparkId)))
+			(^(Spark.report (VAL @sparkId) @etat))
+			(~>(Spark.report (VAL @sparkId) @etat))
+	
+			(IF(?(EQUAL @etat "OK")) ;; we don't look the stop and suspend order because the action is finished
+				(!(PRINT "Post conditions ok"))
+				(=>(ExecutionManager.done (VAL @executionId)))
+				(~>(ExecutionManager.haveToRun (VAL @executionId)))
+				ELSE
+					(!(PRINT "Post conditions not ok"))
+					(~>(ExecutionManager.haveToRun (VAL @executionId)))
+		  	    		(=> (ExecutionManager.failed (VAL @executionId) POST SPARK))
+				)
+			)
+
+
+		;; Suspended state
+		(IF(?(ExecutionManager.suspended (VAL @executionId) @state @param @xObj @yObj @zObj @yawObj @pitchObj @rollObj))
+			(IF(?(|| (Robot.isMovingArm (VAL @armForPick) TRUE) (Robot.isMoving TRUE))) ;; we look if the arm for pick move during the suspend time
+				(!(= @armMove TRUE))
+				)
+			(IF(?(ExecutionManager.stop))
+			        (~>(ExecutionManager.suspended (VAL @executionId) @state @param @xObj @yObj @zObj @yawObj @pitchObj @rollObj))
+				(~>(ExecutionManager.stop (VAL @executionId)))
+				(=>(ExecutionManager.goToStop (VAL @executionId) SUSPEND NO_NAME))
+				ELSEIF(?(ExecutionManager.restart (VAL @executionId)))
+				        (~>(ExecutionManager.suspended (VAL @executionId) @state @param @xObj @yObj @zObj @yawObj @pitchObj @rollObj))
+					(~>(ExecutionManager.restart (VAL @executionId)))
+					(=>(ExecutionManager.goToRestart (VAL @executionId) (VAL @state) (VAL @param) (VAL @xObj) (VAL @yObj) (VAL @zObj) (VAL @yawObj) (VAL @pitchObj) (VAL @rollObj) (VAL @armMove)))
+				)
+			)
+
+
+		;; Go to stop state
+		(IF(?(ExecutionManager.goToStop (VAL @executionId) @state @param @id))
+			(~>(ExecutionManager.goToStop (VAL @executionId) @state @param @id))
+			(!(PRINT "Go to stop"))
+			(IF(?(EQUAL @param NO_NAME))
+				(~>(ExecutionManager.haveToRun (VAL @executionId)))
+				(=>(ExecutionManager.stopped (VAL @executionId)))
+				ELSEIF(?(EQUAL @param MHP))
+					(!(Mhp.cleanTrajectories))
+					(~>(ExecutionManager.haveToRun (VAL @executionId)))
+					(=>(ExecutionManager.stopped (VAL @executionId)))
+					ELSEIF(?(EQUAL @param ARM_ACTION))
+						(!(Softmotion.getFreeId @smId))
+		 				(=>(Softmotion.request stop (VAL @smId)))
+						(^(Softmotion.report (VAL @smId) @report))
+						(~>(Softmotion.report (VAL @smId) @report))
+						(!(Mhp.cleanTrajectories))
+						(IF(?(EQUAL @report "OK"))
+							(!(PRINT "Stop ok"))
+							(~>(ExecutionManager.haveToRun (VAL @executionId)))
+							(=>(ExecutionManager.stopped (VAL @executionId)))
+							ELSEIF(?(EQUAL @report "FAILED"))
+								(!(PRINT "stop failed"))
+								(~>(ExecutionManager.haveToRun (VAL @executionId)))
+					  	    		(=> (ExecutionManager.failed (VAL @executionId) STOP ARM_ACTION))
+							)
+						ELSEIF(?(EQUAL @param HEAD_ACTION))
+							(=>(HeadActions.stop (VAL @id)))
+							(^(HeadActions.report (VAL @id) @report))
+							(~>(HeadActions.report (VAL @id) @report))
+							(IF(?(EQUAL @report "OK"))
+								(!(PRINT "Stop ok"))
+								(~>(ExecutionManager.haveToRun (VAL @executionId)))
+								(=>(ExecutionManager.stopped (VAL @executionId)))
+								ELSEIF(?(EQUAL @report "FAILED"))
+									(!(PRINT "stop failed"))
+									(~>(ExecutionManager.haveToRun (VAL @executionId)))
+						  	    		(=> (ExecutionManager.failed (VAL @executionId) STOP HEAD_ACTION))
+								)
+				)
+			)
+
+		;; Go to suspend state
+		(IF(?(ExecutionManager.goToSuspend (VAL @executionId) @state @param @id))
+			(~>(ExecutionManager.goToSuspend (VAL @executionId) @state @param @id))
+			(!(PRINT "Go to suspend"))
+			(!(Spark.getFreeId @sparkId))
+			(=>(Spark.request getJointAbsPose (VAL @placement) NO_NAME (VAL @sparkId))) ;; we save the position of the object
+			(^(Spark.result (VAL @sparkId) @xObj @yObj @zObj @yawObj @pitchObj @rollObj))
+			(!(= @armMove FALSE))
+			(IF(?(||(EQUAL @state PRE) (EQUAL @state PLAN)))
+			        (!(PRINT "Suspended"))
+				(=>(ExecutionManager.report (VAL @executionId) SUSPEND))
+				(=>(ExecutionManager.suspended (VAL @executionId) (VAL @state) (VAL @param) (VAL @xObj) (VAL @yObj) (VAL @zObj) (VAL @yawObj) (VAL @pitchObj) (VAL @rollObj)))
+				ELSEIF(?(EQUAL @state FIXE))
+					(IF(?(EQUAL @param NO_NAME))
+					        (!(PRINT "Suspended"))
+						(=>(ExecutionManager.report (VAL @executionId) SUSPEND))
+						(=>(ExecutionManager.suspended (VAL @executionId) (VAL @state) (VAL @param) (VAL @xObj) (VAL @yObj) (VAL @zObj) (VAL @yawObj) (VAL @pitchObj) (VAL @rollObj)))
+						ELSEIF(?(EQUAL @param HEAD_ACTION))
+							(=>(HeadActions.stop (VAL @id)))
+							(^(HeadActions.report (VAL @id) @report))
+							(~>(HeadActions.report (VAL @id) @report))
+							(IF(?(EQUAL @report "OK"))
+							        (!(PRINT "Suspended"))
+								(=>(ExecutionManager.report (VAL @executionId) SUSPEND))
+								(=>(ExecutionManager.suspended (VAL @executionId) (VAL @state) (VAL @param) (VAL @xObj) (VAL @yObj) (VAL @zObj) (VAL @yawObj) (VAL @pitchObj) (VAL @rollObj)))
+								ELSEIF(?(EQUAL @report "FAILED"))
+									(!(PRINT "suspend failed"))
+									(~>(ExecutionManager.haveToRun (VAL @executionId)))
+						  	    		(=> (ExecutionManager.failed (VAL @executionId) SUSPEND HEAD_ACTION))
+								)
+						)
+					ELSEIF(?(EQUAL @state EXEC))
+						(!(Softmotion.getFreeId @smId))
+		 				(=>(Softmotion.request halt (VAL @smId)))
+						(^(Softmotion.report (VAL @smId) @report))
+						(~>(Softmotion.report (VAL @smId) @report))
+						(IF(?(EQUAL @report "OK"))
+							(=>(ExecutionManager.suspended (VAL @executionId) (VAL @state) (VAL @param) (VAL @xObj) (VAL @yObj) (VAL @zObj) (VAL @yawObj) (VAL @pitchObj) (VAL @rollObj)))
+							(!(PRINT "Suspended"))
+							(=>(ExecutionManager.report (VAL @executionId) SUSPEND))
+							ELSEIF(?(EQUAL @report "FAILED"))
+								(!(PRINT "suspend failed"))
+								(~>(ExecutionManager.haveToRun (VAL @executionId)))
+					  	    		(=> (ExecutionManager.failed (VAL @executionId) SUSPEND ARM_ACTION))
+							)	
+				)
+			)
+
+		;; Restart
+		(IF(?(|| (ExecutionManager.goToRestart (VAL @executionId) @stateRestart @paramRestart @xObj @yObj @zObj @yawObj @pitchObj @rollObj @armMove) (ExecutionManager.goToRestart (VAL @executionId)))) 
+			(~>(ExecutionManager.goToRestart (VAL @executionId) @state @param @xObj @yObj @zObj @yawObj @pitchObj @rollObj @armMove))
+			(~>(ExecutionManager.goToRestart (VAL @executionId)))
+			(!(PRINT "Restarting"))
+			(IF(?(||(EQUAL @stateRestart PRE) (EQUAL @stateRestart FIXE))) ;; no plan before, we restart from pre-conditions
+				(=>(ExecutionManager.verifyPrec (VAL @executionId)))
+				ELSEIF(?(||(EQUAL @stateRestart PLAN) (EQUAL @stateRestart EXEC)))
+					(IF(?(EQUAL @armMove TRUE)) ;; the arm for pick has moved, we restart from pre-conditions
+						(!(Mhp.cleanTrajectories))
+						(=>(ExecutionManager.verifyPrec (VAL @executionId)))
+						ELSE
+							(IF(?(Robot.hasObject @anyArm (VAL @object)))
+								(IF(?(EQUAL @anyArm @armForPlace))
+									(!(HeadActions.getFreeId @headId))
+									(=>(HeadActions.action isLookingAt (VAL @placement) NO_NAME (VAL @headId)))
+									(^(HeadActions.report (VAL @headId) @report))
+									(~>(HeadActions.report (VAL @headId) @report))
+									(IF(?(EQUAL @report "FALSE")) ;; we want to look the object 
+										(=>(ExecutionManager.fixePre (VAL @executionId) OBJECT (VAL @placement) RESTART))
+										ELSEIF(?(EQUAL @report "FAILED"))
+											(~>(ExecutionManager.haveToRun (VAL @executionId)))
+			 	    							(=> (ExecutionManager.failed (VAL @executionId) RESTART HEAD_ACTION))
+									       		ELSE
+												(!(Spark.getFreeId @sparkId))
+												(=>(Spark.request getJointAbsPose (VAL @placement) NO_NAME (VAL @sparkId)))
+												(^(Spark.result (VAL @sparkId) @xNew @yNew @zNew @yawNew @pitchNew @rollNew))
+												(IF(?(& (& (& (& (& (EQUAL @xNew @xObj) (EQUAL @yNew @yObj)) (EQUAL @zNew @zObj)) (EQUAL @yawNew @yawObj)) (EQUAL @pitchNew @pitchObj)) (EQUAL @rollNew @rollObj))) ;; the object has not moved
+														(IF(?(EQUAL @stateRestart PLAN))
+															(=>(ExecutionManager.execute (VAL @executionId) 0))
+															ELSEIF(?(& (EQUAL @stateRestart EXEC) (EQUAL @paramRestart ARM_ACTION)))
+																(!(Softmotion.getFreeId @smId))
+																(IF(?(EQUAL @armForPlace RIGHT))
+				 													(=>(Softmotion.request resume RARM (VAL @smId)))
+																	ELSE
+																		(=>(Softmotion.request resume LARM (VAL @smId)))
+																	)
+																(^(Softmotion.report (VAL @smId) @report))
+																(~>(Softmotion.report (VAL @smId) @report))
+																(IF(?(EQUAL @report "OK"))
+																	(=>(ExecutionManager.execute (VAL @executionId) 1))
+																	ELSE
+																		(!(PRINT "restart failed"))
+																		(~>(ExecutionManager.haveToRun (VAL @executionId)))
+							  	    										(=> (ExecutionManager.failed (VAL @executionId) RESTART ARM_ACTION))
+																	)
+																ELSEIF(?(& (EQUAL @stateRestart EXEC) (EQUAL @paramRestart GRIPPER)))
+																	(=>(ExecutionManager.execute (VAL @executionId) 1))
+																	(!(PRINT "After execute order"))
+														)
+													ELSE ;; the object has moved, we haved to restart from pre conditions
+														(!(Mhp.cleanTrajectories))
+														(=>(ExecutionManager.verifyPrec (VAL @executionId)))
+													)
+										)
+									ELSE
+										(!(Mhp.cleanTrajectories))
+										(=>(ExecutionManager.verifyPrec (VAL @executionId)))
+									)
+								ELSE ;; robot has not the object any more
+									(~>(ExecutionManager.haveToRun (VAL @executionId)))
+			 	    					(=> (ExecutionManager.failed (VAL @executionId) RESTART OBJECT))
+								)
+						)
+				)
+			(!(PRINT "End Restart"))
+			)
+		(!(PRINT "End Loop"))
+		)	
+
+	;; FINAL STATES
+
+	;;Action ok	
+	(IF(?(ExecutionManager.done (VAL @executionId)))
+		(~>(ExecutionManager.done (VAL @executionId)))
+		(!(PRINT "Action ok"))
+		(=> (ExecutionManager.report (VAL @executionId) OK))
+		)
+
+	;;Action failed	
+	(IF(?(ExecutionManager.failed (VAL @executionId) @state @problem))
+		(~>(ExecutionManager.failed (VAL @executionId) @state @problem))
+		(!(PRINT "Action FAILED"))
+		(=> (ExecutionManager.report (VAL @executionId) FAILED (VAL @state) (VAL @problem)))
+		)
+
+	;;Action stopped	
+	(IF(?(ExecutionManager.stopped (VAL @executionId)))
+		(~>(ExecutionManager.stopped (VAL @executionId)))
+		(!(PRINT "Action stopped"))
+		(=> (ExecutionManager.report (VAL @executionId) STOPPED))
+		)
+
+	
+	)
+
+
+)
+
+
 )
