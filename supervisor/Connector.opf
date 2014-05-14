@@ -22,6 +22,7 @@
 	 )
   )
 
+
 (defop |handleReport|
   :invocation(!(TabletConnector.handleReport ))
   :documentation "used to generalize common operations after receiving a command "
@@ -38,6 +39,24 @@
 	 (^(order stop))
 	 (~>(order stop))
 	 
+	 )
+  )
+
+(defop |setPlanManager|
+  :invocation (!(TabletConnector.setPlanManager))
+  :documentation "utility function to save some coding. Stops running plans on the robot and eventually starts the planning manager"
+  :body (
+
+	 (IF(?(PlanManager.isManagingAgent @agent))
+	    (=>(PlanManager.stop))
+	    (^(PlanManager.report @report))
+	    (~>(PlanManager.report (VAL @report)))
+	    )
+	 
+	 (IF(?(PlanManager.isRunning FALSE))
+	    (=>(PlanManager.managePlans))
+	    )
+
 	 )
   )
 (defop |getCommand|
@@ -57,12 +76,10 @@
 		  (^(parameter name @objectName))
 		  (~>(parameter name (VAL @objectName)))
 	
-	
+		  (!(TabletConnector.setPlanManager))
 		  (=>(PlanManager.goal TakeObject (. PR2_ROBOT (VAL @objectName) .)))
 		  (=>(PlanManager.newGoal TRUE))
-		  (IF(?(PlanManager.isRunning FALSE))
-		     (=>(PlanManager.managePlans))
-		     )
+
 		  (!(TabletConnector.handleReport))
 		  
 		     
@@ -72,11 +89,10 @@
 		  (~>(parameter name (VAL @placementName)))
 
 		  (IF(?(Robot.hasObject RIGHT @objectName))
+
+		     (!(TabletConnector.setPlanManager))
 		     (=>(PlanManager.goal ThrowObject (. PR2_ROBOT (VAL @objectName) PINK_TRASHBIN .)))
 		     (=>(PlanManager.newGoal TRUE))
-		     (IF(?(PlanManager.isRunning FALSE))
-			(=>(PlanManager.managePlans))
-			)
 		     (!(TabletConnector.handleReport))
 
 		     
@@ -84,12 +100,9 @@
 		  
 		  ELSEIF(?(EQUAL @command clean))
 		 
+		  (!(TabletConnector.setPlanManager))
 		  (=>(PlanManager.goal Clean (. TABLE_4 .)))
 		  (=>(PlanManager.newGoal TRUE))
-		  
-		  (IF(?(PlanManager.isRunning FALSE))
-		     (=>(PlanManager.managePlans))
-		     )
 		  (!(TabletConnector.handleReport))
 		  
 		  ELSEIF(?(EQUAL @command stop))
@@ -98,8 +111,21 @@
 		  ELSEIF(?(EQUAL @command give))
 		  (^(parameter name @objectName))
 		  (~>(parameter name (VAL @objectName)))
-		  (^(parameter name @actorName))
-		  (~>(parameter name (VAL @actorName)))
+		  (^(parameter actor @actorName))
+		  (~>(parameter actor (VAL @actorName)))
+
+		  (!(TabletConnector.setPlanManager))
+		  (IF(?(EQUAL @actorName robot))
+		     (=>(PlanManager.goal GiveObject (. PR2_ROBOT HERAKLES_HUMAN1 (VAL @objectName) .)))
+
+		     ELSE
+		     (=>(PlanManager.goal GiveObject (. HERAKLES_HUMAN1 PR2_ROBOT (VAL @objectName) .)))
+				  
+		     )
+		  (=>(PlanManager.newGoal TRUE))
+		  (!(TabletConnector.handleReport))
+
+
 		  ELSEIF(?(EQUAL @command list))
 		  (^(parameter type @listType))
 		  (~>(parameter type (VAL @listType)))

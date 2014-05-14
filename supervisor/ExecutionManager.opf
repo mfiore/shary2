@@ -580,7 +580,7 @@
 		     (!(ExecutionManager.handleReport ArmActions @detectPressionId @executionId TRUE NO_NAME))
 		     )
 
-		  (!(ArmActions.getFreeId @armPositionId))
+		  (!(ArmActions.getFreeId @actionId))
 		  (=>(ArmActions.action moveToExtendedPosition @arm @q0 @actionId))
 		  (!(ExecutionManager.handleReport ArmActions @actionId @executionId TRUE NO_NAME))
 		       
