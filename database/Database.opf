@@ -18,7 +18,7 @@
 	 (~>(AGENT-STATEMENT HERAKLES_HUMAN1 (VAL @object isReachable true)))
 	 (~>(AGENT-STATEMENT HERAKLES_HUMAN1 (VAL @object) isReachableBy PR2_ROBOT))
 	 (=>(Flag.ignoreReachability (VAL @object)))
-	 (!(SEND-MESSAGE @caller (Database.report OK)))
+	 (!(SEND-MESSAGE @caller (Database.result (. OK .) )))
 	 
 	 )
   )
@@ -65,7 +65,7 @@ The result is returned into $newFact. If it's not bounded than no rules have bee
    :body (
 
 	  (!(Database.updateLocal @fact))
-	  (!(SEND-MESSAGE @caller (Database.report OK)))
+	  (!(SEND-MESSAGE @caller (Database.result (. OK .))))
 	  
 	  
 	  )
@@ -93,13 +93,13 @@ The result is returned into $newFact. If it's not bounded than no rules have bee
 or FALSE to the supervisor"
    :body
    (
-    (!(SEND-MESSAGE @caller (Database.report OK)))
     (IF(?(VAL @fact))
-       (!(= @message (Database.result TRUE)))
+       (!(= @message (Database.result (. TRUE .))))
        
        ELSE
-       (!(= @message (Database.result FALSE)))
+       (!(= @message (Database.result (. FALSE .))))
        )
+    
     (!(SEND-MESSAGE @caller @message))
     
     )
@@ -125,7 +125,6 @@ $unboundVariables= lisp-list containing the variables for which we want to find 
     
     
     (!(= @result (N-ALL @unboundVariables @request)))
-    (!(SEND-MESSAGE @caller (Database.report OK)))
     (!(SEND-MESSAGE @caller (Database.result @result)))
     
     )
@@ -160,7 +159,7 @@ $unboundVariables= lisp-list containing the variables for which we want to find 
    :documentation "this procedure adds $fact into the database and returns $result. $fact= a composed term like (isOn cup_0 table_0). SHOULD CHECK FOR RULES BEFORE ADDING (What are these rules? To check)" 
    :body ( 
 	     (!(Database.add @fact))	  
-	     (!(SEND-MESSAGE @caller (Database.report OK)))
+	     (!(SEND-MESSAGE @caller (Database.result (. OK .))))
 	  
 
 
@@ -196,7 +195,7 @@ $unboundVariables= lisp-list containing the variables for which we want to find 
 	 
 	  (!(Database.remove @fact))
 	  
-	  (!(SEND-MESSAGE @caller (Database.report OK)))
+	  (!(SEND-MESSAGE @caller (Database.result (. OK .))))
 	  
 	   
 	  )
@@ -207,11 +206,11 @@ $unboundVariables= lisp-list containing the variables for which we want to find 
    :body (
 	  
 	  (IF (?(toMonitor (VAL @factToMonitor) @anEvent))
-	      (!(SEND-MESSAGE @caller (Database.report ERROR)))
+	      (!(SEND-MESSAGE @caller (Database.result (. ERROR .))))
 	      
 	      ELSE
 	      (=> (toMonitor (VAL @factToMonitor) (VAL @event)))
-	      (!(SEND-MESSAGE @caller (Database.report OK)))
+	      (!(SEND-MESSAGE @caller (Database.result (. OK .))))
 	      
 	      )	  
 	  )
@@ -222,7 +221,7 @@ $unboundVariables= lisp-list containing the variables for which we want to find 
    :body (
 	  
 	  (~> (toMonitor (VAL @factToMonitor) @event))
-	  (!(SEND-MESSAGE @caller (Database.report OK)))	  
+	  (!(SEND-MESSAGE @caller (Database.result (. OK .))))	  
 	  )
    )
 

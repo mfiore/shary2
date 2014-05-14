@@ -92,13 +92,13 @@ $unboundVariables= lisp-list containing the variables for which we want to find 
    :body (
 	  (? (TIME_TO_WAIT_DB $TIME_TO_WAIT_DB))
 	  (^ (|| (Database.result $result) (ELAPSED-TIME (TIME) $TIME_TO_WAIT_DB)))
-	  (IF(~ (BOUNDP $result))
-	     (!(= $result ERROR))
-	     
+	  (IF(?(~(Database.result @result)))
+	     (!(= $result (. .)))
 	     ELSE
-	     (~> (Database.result $result))
-	     )	  
+	     (~>(Database.result $result))
+	     )
+	  
 	  )
-   )
- ) 
-
+   )	 	  
+   
+)

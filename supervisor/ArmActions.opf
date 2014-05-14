@@ -34,9 +34,14 @@
 	  (IF(?(~(EQUAL @object NO_NAME)))
 	     ;;this is done because in take requestes MHP doesn't need the support that the object is on.
 	     (!(DatabaseInterface.findList (AGENT-STATEMENT PR2_ROBOT (VAL @object) isOn @realSupport) (. @realSupport .) @result) )
-
-	     (!(= @result (CAR @result)))
-	     (!(= @realSupport (CAR @result)))
+	     
+	     (IF(?(~(NULL @result)))
+		(!(= @result (CAR @result)))
+		(!(= @realSupport (CAR @result)))
+		
+		ELSE
+		(!(= @realSupport NO_NAME))
+		)
 	     )
 	  (=>(ArmActions.freeId (+ @actionId 1)))
 

@@ -8,6 +8,7 @@
    :invocation(PlanManager.managePlans)
    :documentation "this is the main procedure of the Plan Manager. It's constantly running, receiving goals from the higher level, asking the planner for plans, breaking them into actions and sending those to the appropriate modules for execution"
    :body (
+	  (=>(PlanManager.isRunning TRUE))
 	  (!(= @humanAgent HERAKLES_HUMAN1))
 					;get planning constants
 	  (?(PlanManager.maxPlanningTime @maxPlanningTime))
@@ -155,12 +156,14 @@
 		      
 		      ELSE
 		      (!(Acapela.say "Abandoning Task"))
+		      (=>(PlanManager.report FAILED))
 		      )
 		   
 		   )
 
 	  
 		)
+	  (=>(PlanManager.isRunning TRUE))
 	  )
    )
 

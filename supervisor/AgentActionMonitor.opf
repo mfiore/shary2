@@ -158,7 +158,9 @@
   :body (
 
 	 (!(DatabaseInterface.find (AGENT-STATEMENT PR2_ROBOT PINK_TRASHBIN isVisible true) @result))
-
+	 (IF(?(~(NULL @result)))
+	    (!(= @result (CAR @result)))
+	    )
 	 (IF(?(EQUAL @result TRUE))
 	    (!(AgentActionMonitor.activateMonitorSpheres (. PINK_TRASHBIN .) @agent))
 	    )
@@ -197,6 +199,8 @@
 	  
 	 (!(DatabaseInterface.find (AGENT-STATEMENT PR2_ROBOT PINK_TRASHBIN isVisible true) @result))
 
+	 (!(= @result (CAR @result)))
+
 	 (IF(?(EQUAL @result TRUE))
 	    (!(= @putThrowInference TRUE))
 	    ) 
@@ -207,6 +211,7 @@
 	       (!(AgentActionMonitor.activateMonitorSpheres (. PINK_TRASHBIN .) @agent))
 	       )
 	    ELSE
+	    (!(= @result (. .)))
 	    (!(DatabaseInterface.findList (AGENT-STATEMENT PR2_ROBOT @object isOn TABLE_4) (. @object .) @result))  ;table should not be hardcoded
 	    (IF(?(~(NULL @result)))
 	       (!(= @objects (CAR @result))) 

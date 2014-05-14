@@ -1,4 +1,5 @@
 ;general
+declare ff PlanManager.isRunning 0
 declare cwp PlanManager.isManagingAgent
 declare ff PlanManager.agentReport 1
 declare cwp PlanManager.stopAgent
