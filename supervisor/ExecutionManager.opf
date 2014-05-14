@@ -423,17 +423,6 @@
 
 		(=>(ExecutionManager.oldArmPosition @squareDistance))
 		)
-					;	    (!(DatabaseInterface.findList (AGENT-STATEMENT (VAL @sparkRobotName) (VAL @sparkAgent) armPosition @armPosition) (. @armPosition .) @result))
-					;	    (IF(?(~(EQUAL @result ERROR)))
-					;	       (!(= @result (CAR @result)))
-					;	       (!(= $armPosition (CAR @result)))
-					;	       )
-
-					;	    (!(DatabaseInterface.findList (AGENT-STATEMENT (VAL @sparkRobotName) (VAL @sparkAgent) orientation @orientation) (. @orientation .) @result))
-					;	    (IF(?(~(EQUAL @result ERROR)))
-					;	       (!(= @result (CAR @result)))
-					;	       (!(= $orientation (CAR @result)))
-					;	       )
 	     
 	     )
 	  

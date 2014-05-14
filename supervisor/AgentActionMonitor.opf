@@ -196,34 +196,33 @@
   :body (
 
 
-	  
+	 (!(= @putThrowInference FALSE))
 	 (!(DatabaseInterface.find (AGENT-STATEMENT PR2_ROBOT PINK_TRASHBIN isVisible true) @result))
+	 (IF(?(~(NULL @result)))
+	    (!(= @result (CAR @result)))
 
-	 (!(= @result (CAR @result)))
-
-	 (IF(?(EQUAL @result TRUE))
-	    (!(= @putThrowInference TRUE))
-	    ) 
+	    (IF(?(EQUAL @result TRUE))
+	       (!(= @putThrowInference TRUE))
+	       ) 
+	    )
 	 
-	 (!(= @objectList @objects))
 	 (IF(?(Agent.hasObject (VAL @agent) @object))
 	    (IF(?(EQUAL @putThrowInference TRUE))
 	       (!(AgentActionMonitor.activateMonitorSpheres (. PINK_TRASHBIN .) @agent))
 	       )
 	    ELSE
 	    (!(= @result (. .)))
-	    (!(DatabaseInterface.findList (AGENT-STATEMENT PR2_ROBOT @object isOn TABLE_4) (. @object .) @result))  ;table should not be hardcoded
-	    (IF(?(~(NULL @result)))
-	       (!(= @objects (CAR @result))) 
-	       (WHILE(?(~(NULL @objectList)))
-		     (!(= @object (CAR @objectList)))
-		     (IF(?(~(AgentActionMonitor.sphere (VAL @agent) (VAL @object) @sphereId)))
-			(!(AgentActionMonitor.activateMonitorSpheres (. @object .) @agent))
-			)
+	    (!(DatabaseInterface.findList (AGENT-STATEMENT PR2_ROBOT @object isOn TABLE_4) (. @object .) @objects))  ;table should not be hardcoded
+	    (WHILE(?(~(NULL @objects)))
+		  (!(= @object (CAR(CAR @objects))))
+		  (!(= @objects (CDR @objects)))
+		  (IF(?(~(AgentActionMonitor.sphere (VAL @agent) (VAL @object) @sphereId)))
+		     (!(AgentActionMonitor.activateMonitorSpheres (. @object .) @agent))
 		     )
+		  )
 	       )
-	    )	 
-
+	    
+	 
 	 
 	 )
   )
@@ -238,47 +237,44 @@
 	 (!(DatabaseInterface.findList (AGENT-STATEMENT PR2_ROBOT @object isOn TABLE_4) (. @object .) @result))  ;table should not be hardcoded
 	 (IF(?(NULL @result))
 	    (!(= @objects (. .)))
-	    
 	    ELSE
 	    (!(= @objects @result))
 	    )
 	 
 	 (!(DatabaseInterface.find (AGENT-STATEMENT PR2_ROBOT PINK_TRASHBIN isVisible true) @result))
-	 (IF(?(EQUAL @result TRUE))
-	    (!(= @putThrowInference TRUE))
-	    ) 
-	 ;;activate monitor spheres for every present agent
-	 (!(DatabaseInterface.findList (AGENT-STATEMENT PR2_ROBOT @presentAgents isPresent true) (. @presentAgents .) @result))   
+	 (!(= @putThrowInference FALSE))
 	 (IF(?(~(NULL @result)))
-	    (!(= @agents @result))
-	    
-	    (WHILE(?(~(NULL @agents)))
-		  (!(= @agent (CAR (CAR @agents))))
-		  (!(= @agents (CDR @agents)))
-		  (!(= @objectList @objects))
-		  (IF(?(Agent.hasObject (VAL @agent) @object))
-		     (IF(?(EQUAL @putThrowInference TRUE))
-			(!(AgentActionMonitor.activateMonitorSpheres (. PINK_TRASHBIN .) @agent))
-			)
-		     ELSE
-		     (WHILE(?(~(NULL @objectList)))
-			   (!(= @object (CAR (CAR @objectList))))
-			   (!(= @objectList (CDR @objectList)))
-			   (IF(?(~(AgentActionMonitor.sphere (VAL @agent) (VAL @object) @sphereId)))
-			      (!(AgentActionMonitor.activateMonitorSpheres (. @object .) @agent))
-			      )
-			   )
-		     )
-		  
-		  
-		  )
-	    
+	    (IF(?(EQUAL @result TRUE))
+	       (!(= @putThrowInference TRUE))
+	       ) 
 	    )
-
+	 ;;activate monitor spheres for every present agent
+	 (!(DatabaseInterface.findList (AGENT-STATEMENT PR2_ROBOT @presentAgents isPresent true) (. @presentAgents .) @agents))     
+	 (WHILE(?(~(NULL @agents)))
+	       (!(= @agent (CAR (CAR @agents))))
+	       (!(= @agents (CDR @agents)))
+	       (!(= @objectList @objects))
+	       (IF(?(Agent.hasObject (VAL @agent) @object))
+		  (IF(?(EQUAL @putThrowInference TRUE))
+		     (!(AgentActionMonitor.activateMonitorSpheres (. PINK_TRASHBIN .) @agent))
+		     )
+		  ELSE
+		  (WHILE(?(~(NULL @objectList)))
+			(!(= @object(CAR (CAR @objectList))))
+			(!(= @objectList (CDR @objectList)))
+			(IF(?(~(AgentActionMonitor.sphere (VAL @agent) (VAL @object) @sphereId)))
+			   (!(AgentActionMonitor.activateMonitorSpheres (. @object .) @agent))
+			   )
+			)
+		  )
+	       
+	       
+	       )
+	 
+	 )  
   
- 
-	 )
-  )
+  )	 
+
  (defop |addNewPickInference|
    :invocation(Monitor.objectAppears @object)
    :documentation "when an object appears we check if a human had it and in that case remove the inference" 
@@ -295,21 +291,19 @@
 	     
 	     
 	     ;;activate monitor spheres for every present agent
-	     (!(DatabaseInterface.findList (AGENT-STATEMENT PR2_ROBOT @presentAgents isPresent true) (. @presentAgents .) @result))   
-	     (IF(?(~(NULL @result)))
-		(!(= @agents (CAR @result)))
-		(WHILE(?(~(NULL @agents)))
-		      (!(= @agent (CAR @agents)))
-		      (!(= @agents (CDR @agents)))
-		      (IF(?(~(AgentActionMonitor.sphere (VAL @agent) (VAL @object) @sphereId)))
-			 (!(AgentActionMonitor.activateMonitorSpheres (. @object .) @agent))
-			 )
+	     (!(DatabaseInterface.findList (AGENT-STATEMENT PR2_ROBOT @presentAgents isPresent true) (. @presentAgents .) @agents))   
+	     (WHILE(?(~(NULL @agents)))
+		   (!(= @agent (CAR(CAR@agents))))
+		   (!(= @agents (CDR @agents)))
+		   (IF(?(~(AgentActionMonitor.sphere (VAL @agent) (VAL @object) @sphereId)))
+		      (!(AgentActionMonitor.activateMonitorSpheres (. @object .) @agent))
 		      )
-		)
+		   )
 	     )
-	  (!(SEM-V AgentActionMonitor.sem ))
 	  )
+   (!(SEM-V AgentActionMonitor.sem ))
    )
+
 
  (defop |MonitorSphereLoop|
    :invocation(AgentActionMonitor.startMonitorSphereLoop) 
