@@ -62,8 +62,7 @@
 	     (!(DatabaseInterface.findList (AGENT-STATEMENT PR2_ROBOT (VAL @object) isOn @realSupport) (. @realSupport .) @result) )
 	     
 	     (IF(?(~(NULL @result)))
-		(!(= @result (CAR @result)))
-		(!(= @realSupport (CAR @result)))
+		(!(= @realSupport (CAR(CAR @result))))
 		
 		ELSE
 		(!(= @realSupport NO_NAME))

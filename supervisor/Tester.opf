@@ -573,14 +573,16 @@
    :documentation " "
    :body (
 
-	  (!(DatabaseInterface.findList (AGENT-STATEMENT PR2_ROBOT @agent isPresent true) (. @agent .) @result))
-	  (!(= @agents (CAR @result)))
-	  (WHILE(?(~(NULL @agents)))
-		(!(= @agent (CAR @agents)))
-		(!(= @agent (CDR @agents)))
-		(!(AgentActionMonitor.activateMonitorSpheres (. @object .) @agent))
-		)
- 
+	  (!(DatabaseInterface.findList (fact @f) (. @f .) @result))
+	  (IF(?(~(NULL @result)))
+
+	     (WHILE(?(~(NULL @result)))
+		   (!(= @fact (CAR(CAR @result))))
+		   (!(PRINT @fact))
+		   (!(= @result (CDR @result)))
+		   )
+	     )
+
 	  )
    )
  
