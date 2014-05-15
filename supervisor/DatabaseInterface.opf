@@ -83,6 +83,7 @@ $unboundVariables= lisp-list containing the variables for which we want to find 
 	  (!(SEND-MESSAGE $ONTO_NAME (Database.removeMonitor $factToMonitor $SUP_NAME)))
 	  (!(DatabaseInterface.getResult $result))
 	  
+
 	  
 	)	
    )
@@ -92,13 +93,13 @@ $unboundVariables= lisp-list containing the variables for which we want to find 
    :body (
 	  (? (TIME_TO_WAIT_DB $TIME_TO_WAIT_DB))
 	  (^ (|| (Database.result $result) (ELAPSED-TIME (TIME) $TIME_TO_WAIT_DB)))
-	  (IF(?(~(Database.result @result)))
-	     (!(= $result (. .)))
-	     ELSE
+	  (IF(?(Database.result @result))
 	     (~>(Database.result $result))
+	     
+	     ELSE
+	     (!(= $result (. .)))
 	     )
-	  
 	  )
-   )	 	  
+   )	  
    
 )

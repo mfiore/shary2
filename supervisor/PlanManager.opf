@@ -339,17 +339,18 @@
 			 (^(ExecutionManager.report (VAL @executionId) @report))
 			 )
 		      )
-	  (IF(?(PlanManager.stopAgent robot))
+	  (IF(?(NULL @actions))
+	     (=>(PlanManager.agentReport robot OK))		
+	     
+	     ELSEIF(?(PlanManager.stopAgent robot))
 	     (~>(PlanManager.stopAgent robot))
 	     (=>(PlanManager.agentReport robot STOPPED))
 	     (IF(?(ExecutionManager.isExecutingAction @executionId))
 		(=>(ExecutionManager.stop @executionId))
 		(^(ExecutionManager.report @executionId @report))
 		(~>(ExecutionManager.report (VAL @executionId) (VAL @report)))
-		)
+		)    
 	     
-	     ELSE
-	     (=>(PlanManager.agentReport robot OK))		
 	     )
 	  (~>(PlanManager.isManagingAgent robot))
 	  )

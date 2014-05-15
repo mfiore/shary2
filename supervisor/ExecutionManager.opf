@@ -835,10 +835,11 @@
 	  ;;get the actual position for the throw
 	  (!(= @zf (+ @zp 0.60)))
 	 
+
 	  ;move the arm over the placement
 	  (!(ArmActions.getFreeId @actionId))
 	  (=>(ArmActions.action moveToX @arm @xp @yp @zf @actionId))
-	  (!(ExecutionManager.handleReport ArmActions @actionId @executionId TRUE NO_NAME))
+	  (!(ExecutionManager.handleReport ArmActions @actionId @executionId TRUE (VAL @placement)))
 	  
 	  
 	  ;;execute the throw
