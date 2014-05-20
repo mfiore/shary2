@@ -68,6 +68,7 @@
 	       (~> (order (VAL @command)))
 	       (!(= @idStr (TERM-STRING-CAT @id)))  
 	       (!(= @id (+ @id 1)))
+	       (=>(PlanManager.modality HUMAN))
 	       (IF(?(EQUAL @command stop))
 		  (!(TabletConnector.sendMessage (order stop))) 
 		  (=>(TabletConnector.shouldRun FALSE))

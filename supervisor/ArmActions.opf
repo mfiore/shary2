@@ -54,20 +54,24 @@
   )
 
  (defop |moveTo|
-   :invocation  (ArmActions.action moveTo @arm @task @armGoto @object @support @placement @useObjGoto @objGoto @actionId)
+   :invocation  (ArmActions.action moveTo @arm @task @armGoto @object @support @placement @useObjGoto @objGoto @pose @actionId)
    :documentation "generic procedure to move arm (note that arm start and objstart are not supported)"
    :body (
 	  (IF(?(~(EQUAL @object NO_NAME)))
+	     (!(= @result NULL))
 	     ;;this is done because in take requestes MHP doesn't need the support that the object is on.
 	     (!(DatabaseInterface.findList (AGENT-STATEMENT PR2_ROBOT (VAL @object) isOn @realSupport) (. @realSupport .) @result) )
 	     
 	     (IF(?(~(NULL @result)))
 		(!(= @realSupport (CAR(CAR @result))))
-		
+		   
 		ELSE
 		(!(= @realSupport NO_NAME))
 		)
+	     ELSE
+	     (!(= @realSupport NO_NAME))
 	     )
+	  
 	  (=>(ArmActions.freeId (+ @actionId 1)))
 
 	  (?(Mhp.arm (VAL @arm) @mhpArm))
@@ -87,6 +91,7 @@
 	  (=>(Softmotion.request moveArm @smArm @smId))
 	  (!(ArmActions.handleReport Softmotion @smId @actionId))
 	  (=>(ArmActions.report (VAL @actionId) "OK"))
+	  (=>(Robot.pose (VAL @arm) (VAL @pose)))
 	  (IF(?(EQUAL @task MHP_ARM_PICK_GOTO))
 	     (=>(Robot.armPosition (VAL @arm) @realSupport)) 
 	     (=>(Robot.closeToObject (VAL @arm) @object))
@@ -109,7 +114,7 @@
 	  (!(Mhp.makeArmGotoParameter 0 0 0 0 0 0 0 @armGoto))
 	  (!(= @objGoto (objGoto 0.0 0.0 0.0 0.0 0.0 0.0)))
 	  
-	  (=>(ArmActions.action moveTo @arm MHP_ARM_ESCAPE_OBJECT @armGoto @object NO_NAME NO_NAME 0 @objGoto @actionId))
+	  (=>(ArmActions.action moveTo @arm MHP_ARM_ESCAPE_OBJECT @armGoto @object NO_NAME NO_NAME 0 @objGoto OTHER @actionId))
 	  )
    )
  (defop |moveToX|
@@ -122,14 +127,14 @@
 	  (!(Mhp.makeArmGotoParameter 0 0 0 0 0 0 0 @armGoto))
 	  (!(= @objGoto (objGoto (VAL @x) (VAL @y) (VAL @z) 0.0 0.0 0.0)))
 
-	  (=>(ArmActions.action moveTo @arm @task @armGoto @object @support NO_NAME 15 @objGoto @actionId))
+	  (=>(ArmActions.action moveTo @arm @task @armGoto @object @support NO_NAME 15 @objGoto OTHER @actionId))
 	  
 	  )
    )
 
 
  (defop |moveToQ|
-   :invocation(ArmActions.action moveToQ @arm  @q0 @q1 @q2 @q3 @q4 @q5 @q6 @actionId)
+   :invocation(ArmActions.action moveToQ @arm  @q0 @q1 @q2 @q3 @q4 @q5 @q6 @pose @actionId)
    :documentation "Moves the arm to the q configuration"
    :body (
 	  (!(ArmActions.checkAndEscapeObject @arm))
@@ -137,7 +142,7 @@
 	  (!(Mhp.makeArmGotoParameter @q0 @q1 @q2 @q3 @q4 @q5 @q6 @armGoto))
 	  (!(= @objGoto (objGoto 0.0 0.0 0.0 0.0 0.0 0.0)))
 
-	  (=>(ArmActions.action moveTo @arm @task @armGoto @object @support NO_NAME 0 @objGoto @actionId))
+	  (=>(ArmActions.action moveTo @arm @task @armGoto @object @support NO_NAME 0 @objGoto @pose @actionId))
 	  
 	  )
    )
@@ -154,7 +159,7 @@
 	  (!(= @objGoto (objGoto 0.0 0.0 0.0 0.0 0.0 0.0)))
 	  (!(Mhp.makeArmGotoParameter 0 0 0 0 0 0 0 @armGoto))
 	
-	  (=>(ArmActions.action moveTo @arm MHP_ARM_PICK_GOTO @armGoto @object NO_NAME NO_NAME 0 @objGoto @actionId))
+	  (=>(ArmActions.action moveTo @arm MHP_ARM_PICK_GOTO @armGoto @object NO_NAME NO_NAME 0 @objGoto OTHER @actionId))
 
 	  
 	  
@@ -184,7 +189,7 @@
 	  (~>(Spark.result (VAL @sparkId) (VAL @xp) (VAL @yp) (VAL @zp) (VAL @yawp) (VAL @pitchp) (VAL @rollp))) 
 	  (!(= @objGoto (objGoto @xp @yp @zp 0.0 0.0 0.0)))
 
-	  (=>(ArmActions.action moveTo @arm @task @armGoto @object @support @placement 9 @objGoto @actionId))
+	  (=>(ArmActions.action moveTo @arm @task @armGoto @object @support @placement 9 @objGoto OTHER @actionId))
 	  )
    )
 
@@ -196,7 +201,9 @@
    :body (
 	  (!(ArmActions.checkAndEscapeObject @arm))
 	  (!(PRINT "going to rest position"))
-	  (=>(ArmActions.action moveToQ (VAL @arm)  0.6 0.4 -1.2 -1.0 0.0 -0.4 0.0 (VAL @actionId))) 
+;	  (=>(ArmActions.action moveToQ (VAL @arm)  0.6 0.4 -1.2 -1.0 0.0 -0.4 0.0 (VAL @actionId))) 
+	  (=>(ArmActions.action moveToQ (VAL @arm) -1.7 -0.098069 -0.8 -1.8 0.5 -0.432614 -1.730387 REST (VAL @actionId)))
+
 	  )
    )
 
@@ -207,7 +214,8 @@
 	  (!(ArmActions.checkAndEscapeObject @arm))
 	  (!(PRINT "going to extended position"))
 
-	  (=>(ArmActions.action moveToQ (VAL @arm) @q0 0 0 0 0 0 0 (VAL @actionId)))
+	  (=>(ArmActions.action moveToQ (VAL @arm) @q0 0 0 0 0 0 0 EXTENDED (VAL @actionId)))
+
 	  )
    )
 
@@ -217,7 +225,7 @@
    :body (
 	  (!(ArmActions.checkAndEscapeObject @arm))
 	  (!(PRINT "going to ready position"))
-	  (=>(ArmActions.action moveToQ @arm @q0 0.5 -0.4 -1.3 0.0 -0.5 0.0 (VAL @actionId)))
+	  (=>(ArmActions.action moveToQ @arm @q0 0.5 -0.4 -1.3 0.0 -0.5 0.0 READY (VAL @actionId)))
 	  )
    )
 
@@ -226,7 +234,7 @@
   :documentation "Moves to a position suitable for manipulation with the right arm"
   :body (
 	 (!(ArmActions.checkAndEscapeObject @arm))
-	 (=>(ArmActions.action moveToQ RIGHT -1.7 -0.098069 -0.8 -1.8 0.5 -0.432614 -1.730387 (VAL @actionId)))
+	 (=>(ArmActions.action moveToQ RIGHT -1.7 -0.098069 -0.8 -1.8 0.5 -0.432614 -1.730387 MANIPULATION (VAL @actionId)))
 	 )
   )
 

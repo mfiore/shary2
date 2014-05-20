@@ -1,6 +1,8 @@
 ;;GENERAL
 declare ff Acapela.isActive 0
 declare ff Acapela.server 0
+declare cwp Acapela.sentence
+declare cwp Acapela.number
 
 ;;init
 declare op_predicate Acapela.init

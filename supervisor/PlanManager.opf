@@ -15,43 +15,69 @@
 	  (?(PlanManager.maxPlanningFailures @maxPlanningFailures))
 	  (!(= @maxPlanningFailures 3))
 	  (?(PlanManager.timeToRetry @timeToRetry))
+	  (!(AgentActionMonitor.startMonitoringAgent @humanAgent))
+	  (!(Acapela.say "Hello!"))
+	  (^(ELAPSED-TIME (TIME) 1))
 	  (WHILE(?(PlanManager.shouldRun TRUE))
 		;;wait for a new goal or for a stop
-		(^(|| (PlanManager.newGoal TRUE) (PlanManager.shouldRun FALSE)))
+		(^(|| (PlanManager.newGoal TRUE) (PlanManager.shouldRun FALSE) (AgentActionMonitor.unexpectedAction (VAL @humanAgent))))
 		(IF(?(PlanManager.newGoal TRUE))
 		   (=>(PlanManager.newGoal FALSE)) ;we are treating the goal so it's no longer new
 		   (?(PlanManager.goal @goal @parameters))
 		   (!(= @planningFailures 0))
 		   ;;we loop until we try planning and the planner returns an "achieved" or we've failed enough times
-		   
+
+		   (IF(?(PlanManager.planningModality ADAPTS))
+		      	   (^(AgentActionMonitor.unexpectedAction @agent))
+			   (~>(AgentActionMonitor.unexpectedAction (VAL @agent)))
+		      )
+		   (!(PlanManager.tellGoal @goal @parameters))
+
+
 		   (!(= @status notStarted))
 		   (WHILE(?(& 
 			    (~(EQUAL @status completed)) 
 			    (< @planningFailures @maxPlanningFailures)
 			    ))
+			 (IF(?(~(Robot.pose RIGHT REST)))
+			    (!(ArmActions.getFreeId @actionId))
+			    (=>(ArmActions.action moveToManipulationPosition @actionId))
+			    (^(ArmActions.report (VAL @actionId) @report))
+			    (~>(ArmActions.report (VAL @actionId) @report))
+			    )
+
+			 (IF(?(PlanManager.planningModality ROBOT))
+			    (IF(?(&(PlanManager.agentReport robot OK) (PlanManager.agentReport (VAL @humanAgent) OK)))
+			       (!(Acapela.say "Let's see if we are done"))
+			       ELSEIF(?(EQUAL @planningFailures 0))
+			       (!(Acapela.say "Let me think of a plan..."))
+			       
+			       ELSE
+			       (!(Acapela.say "Let me think of another plan.."))
+			       )
+			    (^(ELAPSED-TIME (TIME) 1))
+			    )
+			    
 			 (=>(PlannerInterface.getPlan (VAL @goal) (VAL @parameters)))   ;;we ask for a plan
 			 (^(PlannerInterface.report @report))
 			 (~>(PlannerInterface.report (VAL @report)))
 			 (IF(?(EQUAL @report ACHIEVED))
 			    (!(= @status completed))
 			 ELSEIF(?(EQUAL @report OK))
-			    (!(Acapela.say "I've got a plan!"))
 
-			    (!(ArmActions.getFreeId @actionId))
-			    (=>(ArmActions.action moveToManipulationPosition @actionId))
-			    (^(ArmActions.report (VAL @actionId) @report))
-			    (~>(ArmActions.report (VAL @actionId) @report))
 
-			    (!(AgentActionMonitor.startMonitoringAgent @humanAgent))
+			    
 			    (^(PlannerInterface.result @plan))
 			    (~>(PlannerInterface.result (VAL @plan)))
 
 			    (!(== (VAL @plan) (. @robotActions @humanActions .)))     
 			    
-			    (IF(?(PlanManager.shouldTellPlan TRUE))
+			    (IF(?(PlanManager.planningModality ROBOT))
 			       (!(PlanManager.tellPlan @plan))
+			       (!(Acapela.say "Let's start!"))
 			       )			    
 			    ;;we launch the managing of the two planning lines
+
 
 			    (=>(PlanManager.manageRobotActions (VAL @robotActions)))   
 			    (=>(PlanManager.manageHumanActions (VAL @humanAgent) (VAL @humanActions)))
@@ -59,12 +85,23 @@
 			    (^(|| (PlanManager.agentReport robot @report) (PlanManager.agentReport (VAL @humanAgent) @report)  (PlanManager.stop) (AgentActionMonitor.unexpectedAction @agent)))
 			    ;;we treat every possible case. If one of the two agent has failed it's execution we stop the other one and try replanning. If one of the two agents has completed we wait for the other one. If the robot is stopped we abort planning.
 			    (IF(?(AgentActionMonitor.unexpectedAction @agent))
-			       (=>(PlanManager.stopAgent @humanAgent))
-			       (=>(PlanManager.stopAgent robot))
-			       (^(PlanManager.agentReport robot @report))
-			       (^(PlanManager.agentReport (VAL @humanAgent) @report))
+			       (IF(?(PlanManager.isManagingAgent (VAL @humanAgent)))
+				  (=>(PlanManager.stopAgent @humanAgent))
+				  (^(PlanManager.agentReport (VAL @humanAgent) @report))
+				  )
+			       (IF(?(PlanManager.isManagingAgent robot))
+				  (=>(PlanManager.stopAgent robot))
+				  (^(PlanManager.agentReport robot @report))
+				  )
+			       (IF(?(PlanManager.planningModality ROBOT))
+				  (!(Acapela.say "Do you want to do it in a different way? Let's see if I can help..."))
+				  (=>(PlanManager.planningModality ADAPTS))
+				  )
 			       			    
 			       ELSEIF(?(PlanManager.stop))
+			       (IF(?(PlanManager.planningModality HUMAN))
+				  (!(Acapela.say "Oh okay... I wait for further instructions"))
+				  )
 			       (IF(?(PlanManager.isManagingAgent (VAL @humanAgent)))
 				  (=>(PlanManager.stopAgent @humanAgent))
 				  (^(PlanManager.agentReport (VAL @humanAgent) @report))
@@ -144,10 +181,8 @@
 			    ELSE
 			    (^(ELAPSED-TIME (TIME) @timeToRetry))
 
-			    )
-			 
+			    )			 
 			 (!(PlanManager.clean))
-			 (!(AgentActionMonitor.stopMonitoringAgent @humanAgent))
 			 )
 		   (!(PRINT "stopping monitoring agent"))
 		   (IF(?(EQUAL @status completed))
@@ -164,6 +199,7 @@
 	  
 		)
 	  (=>(PlanManager.isRunning TRUE))
+	  (!(AgentActionMonitor.stopMonitoringAgent @humanAgent))
 	  )
    )
 
@@ -198,11 +234,13 @@
    :invocation (PlanManager.manageHumanActions @agent @actions)
    :documentation "Procedure to handle the human actions into a plan"
    :body (
+	  (!(= @oldObject NULL))
 	  (IF(?(~(NULL @actions)))
 	     (=>(PlanManager.isManagingAgent @agent))
 	     (!(= @tempActions (VAL @actions)))
 	     ;;loop until every action has been executed, we receive a stop commando or there is an unexpected action
-	     	     (WHILE(?(& 
+
+	     (WHILE(?(& 
 		      (~(NULL @actions))
 		      (~(PlanManager.agentReport (VAL @agent) @report))
 		      ))
@@ -210,12 +248,13 @@
 		   (!(= @actions (CDR @actions)))
 		   ;;get the action parameters
 		   (!(== (VAL @action) (. @actionToExecute @actionId @actionLinks .)))
-		  
+		   
 		   (WHILE(?(~(NULL @actionLinks))) ;;TO REPUT STOPAGENT
 			 (!(= @currentLink (CAR @actionLinks)))
 			 (^(|| (PlanManager.actionReport (VAL @currentLink) @report) (PlanManager.stopAgent (VAL @agent))))
 			 
 			 (IF(?(PlanManager.stopAgent (VAL @agent)))
+			    (~>(PlanManager.stopAgent (VAL @agent)))
 			    (=>(PlanManager.agentReport @agent STOPPED))
 			    (!(FAILED))
 			    )
@@ -223,11 +262,11 @@
 			    (=>(PlanManager.agentReport (VAL @agent) FAILURE))
 			    (!(FAILED))
 			    )
-		      (!(= @actionLinks (CDR @actionLinks)))
-		      )
+			 (!(= @actionLinks (CDR @actionLinks)))
+			 )
 		   (!(== (VAL @actionToExecute) (. @actionName @actionParameters .)))
 		   
-
+		   
 		   (IF(?(Action.type (VAL @actionName) MANIPULATION))
 		      (!(== (VAL @actionParameters) (. @object .)))
 		      
@@ -235,14 +274,15 @@
 		      (!(== (VAL @actionParameters) (. @object @placement .)))
 		      
 		      ) 
-		      
-
-		   (!(= @message (TERM-STRING-CAT "Human executes" @actionName)))
-		   (!(Acapela.say @message))
-
+		   
+		   (IF(?(PlanManager.planningModality ROBOT))
+		      (!(PlanManager.getActionString @actionName @actionParameters " " 0 @oldObject @followsHandover @actionString))
+		      (!(Acapela.say @actionString))
+		      )
+		   
 ;;if we haven't activated a monitor sphere activate it. Associate a monitor sphere id
-		      ;; with the id of the action to monitor  (?(Spark.monitorParameter (VAL @actionName) @parameterType))
-		      
+		   ;; with the id of the action to monitor  (?(Spark.monitorParameter (VAL @actionName) @parameterType))
+		   
 	     
 		   (?(Spark.monitorParameter (VAL @actionName) @parameterType))
 		   
@@ -260,37 +300,29 @@
 		   (=>(AgentActionMonitor.monitorAction @agent @actionId @sphereId))
 		   (^(|| (AgentActionMonitor.actionCompleted (VAL @agent) (VAL @actionId)) 
 		      (PlanManager.stopAgent (VAL @agent))))
-			 
+		   
 		   (IF(?(AgentActionMonitor.actionCompleted (VAL @agent) (VAL @actionId)))
 		      (~>(AgentActionMonitor.actionCompleted (VAL @agent) (VAL @actionId)))
 		      (=>(PlanManager.actionReport @actionId OK))
 		      
 		      ELSEIF(?(PlanManager.stopAgent (VAL @agent)))
+		      (~>(PlanManager.stopAgent (VAL @agent)))
 		      (=>(PlanManager.agentReport @agent STOPPED))
 		      (!(FAILED))      
 		      )
 		   
-		   )
-	     
-	     (IF(?(PlanManager.stopAgent (VAL @agent)))
-		(=>(PlanManager.agentReport @agent STOPPED))
-		(~>(PlanManager.agentReport @agent STOPPED))
-		
-		ELSEIF(?(~(PlanManager.agentReport (VAL @agent) @agentReport)))
-		(=>(PlanManager.agentReport @agent OK))
-		)
-	     
-	     ELSE
+		   )    
 	     (=>(PlanManager.agentReport @agent OK))
+	     (~>(PlanManager.isManagingAgent @agent))
 	     )
-	  (~>(PlanManager.isManagingAgent @agent))
 	  )
-
    )
  (defop |manageRobotActions|
    :invocation(PlanManager.manageRobotActions @actions)
    :documentation "Manages the execution of the robot actions"
    :body (
+	  (!(= @oldObject NULL))
+
 	  (WHILE(?(& (~ (NULL @actions)) (~ (PlanManager.stopAgent robot))))
 		(=>(PlanManager.isManagingAgent robot))
 		(!(= @currentAction (CAR @actions)))
@@ -299,7 +331,7 @@
 		(!(== (VAL @currentAction) (. @actionToExecute @actionId @actionLinks .)))
 		;;wait for previous linked actions to be completed or to fail
 
-		(WHILE(?(~(NULL @actionLinks))) ;;TO REPUT STOPAGENT
+		(WHILE(?(~(NULL @actionLinks))) 
 		      (!(= @currentLink (CAR @actionLinks)))
 		      (^(|| (PlanManager.actionReport (VAL @currentLink) @report)
 			 (PlanManager.stopAgent robot)))
@@ -317,8 +349,10 @@
 		      (!(== (VAL @actionToExecute) (. @actionName @actionParameters .)))
 		      (!(ExecutionManager.getFreeId @executionId))
 		      (!(PRINT "starting execution"))
-		      (!(= @message (TERM-STRING-CAT "I'm executing " @actionName)))
-		      (!(Acapela.say @message))
+		      (!(PlanManager.getActionString @actionName @actionParameters "I " 0 @oldObject @followsHandover @actionString))
+
+
+		      (!(Acapela.say @actionString))
 
 
 		      (=>(ExecutionManager.executeAction @actionName @actionParameters @executionId))
@@ -339,10 +373,8 @@
 			 (^(ExecutionManager.report (VAL @executionId) @report))
 			 )
 		      )
-	  (IF(?(NULL @actions))
-	     (=>(PlanManager.agentReport robot OK))		
-	     
-	     ELSEIF(?(PlanManager.stopAgent robot))
+	  	     
+	  (IF(?(PlanManager.stopAgent robot))
 	     (~>(PlanManager.stopAgent robot))
 	     (=>(PlanManager.agentReport robot STOPPED))
 	     (IF(?(ExecutionManager.isExecutingAction @executionId))
@@ -350,34 +382,205 @@
 		(^(ExecutionManager.report @executionId @report))
 		(~>(ExecutionManager.report (VAL @executionId) (VAL @report)))
 		)    
-	     
+	     ELSE
+	     (=>(PlanManager.agentReport robot OK))		
 	     )
+	 
 	  (~>(PlanManager.isManagingAgent robot))
 	  )
    
    )
 
+(defop |tellGoal|
+  :invocation(!(PlanManager.tellGoal @goal @parameters))
+  :documentation "Returns a text string containing a suitable verbalization for a goal"
+  :body (
+	 (IF(?(EQUAL @goal Clean))
+	    (IF(?(PlanManager.planningModality ROBOT))
+	       (!(Acapela.say "We will clean the table together."))
+	       (^(ELAPSED-TIME (TIME) 1))
+	       ELSEIF(?(PlanManager.planningModality ADAPTS))
+	       (!(Acapela.say "Uhm... I think you want to clean the table. Let's see if I can help..."))
+	       
+	       ELSEIF(?(PlanManager.planningModality HUMAN))
+	       (!(Acapela.say "Oh... so you want to clean the table? Let me think of a plan..."))
+	       (=>(PlanManager.planningModality ROBOT))
+	       )
+	    )
+	 
+	 )
+  )
+(defop |getActionString|
+  :invocation(!(PlanManager.getActionString @actionName @actionParameters @subject @nAction $oldObject $followsHandover $string))
+  :documentation "Returns a text string containing a suitable verbalization for an action"
+  :body (
+	 (!(= @message ""))
+	 (?(Action.type (VAL @actionName) @type))
+	 (IF(?(EQUAL @type MANIPULATION))
+	    (!(== (VAL @actionParameters) (. @object .)))
+			
+	    (IF(?(EQUAL @object $oldObject))
+	       (!(= @translatedObject "it "))
+	       ELSE
+	       (?(Acapela.translation (VAL @object) @translatedObject))
+	       (!(= @translatedObject (TERM-STRING-CAT "the " @translatedObject " ")))
+	       )
+	    (!(= $oldObject @object))
+	    
+	    (IF(?(|| (< @nAction 2) (EQUAL $followsHandover TRUE)))
+	       (!(= @message (TERM-STRING-CAT @message @subject)))
+	       )
+	    (!(= @message (TERM-STRING-CAT @message @actionName " " @translatedObject)))
+			
+	    ELSEIF(?(EQUAL @type HANDOVER))
+	    (!(== (VAL @actionParameters) (. @object @agent1 @agent2 .)))
+	    (IF(?(EQUAL @agent1 PR2_ROBOT))
+	       (!(= @subject2 "you "))
+	       
+	       ELSE
+	       (!(= @subject "you "))
+	       (!(= @subject2 "me "))
+	       )
+
+	       
+	    
+	    (IF(?(< @nAction 2))
+	       (!(= @message (TERM-STRING-CAT @message @subject)))
+	       )
+	    (IF(?(EQUAL @object $oldObject))
+	       (!(= @message (TERM-STRING-CAT @message "give it to " @subject2)))
+	       ELSE
+	       (?(Acapela.translation (VAL @object) @translatedObject))
+	       (!(= @translatedObject (TERM-STRING-CAT "the " @translatedObject " ")))
+	       (!(= @message (TERM-STRING-CAT @message "give " @subject2 @translatedObject)))
+	       )
+	    (!(= $oldObject @object))
+	    (!(= $followsHandover TRUE))
+	    
+	    ELSEIF(?(EQUAL @type PLACEMENT))
+	    (!(== (VAL @actionParameters) (. @object @placement .)))
+	    (?(Acapela.translation (VAL @object) @translatedObject))
+	    (?(Acapela.translation (VAL @placement) @translatedPlacement))
+	    (IF(?(EQUAL @object $oldObject))
+	       (!(= @translatedObject "it "))
+	       ELSE
+	       (?(Acapela.translation (VAL @object) @translatedObject))
+	       (!(= @translatedObject (TERM-STRING-CAT "the " @translatedObject " ")))
+	       )
+	    (!(= $oldObject @object))
+	    
+	    (IF(?(|| (< @nAction 2) (EQUAL $followsHandover TRUE)))
+	       (!(= @message (TERM-STRING-CAT @message @subject)))
+	       )
+	    (!(= @message (TERM-STRING-CAT @message @actionName " " @translatedObject "in the " @translatedPlacement " ")))
+	    
+	    )
+	 (!(= $string @message))
+
+	 )
+  )
+
+
  (defop |tellPlan|
    :invocation(!(PlanManager.tellPlan @plan))
    :documentation "Verbalizes a plan using acapela"
    :body (
-	  ;; (!(== (VAL @plan) (. @robotActions @humanActions .)))     
-	  ;; (WHILE(?(~ (NULL @humanActions)))
-	  ;; 	(!(PRINT "starting an action"))
-	  ;; 	(!(= @currentAction (CAR @humanActions)))
-	  ;; 	(!(= @actions (CDR @humanActions)))
-	  ;; 	(!(== (VAL @currentAction) (. @actionToExecute @actionId @actionLinks .)))
-	  ;; 	(!(== (VAL @actionToExecute) (. @actionName @actionParameters .)))
-	  ;; 	(!(== (VAL @actionParameters) (. @object @support @placement .)))
 
-	  ;; 	(IF(?(EQUAL @actionName take))
-	  ;; 	   (!(= @message (TERM-STRING-CAT @actionName " " @object)))
-		   
-	  ;; 	   ELSE
-	  ;; 	   (!(= @message (TERM-STRING-CAT @actionName " " @placement)))
-	  ;; 	   )
-	  ;; 	(!(Acapela.say @message))
-	  ;; 	)
+	  (!(== (VAL @plan) (. @robotActions @humanActions .)))     
+	  
+	  (!(Acapela.say "Okay... this is the plan"))
+	  (!(= @first TRUE))
+	  (WHILE(?(|| (~(NULL @robotActions)) (~(NULL @humanActions))))
+
+		(!(PlanManager.tellPossibleActions PR2_ROBOT @robotActions @first))
+
+		(!(PlanManager.tellPossibleActions human @humanActions @first))
+		
+		)	  
+	  (^(ELAPSED-TIME (TIME) 1))
 	  )
    )
+
+(defop |tellPossibleActions|
+  :invocation(!(PlanManager.tellPossibleActions @agentName $agentActions $first))
+  :documentation "Verabalizes all possible sequential actions (before the agent needs to wait for another agent's action"
+  :body (
+	 (!(= @hasUndefined FALSE))
+	 (!(= @followsHandover FALSE))
+	 (!(= @n 0))
+
+	 (IF(?(~(NULL $agentActions)))
+	    (!(= @actionsTold FALSE))
+	    (IF(?(EQUAL @agentName PR2_ROBOT))
+	       (!(= @subject "I "))
+	       (!(= @subject2 "you "))
+	       ELSE
+	       (!(= @subject "you "))
+	       (!(= @subject2 "me "))
+	       )
+	    (!(= @firstAgentAction TRUE))
+
+	    (IF(?(EQUAL $first TRUE))
+	       (!(Acapela.getSentence startSentence @message))
+	       
+	       ELSE
+	       (!(Acapela.getSentence continueSentence @message))
+	       )
+
+	    (!(= @nAction 1))
+	    (!(= @oldObject NULL))
+	    
+	    (WHILE(?(&(EQUAL @actionsTold FALSE) (~(NULL $agentActions))))
+		  (!(= @currentAgentAction (CAR $agentActions)))
+		  (!(== (VAL @currentAgentAction) (. @agentAction @actionId @agentLinks .)))
+		  (!(== (VAL @agentAction) (. @actionName @actionParameters .)))
+		
+		  (WHILE(?(& (~(NULL @agentLinks)) (EQUAL @actionsTold FALSE)))
+			(!(= @currentLink (CAR @agentLinks)))
+			(!(= @agentLinks (CDR @agentLinks)))
+			(IF(?(~(PlanManager.actionTold (VAL @currentLink))))
+			   (!(= @actionsTold TRUE))
+			   )		      
+			)
+		  (IF(?(EQUAL @actionsTold FALSE))
+		     (!(= $agentActions (CDR $agentActions)))
+		     (IF(?(EQUAL @actionName undefined))	
+			(=>(PlanManager.actionTold @actionId))
+			(!(= @hasUndefined TRUE))
+			
+		     
+			ELSE
+			(!(= @n (+ @n 1)))
+			(IF(?(EQUAL @firstAgentAction TRUE))
+			   (!(= @firstAgentAction FALSE))
+
+			   ELSE
+			   (IF(?(EQUAL @nAction 1))
+			      (!(= @message (TERM-STRING-CAT @message "and ")))
+			      (!(= @nAction 2))
+			      
+			      ELSEIF(?(EQUAL @nAction 2))
+			      (!(Acapela.getSentence continueSentence @continueSentence))
+			      (!(= @message (TERM-STRING-CAT @message ". " @continueSentence)))
+			      (!(= @nAction 1))
+
+			      )
+			   )
+			(!(PlanManager.getActionString @actionName @actionParameters @subject @nAction @oldObject @followsHandover @actionString))
+			(!(= @message (TERM-STRING-CAT @message @actionString)))
+			
+			(=>(PlanManager.actionTold @actionId))
+			)
+		     )
+		  )
+	    (IF(?(|| (& (EQUAL @n 1) (EQUAL @hasUndefined FALSE)) (> @n 1)))
+	       (!(Acapela.say @message))	       
+	       (!(= $first FALSE))
+	       )
+	    (!(PRINT @message))
+	    
+	    )
+	 )
+  
+  )
 )

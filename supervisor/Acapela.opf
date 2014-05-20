@@ -24,5 +24,15 @@
 	     )
 	  )
    )
+
+ (defop |getSentence|
+   :invocation(!(Acapela.getSentence @type $sentence))
+   :documentation "gets a random sentence of a certain type"
+   :body (
+	  (?(Acapela.number (VAL @type) @n))
+	  (!(= @choice (RAND @n)))
+	  (?(Acapela.sentence (VAL @type) (VAL @choice) $sentence))
+	  )
+   )
 )
 

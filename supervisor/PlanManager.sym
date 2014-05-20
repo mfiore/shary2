@@ -7,6 +7,8 @@ declare ff PlanManage.actionReport 1
 declare cwp PlannerInterface.report 
 declare be PlanManager.managePlans
 declare cwp PlanManager.stop
+declare cwp PlanManager.actionTold 
+declare ff PlanManager.planningModality 0
 
 ;manage plans
 declare be PlanManager.managePlans

@@ -8,7 +8,7 @@
 (Robot.simu FALSE)
 (Robot.armPosition RIGHT FREE)
 (Robot.armPosition LEFT FREE)
-
+(Robot.pose RIGHT REST)
 
 (SUP_NAME OPRS_SUP)
 (PlanManager.shouldRun true)

@@ -6,6 +6,35 @@
 
 (
 
+ (defop |testGetActionString|
+   :invocation(!(Tester.testGetActionString))
+   :body (
+	  (!(= @actionName handover))
+	  (!(= @actionParameters (. WALLE_TAPE HERAKLES_HUMAN1 PR2_ROBOT .)))
+	  (!(PlanManager.getActionString @actionName @actionParameters "I " 0 @oldObject @followsHandover @actionString))
+	  (!(PlanManager.getActionString @actionName @actionParameters "I " 0 @oldObject @followsHandover @actionString))
+	  (!(PlanManager.getActionString @actionName @actionParameters "I " 0 @oldObject @followsHandover @actionString))
+	  )
+   )
+ (defop |testTellPlan|
+   :invocation(!(Tester.testTellPlan))
+   :body (
+	  (!(Controller.initAll))
+	  (=>(PlanManager.goal Clean (. TABLE_4 .)))
+	  (?(PlanManager.goal @goal @parameters))
+	  (=>(PlannerInterface.getPlan (VAL @goal) (VAL @parameters)))   ;;we ask for a plan
+	  (^(PlannerInterface.report @report))
+	  (~>(PlannerInterface.report (VAL @report)))
+	  (IF(?(EQUAL @report OK))
+	     (^(PlannerInterface.result @plan))
+	     (~>(PlannerInterface.result (VAL @plan)))
+	     (!(PlanManager.tellPlan @plan))
+			       
+	     )
+			 
+	  )
+   )
+
  (defop |testWeirdError|
    :invocation(!(Tester.testWeirdError))
    :body (
@@ -285,8 +314,8 @@
    :documentation " "
    :body (
 	  (!(Controller.initAll))
-	  (=>(Robot.hasObject RIGHT WALLE_TAPE))
-	  (=>(ExecutionManager.execute handover GIVE WALLE_TAPE HERAKLES_HUMAN1 1))
+	  (=>(Robot.hasObject RIGHT LOTR_TAPE))
+	  (=>(ExecutionManager.execute handover GIVE LOTR_TAPE HERAKLES_HUMAN1 1))
 
 	    
 	  )

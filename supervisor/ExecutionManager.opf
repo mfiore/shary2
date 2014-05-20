@@ -154,6 +154,7 @@
 	       (!(ExecutionManager.cleanModuleRequestes))
 	       (IF(?(~(EQUAL @object NO_NAME)))
 		  (!(DatabaseInterface.setReachabilityFalse (VAL @object) @result)) ;;the robot tought that the object was reachable while, in fact, it was not (shouldn't this be in armactions?)
+		  (!(Acapela.say "I can't seem to reach it..."))
 		  )
 	       (!(SEM-V ExecutionManager.sem))
 	       (!(FAILED))
@@ -312,8 +313,10 @@
 	  (!(Spark.getFreeId @sparkId))
 	  (=>(Spark.request setObjectInHand PR2_ROBOT (VAL @object) (VAL @armForPick) TRUE (VAL @sparkId)))
 	  (!(ExecutionManager.handleReport Spark @sparkId @executionId FALSE NO_NAME))
-	  
+
 	  (!(DatabaseInterface.add (AGENT-STATEMENT PR2_ROBOT PR2_ROBOT hasInHand (VAL @object)) @result))
+
+	  (!(AgentActionMonitor.cleanObjectMonitorSpheres (VAL @object)))
 	  (~>(ExecutionManager.isExecutingAction (VAL @executionId)))
 	  (!(SEM-V ExecutionManager.sem))
 	  )
@@ -536,14 +539,10 @@
 	    ELSE
 	    (!(= @inRange true))
 	    (!(ExecutionManager.getQForHuman @arm @agent @q0))
-	    (IF(?(EQUAL @type GIVE))
-	       (!(Acapela.say "I'm ready to give you the item"))
+	    (IF(?(~(AgentActionMonitor.isMonitoringAgent (VAL @agent) @monitorId)))
+		 (!(AgentActionMonitor.startMonitoringAgent @agent))
+		 )
 	       
-	       ELSEIF(?(EQUAL @type GRAB))
-	       (!(Acapela.say "Could you give me the item?"))
-	       )
-	    (!(MonitorManager.getFreeId @monitorId))
-	    (!(MonitorManager.monitorTarget @agent @humanHead @monitorSuccessConditions @monitorFailureConditions HIGH @monitorId)) 
 
 	    )
 	 
@@ -636,10 +635,10 @@
 		     )
 		  (!(= @time ok))
 		  (IF(?(EQUAL @type GIVE))
-		     (!(Acapela.say "I'm ready to give you the item. Are you still interested?"))
+		     (!(Acapela.say "Are you sure you want it?"))
 		  
 		     ELSEIF(?(EQUAL @type GRAB))
-		     (!(Acapela.say "I'm ready to take the item. Could you please give it to me?"))
+		     (!(Acapela.say "Can you give that to me?"))
 		     )
 		  )
 	       ;;WAIT before getting the new observations
@@ -655,24 +654,24 @@
 		  (!(ExecutionManager.getQForHuman @arm @agent @qo))
 		  )
 	       
-	       ;;if the user is out of range and the monitor has not failed stop the monitor. If the user is in range and we are not monitoring it start the monitor.
+	       ;; ;;if the user is out of range and the monitor has not failed stop the monitor. If the user is in range and we are not monitoring it start the monitor.
 	       
-	       (IF(?(EQUAL @inRange true))
-		  (IF(?(~(MonitorManager.isMonitoringTarget (VAL @monitorId))))
-		     (!(MonitorManager.getFreeId @monitorId))
-		     (!(MonitorManager.monitorTarget @agent @humanHead @monitorSuccessConditions @monitorFailureConditions HIGH @monitorId)) 
-		     )
-		  ELSE
-		  (IF(?(MonitorManager.isMonitoringTarget (VAL @monitorId)))
-		     (IF(?(~(MonitorManager.report (VAL @monitorId) @report)))
-			(=>(MonitorManager.cancelMonitoring (VAL @monitorId)))
-			(^(MonitorManager.report (VAL @monitorId) @report))
-			(~>(MonitorManager.report (VAL @monitorId) @report))
-			ELSE
-			(~>(MonitorManager.report (VAL @monitorId) @report))
-			)
-		     )
-		  )
+	       ;; (IF(?(EQUAL @inRange true))
+	       ;; 	  (IF(?(~(MonitorManager.isMonitoringTarget (VAL @monitorId))))
+	       ;; 	     (!(MonitorManager.getFreeId @monitorId))
+	       ;; 	     (!(MonitorManager.monitorTarget @agent @humanHead @monitorSuccessConditions @monitorFailureConditions HIGH @monitorId)) 
+	       ;; 	     )
+	       ;; 	  ELSE
+	       ;; 	  (IF(?(MonitorManager.isMonitoringTarget (VAL @monitorId)))
+	       ;; 	     (IF(?(~(MonitorManager.report (VAL @monitorId) @report)))
+	       ;; 		(=>(MonitorManager.cancelMonitoring (VAL @monitorId)))
+	       ;; 		(^(MonitorManager.report (VAL @monitorId) @report))
+	       ;; 		(~>(MonitorManager.report (VAL @monitorId) @report))
+	       ;; 		ELSE
+	       ;; 		(~>(MonitorManager.report (VAL @monitorId) @report))
+	       ;; 		)
+	       ;; 	     )
+	       ;; 	  )
 	       (IF(?(EQUAL @task waitingGrasp)) ;if we are waiting a grasp and detecting pressure we open or close the gripper depending on the kind of handover
 		  (IF(?(Robot.gripper (VAL @arm) DETECTED_PRESSION))
 		     (~>(Robot.gripper (VAL @arm) DETECTED_PRESSION))
@@ -769,17 +768,23 @@
 	   
 	    ELSE
 	    (=>(ExecutionManager.report @executionId FAILURE))
-	    (!(Acapela.say "Well... too bad. Have a nice day."))
+	    (!(Acapela.say "Well... too bad."))
+	    )
+	 (!(ArmActions.getFreeId @actionId))
+	 (IF(?(~(Robot.pose RIGHT REST)))
+	    (=>(ArmActions.action moveToManipulationPosition @actionId))
+	    (^(ArmActions.report (VAL @actionId) @report))
+	    (~>(ArmActions.report (VAL @actionId) @report))
 	    )
 	 (!(ExecutionManager.cleanModuleRequestes))
 	 ;;stop any remaining monitor (should not be there actually but still...)
-	 (IF(?(MonitorManager.target @any1 (VAL @monitorId) @any2))
-	    (^(MonitorManager.report (VAL @monitorId) @report))
-	    (~>(MonitorManager.report (VAL @monitorId) @report))
+	 ;; (IF(?(MonitorManager.target @any1 (VAL @monitorId) @any2))
+	 ;;    (^(MonitorManager.report (VAL @monitorId) @report))
+	 ;;    (~>(MonitorManager.report (VAL @monitorId) @report))
 	    
-	    ELSEIF(?(MonitorManager.report (VAL @monitorId) @report))
-	    (~>(MonitorManager.report (VAL @monitorId) @report))
-	    )
+	 ;;    ELSEIF(?(MonitorManager.report (VAL @monitorId) @report))
+	 ;;    (~>(MonitorManager.report (VAL @monitorId) @report))
+	 ;;    )
 	 (IF(?(Timer.isRunning (VAL @timerId)))
 	    (=>(Timer.stopTimer @timerId))
 	    )
