@@ -1,2 +1,2 @@
-declare op_predicate Controller.initAll
-declare op_predicate Controller.stopAll
+declare op_predicate Controller.initAll  ;inits all modules
+declare op_predicate Controller.stopAll  ;stops all modules

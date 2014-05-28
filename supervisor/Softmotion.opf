@@ -37,9 +37,11 @@
 	  (?(Softmotion.arm @arm (VAL @armId)))
 	  (IF(?(EQUAL @arm RIGHT))
 	     (!(SEM-P Softmotion.semRArm))
+	     (!(= @armJoint RIGHT_ARM))
 	     
 	     ELSE
 	     (!(SEM-P Softmotion.semLArm))
+	     (!(= @armJoint LEFT_ARM))
 	     )
 	  
 	  (=>(Softmotion.freeId (+ @id 1)))
@@ -51,7 +53,7 @@
 		(trackMode PR2SM_TRACK_POSTER )
 		(robotPart (VAL @armId)))))
 
-	  (!(GenomInterface.handleRequest  PR2SOFTMOTION PR2SOFTMOTION_TRACKQ (Softmotion.stop (VAL @id)) (Robot.isMovingArm (VAL @arm) TRUE) (Robot.isMovingArm (VAL @arm) FALSE) 300 (VAL @parameters) @report @result))
+	  (!(GenomInterface.handleRequest  PR2SOFTMOTION PR2SOFTMOTION_TRACKQ (Softmotion.stop (VAL @id)) (Robot.isMoving (VAL @armJoint) TRUE) (Robot.isMovingArm (VAL @armJoint) FALSE) 300 (VAL @parameters) @report @result))
 	  (=>(Softmotion.report (VAL @id) (VAL @report)))
 	  (=>(Softmotion.freeId (+ @id 1)))
 	 
@@ -109,7 +111,7 @@
 	   
 	   
 
-	   (!(GenomInterface.handleRequest PR2SOFTMOTION PR2SOFTMOTION_GOTOQ (Softmotion.stop (VAL @id)) (Robot.isMovingHead TRUE) (Robot.isMovingHead FALSE) 300 (VAL @parameters) @report @result))
+	   (!(GenomInterface.handleRequest PR2SOFTMOTION PR2SOFTMOTION_GOTOQ (Softmotion.stop (VAL @id)) (Robot.isMoving HEAD TRUE) (Robot.isMoving HEAD FALSE) 300 (VAL @parameters) @report @result))
 	   (=>(Softmotion.report (VAL @id) (VAL @report)))
 	   (!(SEM-V Softmotion.semHead))
 
@@ -156,10 +158,9 @@
 	  (=>(Softmotion.freeId (+ @id 1)))
 	  
 	  (!(GenomInterface.handleRequest PR2SOFTMOTION PR2SOFTMOTION_STOP (Softmotion.stop (VAL @id)) (FALSE) (FALSE) 300  NIL @report @result))
-	  (=> (Robot.isMovingHead FALSE))
-	  (=> (Robot.isMovingArm RIGHT FALSE))
-	  (=> (Robot.isMovingArm LEFT FALSE))
-	  (=> (Robot.isMoving FALSE))
+	  (=> (Robot.isMoving HEAD FALSE))
+	  (=> (Robot.isMoving RIGHT_ARM FALSE))
+	  (=> (Robot.isMoving LEFT_ARM FALSE))
 	  (=>(Softmotion.report (VAL @id) (VAL @report)))
 
 	  (!(SEM-V Softmotion.semStop))
@@ -184,54 +185,54 @@
 	  
 	  (!(= @irAddFact (FALSE)))
 	  (IF(?(EQUAL @state ROPEN))
-	     (!(= @stopFact (Robot.gripper RIGHT OPEN)))
+	     (!(= @stopFact (Robot.gripperStatus RIGHT OPEN)))
 	     
 	     ELSEIF(?(EQUAL @state RRELEASE))
-	     (!(= @stopFact (Robot.gripper RIGHT OPEN_AFTER_PRESSION)))
-	     (!(= @irAddFact (Robot.gripper RIGHT WAITING_PRESSION)))
+	     (!(= @stopFact (Robot.gripperStatus RIGHT OPEN_AFTER_PRESSION)))
+	     (!(= @irAddFact (Robot.gripperStatus RIGHT WAITING_PRESSION)))
 
 	     ELSEIF(?(EQUAL @state RCLOSE))
-	     (!(= @stopFact (Robot.gripper RIGHT CLOSE)))
+	     (!(= @stopFact (Robot.gripperStatus RIGHT CLOSE)))
 	     
 	     ELSEIF(?(EQUAL @state RCANCEL))
-	     (IF(?(Robot.gripper RIGHT WAITING_PRESSION))
-		(!(= @stopFact (Robot.gripper RIGHT CLOSE)))
+	     (IF(?(Robot.gripperStatus RIGHT WAITING_PRESSION))
+		(!(= @stopFact (Robot.gripperStatus RIGHT CLOSE)))
 		
-		ELSEIF(?(Robot.gripper RIGHT WAITING_CONTACT))
-		(!(= @stopFact (Robot.gripper RIGHT OPEN)))
+		ELSEIF(?(Robot.gripperStatus RIGHT WAITING_CONTACT))
+		(!(= @stopFact (Robot.gripperStatus RIGHT OPEN)))
 		
 		ELSE
 		(!(= @stopFact (FALSE))) 
 		)
 	     
 	     ELSEIF(?(EQUAL @state RGRAB))
-	     (!(= @stopFact (Robot.gripper RIGHT CLOSE_AFTER_CONTACT)))
-	     (!(= @irAddFact (Robot.gripper RIGHT WAITING_CONTACT)))
+	     (!(= @stopFact (Robot.gripperStatus RIGHT CLOSE_AFTER_CONTACT)))
+	     (!(= @irAddFact (Robot.gripperStatus RIGHT WAITING_CONTACT)))
 	     
 	     
 	     ELSEIF(?(EQUAL @state LOPEN))
-	     (!(= @stopFact (Robot.gripper LEFT OPEN)))
+	     (!(= @stopFact (Robot.gripperStatus LEFT OPEN)))
 	     
 	     ELSEIF(?(EQUAL @state LRELEASE))
-	     (!(= @stopFact (Robot.gripper LEFT OPEN_AFTER_PRESSION)))
-	     (!(= @irAddFact (Robot.gripper LEFT WAITING_PRESSION)))
+	     (!(= @stopFact (Robot.gripperStatus LEFT OPEN_AFTER_PRESSION)))
+	     (!(= @irAddFact (Robot.gripperStatus LEFT WAITING_PRESSION)))
 
 	     ELSEIF(?(EQUAL @state LCLOSE))
-	     (!(= @stopFact (Robot.gripper LEFT CLOSE)))
+	     (!(= @stopFact (Robot.gripperStatus LEFT CLOSE)))
 	     
 	     ELSEIF(?(EQUAL @state LCANCEL))
-	     (IF(?(Robot.gripper LEFT WAITING_PRESSION))
-		(!(= @stopFact (Robot.gripper LEFT CLOSE)))
+	     (IF(?(Robot.gripperStatus LEFT WAITING_PRESSION))
+		(!(= @stopFact (Robot.gripperStatus LEFT CLOSE)))
 		
-		ELSEIF(?(Robot.gripper LEFT WAITING_CONTACT))
-		(!(= @stopFact (Robot.gripper LEFT OPEN)))
+		ELSEIF(?(Robot.gripperStatus LEFT WAITING_CONTACT))
+		(!(= @stopFact (Robot.gripperStatus LEFT OPEN)))
 		ELSE
 		(!(= @stopFact (FALSE))) 
 		)
 	    
 	     ELSEIF(?(EQUAL @state LGRAB))
-	     (!(= @stopFact (Robot.gripper LEFT CLOSE_AFTER_CONTACT)))
-	     (!(= @irAddFact (Robot.gripper LEFT WAITING_CONTACT)))
+	     (!(= @stopFact (Robot.gripperStatus LEFT CLOSE_AFTER_CONTACT)))
+	     (!(= @irAddFact (Robot.gripperStatus LEFT WAITING_CONTACT)))
 	     
 	     )
 
@@ -305,12 +306,12 @@
   :body (
 	  (IF(?(||(EQUAL @state ROPEN) (EQUAL @state RCLOSE) (EQUAL @state RCANCEL) (EQUAL @state RGRAB) (EQUAL @state RRELEASE)))
 
-	     (!(= @stopFact (Robot.gripper RIGHT DETECTED_PRESSION)))
-	     (!(= @irAddFact (Robot.gripper RIGHT DETECTING_PRESSION)))	     
+	     (!(= @stopFact (Robot.gripperStatus RIGHT DETECTED_PRESSION)))
+	     (!(= @irAddFact (Robot.gripperStatus RIGHT DETECTING_PRESSION)))	     
 	     ELSE
 
-	     (!(= @stopFact (Robot.gripper LEFT DETECTED_PRESSION)))
-	     (!(= @irAddFact (Robot.gripper LEFT DETECTING_PRESSION)))	     
+	     (!(= @stopFact (Robot.gripperStatus LEFT DETECTED_PRESSION)))
+	     (!(= @irAddFact (Robot.gripperStatus LEFT DETECTING_PRESSION)))	     
 	     )
 	  
 	 (!(= @parameters (PR2SM_gripperGrabRelease (VAL @state))))	     

@@ -5,6 +5,16 @@
 ;;it should be extended to handle different possibilities
 
 (
+
+ (defop |init|
+   :invocation(!(DatabaseInterface.init))
+   :documentation "Inits the module. For now we put a semaphore for the get result but it could be better to change the result to include an id. Too lazy to do that now =)"
+   :body (
+	     (!(SEM-CREATE DatabaseInterface.sem 1 SEM-FIFO))
+	     )
+	  )
+   )
+
  
 (defop |setReachabilityFalse|
   :invocation(!(DatabaseInterface.setReachabilityFalse @object $result))
@@ -91,6 +101,7 @@ $unboundVariables= lisp-list containing the variables for which we want to find 
    :invocation(!(DatabaseInterface.getResult $result))
    :documentation "this procedure handles the return message of the DB"
    :body (
+	  (!(SEM-P DatabaseInterface.sem))
 	  (? (TIME_TO_WAIT_DB $TIME_TO_WAIT_DB))
 	  (^ (|| (Database.result $result))) ;(ELAPSED-TIME (TIME) $TIME_TO_WAIT_DB)))
 	  (IF(?(Database.result $result))
@@ -99,6 +110,7 @@ $unboundVariables= lisp-list containing the variables for which we want to find 
 	     ELSE
 	     (!(= $result (. .)))
 	     )
+	  (!(SEM-V DatabaseInterface.sem))
 	  )
    )	  
    

@@ -56,7 +56,7 @@
 		 ELSE 
 		 (=>(ExecutionManager.execute handover GIVE @object @agent2 @executionId))
 		 )
-	    ELSEIF(?(EQUAL @actionName undefined))
+	    ELSEIF(?(EQUAL @actionName undefined))  ;this kind of actions are not executed at the moment and the module returns just an ok
 	    (=>(ExecutionManager.report (VAL @executionId) OK))
 	    
 	    )
@@ -75,7 +75,7 @@
 					;If the robot has only one free arm try the take action with that arm. 
 	 (IF(?(& (Robot.hasObject RIGHT @anyObject) (~(Robot.hasObject LEFT @anyObject2))))
 	    (!(= $armForTake LEFT))
-	     
+	    
 	    ELSEIF(?(&(~(Robot.hasObject RIGHT @anyObject)) (Robot.hasObject LEFT @anyObject2)))
 	    (!(= $armForTake RIGHT))
 	     
@@ -132,39 +132,45 @@
 	    (=>(Softmotion.request useGripper @state @smId))
 	    (^(Softmotion.report (VAL @smId) @report))
 	    )
-	 (^(Robot.isMovingArm RIGHT FALSE))
-	 (^(Robot.isMovingArm LEFT FALSE))
+	 (^(Robot.isMoving RIGHT_ARM FALSE))
+	 (^(Robot.isMoving LEFT_ARM FALSE))
 	 )
   )
  (defop |handleReport|
    :invocation(!(ExecutionManager.handleReport @module @id @executionId @stoppable @object))
-   :documentation "Utility function to avoid some code duplication when waiting for the response of a genom module. This can't be used when we don't want to fail if the genom request fails"
+   :documentation "Utility function to avoid some code duplication when waiting for the response of a genom module. This can't be used when we don't want to fail if the genom request fails
+                   @module is the name of the module we are waiting a report (Spark, Softmotion...)
+                   @id is the id of the request we are waiting a report
+                   @executionId is the id of the current execution
+                   @stoppable is TRUE when we want to be able to stop while waiting for a report
+                   @object NO_NAME or set to an object name is used to set reachability false when we fail an action oriented to an object. This could be generalized in a better mechanism to input failure facts"
    :body (
-	 (!(= @reportName (TERM-STRING-CAT (VAL @module) ".report")))
-	 (!(= @reportName (MAKE-ATOM @reportName)))
+	  (!(= @reportName (TERM-STRING-CAT (VAL @module) ".report")))   ;we create the real report name
+	  (!(= @reportName (MAKE-ATOM @reportName)))
 
-	 (^(|| (@reportName (VAL @id) @report) (ExecutionManager.halt (VAL @executionId)) (& (EQUAL @stoppable TRUE) (ExecutionManager.stop (VAL @executionId)) )))
+	  ;;we wait until we have a report, we are stopped or paused.
+	 (^(|| (@reportName (VAL @id) @report) (& (EQUAL @stoppable TRUE) ExecutionManager.halt (VAL @executionId)) (& (EQUAL @stoppable TRUE) (ExecutionManager.stop (VAL @executionId)) )))
 	 
-	 (IF(?(@reportName (VAL @id) @report))   
+	 (IF(?(@reportName (VAL @id) @report))   e;if we have a report
 	    (~>(@reportName (VAL @id) (VAL @report)))
 	    (IF(?(~(EQUAL @report "OK")))   ; if we have a negative report we quit
 	       (!(PRINT @report))
 	       (=> (ExecutionManager.report (VAL @executionId) FAILURE))
 	       (~>(ExecutionManager.isExecutingAction (VAL @executionId)))
 	       (!(ExecutionManager.cleanModuleRequestes))
-	       (IF(?(~(EQUAL @object NO_NAME)))
-		  (!(DatabaseInterface.setReachabilityFalse (VAL @object) @result)) ;;the robot tought that the object was reachable while, in fact, it was not (shouldn't this be in armactions?)
-		  (!(Acapela.say "I can't seem to reach it..."))
+	       (IF(?(~(EQUAL @object NO_NAME)))  ;if an object name is set the op will call the db to put a reachability to false. It would be better if this was in ArmActions, with the Acapela command here perhaps. The structure of ArmActions rends it a little difficult...
+		  (!(DatabaseInterface.setReachabilityFalse (VAL @object) @result)) 
+		  (!(Acapela.say "I can't seem to reach it..."))   
 		  )
 	       (!(SEM-V ExecutionManager.sem))
 	       (!(FAILED))
 	       )
-	    ELSEIF(?(ExecutionManager.halt (VAL @executionId)))  ;if we halt we want to pause until we receive a resume or stop order.
+	    ELSEIF(?(&(EQUAL @stoppable TRUE) ExecutionManager.halt (VAL @executionId)))  ;if we halt we want to pause until we receive a resume or stop order.
 	    (~>(ExecutionManager.halt (VAL @executionId)))
 	    (IF(?(EQUAL @module ArmActions))
 	       (=>(ArmActions.halt (VAL @id)))
 	       )
-	    (^(|| (& (EQUAL @stoppable TRUE) (ExecutionManager.stop (VAL @executionId))) (ExecutionManager.resume (VAL @executionId))))
+	    (^(|| (& (EQUAL @stoppable TRUE) (ExecutionManager.stop (VAL @executionId))) (ExecutionManager.resume (VAL @executionId)))) 
 	    
 	    (IF(?(ExecutionManager.resume (VAL @executionId)))   ;we ask to resume and recall this function to wait for the report
 	       (~>(ExecutionManager.resume (VAL @executionId)))
@@ -175,13 +181,14 @@
 	       )
 	    
 	    
-	    ELSEIF(?(&(ExecutionManager.stop (VAL @executionId)) (EQUAL @stoppable TRUE)))   ;;if we stop we abandon the action. Possible problem of coherency
+	    ELSEIF(?(&(ExecutionManager.stop (VAL @executionId)) (EQUAL @stoppable TRUE)))   ;;if we stop we abandon the action. Possible problem of coherency. Since the stop in softmotion is not working well we will just quit after the action is over
+	 
 
 	    (~>(ExecutionManager.stop (VAL @executionId)))
 	    (~>(ExecutionManager.isExecutingAction (VAL @executionId)))
-	       ;; (IF(?(EQUAL @module ArmActions))
-	       ;; 	  (=>(ArmActions.stop @id))
-		  
+	    (IF(?(EQUAL @module ArmActions))
+	       (=>(ArmActions.stop @id))
+	       )	  
 	       ;; 	  ELSEIF(?(EQUAL @module Spark))
 	       ;; 	  (=>(Spark.stop (VAL @id)))
 		  
@@ -239,12 +246,12 @@
 	     )
 	  (=>(ExecutionManager.isExecutingAction (VAL @executionId)))
 	  ;;set the parameters for the monitor manager
-	   (!(= @failureConditions (. (. .)  (. (ExecutionManager.report (VAL @executionId) FAILURE) (ExecutionManager.report (VAL @executionId) STOPPED) .) .) )) 	 ; item not there 
+	   (!(= @failureConditions (. (. .)  (. (ExecutionManager.report (VAL @executionId) FAILURE) (ExecutionManager.report (VAL @executionId) STOPPED) .) .) )) 	 ; stops monitoring if we fail or if we are stopped
 	  (!(= @successConditions (. (. (ExecutionManager.report (VAL @executionId) OK) .)  (. .) .) ))     ; look at the item until execution is completed
 	  
 
 	  (!(MonitorManager.getFreeId @monitorId))
-
+	  
 	  
 	  ;;start the monitoring
 	  (!(MonitorManager.monitorTarget @object "NO_NAME" @successConditions @failureConditions HIGH @monitorId))
@@ -281,7 +288,7 @@
 
 
 					;open gripper if needed
-	  (IF(?(Robot.gripper (VAL @armForPick) CLOSE))
+	  (IF(?(Robot.gripperStatus (VAL @armForPick) CLOSE))
 	     (!(ArmActions.getFreeId @actionId))
 	     (=>(ArmActions.action openGripper @armForPick @actionId))
 	     (!(ExecutionManager.handleReport ArmActions @actionId @executionId TRUE NO_NAME))
@@ -291,7 +298,6 @@
 	  ;;plan and execute the trajectory
 	  (!(ArmActions.getFreeId @actionId))
 	  (=>(ArmActions.action moveToObject @armForPick @object @actionId))
-
 
 	  (!(ExecutionManager.handleReport ArmActions @actionId @executionId TRUE @object))
 
@@ -303,8 +309,6 @@
 	  (!(ExecutionManager.handleReport ArmActions @actionId @executionId FALSE NO_NAME))
 	  
 					;updates knowledge of the robot
-
-
 	  (=> (Robot.hasObject (VAL @armForPick) (VAL @object))) ;if we arrive here with no FAILED than we've got the item (hopefully XD)
 
 	  (=>(ExecutionManager.report (VAL @executionId) OK))
@@ -499,6 +503,7 @@
 		  
 		  ELSE
 		  (!(= @arm LEFT))
+		  (!(= @armJoint LEFT_ARM))
 		  (!(ArmActions.getFreeId @actionId))
 		  (=>(ArmActions.action openGripper @arm @actionId))
 		  (!(ExecutionManager.handleReport ArmActions @actionId @executionId TRUE NO_NAME))
@@ -506,6 +511,7 @@
 		    
 	       ELSE
 	       (!(= @arm RIGHT))
+	       (!(= @armJoint RIGHT_ARM))
 	       (!(ArmActions.getFreeId @actionId))
 	       (=>(ArmActions.action openGripper @arm @actionId))
 
@@ -525,12 +531,6 @@
 
 	 (=>(Robot.position TORSO @robotTorsoX @robotTorsoY @robotTorsoZ @robotTorsoYaw @robotTorsoPitch @robotTorsoRoll))
 	 
-	 ;move to rest position
-;	 (!(ArmActions.getFreeId @actionId))
-;	 (=>(ArmActions.action moveToRestPosition (VAL @arm) (VAL @actionId)))
-;	 (!(ExecutionManager.handleReport ArmActions @actionId @executionId))
-	
-
 	 ;;Set the starting variables. We only compute observations to set inRange at the start.
 	 (!(ExecutionManager.getHumanObservations @agent  @executionId @armPosition @distance @orientation))
 	 (IF(?(EQUAL @distance outOfRange))
@@ -586,7 +586,7 @@
 		  ;;we get a WAIT or ENGAGE command
 		  ;;task state is not modified here
 		  ELSEIF(?(&(~(EQUAL @robotState armReady)) (EQUAL @yState notEngaged) (EQUAL @inRange true) (|| (EQUAL @action WAIT) (EQUAL @action ENGAGE))))
-		  (^(Robot.isMovingArm (VAL @arm) FALSE))
+		  (^(Robot.isMoving (VAL @armJoint) FALSE))
 		  (IF(?(EQUAL @task waitingGrasp))
 		     (!(ArmActions.getFreeId @detectPressionId))
 		     (=>(ArmActions.action stopDetectPression @arm @type @detectPressionId))
@@ -606,7 +606,7 @@
 		  ;;we go to rest state if
 		  ;;we receive a wait command and the user is out of range and the the robot is not in restState
 		  ELSEIF(?(& (~(EQUAL @robotState armRest)) (EQUAL @inRange false) (EQUAL @action WAIT)))
-		  (^(Robot.isMovingArm (VAL @arm) FALSE))
+		  (^(Robot.isMoving (VAL @armJoint) FALSE))
 		  (IF(?(EQUAL @task waitingGrasp))
 		     (!(ArmActions.getFreeId @detectPressionId))
 		     (=>(ArmActions.action stopDetectPression @arm @type @detectPressionId))
@@ -673,8 +673,8 @@
 	       ;; 	     )
 	       ;; 	  )
 	       (IF(?(EQUAL @task waitingGrasp)) ;if we are waiting a grasp and detecting pressure we open or close the gripper depending on the kind of handover
-		  (IF(?(Robot.gripper (VAL @arm) DETECTED_PRESSION))
-		     (~>(Robot.gripper (VAL @arm) DETECTED_PRESSION))
+		  (IF(?(Robot.gripperStatus (VAL @arm) DETECTED_PRESSION))
+		     (~>(Robot.gripperStatus (VAL @arm) DETECTED_PRESSION))
 		     (~>(ArmActions.report @detectPressionId @report))
 		     
 		     (IF(?(EQUAL @type GIVE))
@@ -771,7 +771,7 @@
 	    (!(Acapela.say "Well... too bad."))
 	    )
 	 (!(ArmActions.getFreeId @actionId))
-	 (IF(?(~(Robot.pose RIGHT REST)))
+	 (IF(?(~(Robot.pose RIGHT @anObject @aSupport REST)))
 	    (=>(ArmActions.action moveToManipulationPosition @actionId))
 	    (^(ArmActions.report (VAL @actionId) @report))
 	    (~>(ArmActions.report (VAL @actionId) @report))

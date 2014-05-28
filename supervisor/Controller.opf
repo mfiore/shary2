@@ -38,7 +38,7 @@
 	  (~>(Spark.report (VAL @sparkId) @report))
 	  (=>(Robot.position TORSO @x @y @z @yaw @pitch @roll))
 	  
-	  (!(AgentActionMonitor.calculateInferences HERAKLES_HUMAN1))
+	  (!(AgentActionMonitor.calculateInferencesForAgent HERAKLES_HUMAN1))
 	  
 
 
