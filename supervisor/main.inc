@@ -29,6 +29,7 @@ include "supervisor/PlannerInterface.sym"
 include "supervisor/AgentActionMonitor.sym"
 include "supervisor/Connector.sym"
 include "supervisor/Queue.sym"
+include "supervisor/Monitors.sym"
 
 load db "supervisor/GlobalConstants.db"
 load db "supervisor/StartingKnowledge.db"

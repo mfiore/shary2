@@ -143,7 +143,7 @@
 	 (!(= @reportName (TERM-STRING-CAT (VAL @module) ".report")))
 	 (!(= @reportName (MAKE-ATOM @reportName)))
 
-	 (^(|| (@reportName (VAL @id) @report) (ExecutionManager.halt (VAL @executionId)) (& (EQUAL @stoppable TRUE) (ExecutionManager.stop (VAL @executionId)) )))
+	 (^(|| (@reportName (VAL @id) @report) (ExecutionManager.halt (VAL @executionId)) (& (EQUAL @stoppable TRUE) (ExecutionManager.stop (VAL @executionId)) (&(Monitor.positionDanger) (EQUAL @stoppable TRUE))  )))
 	 
 	 (IF(?(@reportName (VAL @id) @report))   
 	    (~>(@reportName (VAL @id) (VAL @report)))
@@ -159,14 +159,20 @@
 	       (!(SEM-V ExecutionManager.sem))
 	       (!(FAILED))
 	       )
-	    ELSEIF(?(ExecutionManager.halt (VAL @executionId)))  ;if we halt we want to pause until we receive a resume or stop order.
-	    (~>(ExecutionManager.halt (VAL @executionId)))
+	    ELSEIF(?(& (EQUAL @stoppable TRUE) (|| (ExecutionManager.halt (VAL @executionId) (Monitor.positionDanger TRUE)))))  ;if we halt we want to pause until we receive a resume or stop order.
+	    (IF(?(Monitor.positionDanger TRUE))
+	       (!(= @waitingPositionChange TRUE))
+	       
+	       ELSE
+	       (!(= @waitingPositionChange FALSE))
+	       (~>(ExecutionManager.halt (VAL @executionId)))
+	       )
 	    (IF(?(EQUAL @module ArmActions))
 	       (=>(ArmActions.halt (VAL @id)))
 	       )
-	    (^(|| (& (EQUAL @stoppable TRUE) (ExecutionManager.stop (VAL @executionId))) (ExecutionManager.resume (VAL @executionId))))
+	    (^(|| (& (EQUAL @stoppable TRUE) (ExecutionManager.stop (VAL @executionId))) (ExecutionManager.resume (VAL @executionId)) (&(EQUAL @waitingPositionChange TRUE) (Monitor.positionDanger FALSE))))
 	    
-	    (IF(?(ExecutionManager.resume (VAL @executionId)))   ;we ask to resume and recall this function to wait for the report
+	    (IF(?(||(ExecutionManager.resume (VAL @executionId)) (&(EQUAL @waitingPositionChange TRUE) (Monitor.positionDanger FALSE))))  ;we ask to resume and recall this function to wait for the report
 	       (~>(ExecutionManager.resume (VAL @executionId)))
 	       (IF(?(EQUAL @module ArmActions))
 		  (=>(ArmActions.resume (VAL @id)))
