@@ -40,6 +40,9 @@
 	  
 	  (!(AgentActionMonitor.calculateInferencesForAgent HERAKLES_HUMAN1))
 	  
+	  (!(DatabaseInterface.addMonitor (AGENT-STATEMENT PR2_ROBOT HERAKLES_HUMAN1 distance DANGER) (Monitor.positionDanger TRUE)))
+	  (!(DatabaseInterface.addMonitor (AGENT-STATEMENT PR2_ROBOT HERAKLES_HUMAN1 distance CLOSE) (Monitor.positionDanger FALSE)))
+	  (!(DatabaseInterface.addMonitor (AGENT-STATEMENT PR2_ROBOT HERAKLES_HUMAN1 distance FAR) (Monitor.positionDanger FALSE)))	  
 
 
 	  )

@@ -165,21 +165,35 @@
 	       (!(SEM-V ExecutionManager.sem))
 	       (!(FAILED))
 	       )
-	    ELSEIF(?(&(EQUAL @stoppable TRUE) ExecutionManager.halt (VAL @executionId)))  ;if we halt we want to pause until we receive a resume or stop order.
-	    (~>(ExecutionManager.halt (VAL @executionId)))
+ ELSEIF(?(& (EQUAL @stoppable TRUE) (|| (ExecutionManager.halt (VAL @executionId) (Monitor.positionDanger TRUE)))))  ;if we halt we want to pause until we receive a resume or stop order.
+	    (IF(?(Monitor.positionDanger TRUE))
+	       (!(= @waitingPositionChange TRUE))
+	       
+	       ELSE
+	       (!(= @waitingPositionChange FALSE))
+	       (~>(ExecutionManager.halt (VAL @executionId)))
+	       )
 	    (IF(?(EQUAL @module ArmActions))
 	       (=>(ArmActions.halt (VAL @id)))
 	       )
-	    (^(|| (& (EQUAL @stoppable TRUE) (ExecutionManager.stop (VAL @executionId))) (ExecutionManager.resume (VAL @executionId)))) 
+	    (^(|| (& (EQUAL @stoppable TRUE) (ExecutionManager.stop (VAL @executionId))) (ExecutionManager.resume (VAL @executionId)) (&(EQUAL @waitingPositionChange TRUE) (Monitor.positionDanger FALSE))))
 	    
-	    (IF(?(ExecutionManager.resume (VAL @executionId)))   ;we ask to resume and recall this function to wait for the report
+	    (IF(?(||(ExecutionManager.resume (VAL @executionId)) (&(EQUAL @waitingPositionChange TRUE) (Monitor.positionDanger FALSE))))  ;we ask to resume and recall this function to wait for the report
 	       (~>(ExecutionManager.resume (VAL @executionId)))
 	       (IF(?(EQUAL @module ArmActions))
 		  (=>(ArmActions.resume (VAL @id)))
 		  )
 	       (!(ExecutionManager.handleReport @module @id @executionId @stoppable @object )) 
+	       
+	       ELSEIF(?(&(EQUAL @stoppable TRUE) (ExecutionManager.stop (VAL @executionId))))
+	       (~>(ExecutionManager.stop (VAL @executionId)))
+	       (~>(ExecutionManager.isExecutingAction (VAL @executionId)))
+	       (=>(ExecutionManager.report @executionId STOPPED))
+	       (!(ExecutionManager.cleanModuleRequestes))
+	       (!(SEM-V ExecutionManager.sem))
+	       (!(FAILED))
 	       )
-	    
+
 	    
 	    ELSEIF(?(&(ExecutionManager.stop (VAL @executionId)) (EQUAL @stoppable TRUE)))   ;;if we stop we abandon the action. Possible problem of coherency. Since the stop in softmotion is not working well we will just quit after the action is over
 	 

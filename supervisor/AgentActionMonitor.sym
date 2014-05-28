@@ -25,7 +25,7 @@ declare cwp AgentActionMonitor.isMonitoringAgent
 declare cwp AgentActionMonitor.blockObjectReappears
 
 declare cwp AgentActionMonitor.sphere
-declare be Monitor.objectAppears
+
 declare cwp AgentActionMonitor.monitorAction
 declare cwp AgentActionMonitor.unexpectedAction
 declare cwp AgentActionMonitor.isMonitoringAgent
