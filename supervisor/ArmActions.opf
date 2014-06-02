@@ -369,7 +369,7 @@ actually know if this really changes something... pressure is pressur."
   :invocation(!(ArmActions.checkAndEscapeObject @arm))
   :documentation "checks if there is an object near the arm and eventually escapes it"
   :body (
-	 (?(Robot.pose @object @support @pose))
+	 (?(Robot.pose (VAL @arm) @object @support @pose))
 	 (IF(?(~(EQUAL @object NO_NAME)))
 	    (IF(?(~(Robot.hasObject (VAL @arm) (VAL @object))))
 	       (!(ArmActions.getFreeId @escapeId))
@@ -395,12 +395,14 @@ actually know if this really changes something... pressure is pressur."
 		
 	  ;if we are paused we give a halt request if we were doing a softmotion request or simply wait for a resume
 	  (IF(?(ArmActions.halt (VAL @actionId)))
-	     (~>(actionId.halt (VAL @actionId)))
+	     (~>(ArmActions.halt (VAL @actionId)))
 	     (IF(?(EQUAL @module Softmotion))
 		(!(Softmotion.getFreeId @smId))
 		(=>(Softmotion.request halt (VAL @smId)))
 		(^(Softmotion.report (VAL @smId) @smReport))
 		(~>(Softmotion.report (VAL @smId) (VAL @smReport)))
+		(^(@reportName (VAL @id) @report))
+		(~>(@reportName (VAL @id) (VAL @report)))
 		)
 	     ;we wait for a stop or for a resume
 	     (^(|| (ArmActions.stop (VAL @actionId)) (ArmActions.resume (VAL @actionId))))
@@ -411,8 +413,9 @@ actually know if this really changes something... pressure is pressur."
 		     (=>(Softmotion.request resume @smId))
 		     (^(Softmotion.report (VAL @smId) @smReport))
 		     (~>(Softmotion.report (VAL @smId) (VAL @smReport)))
+		     (^(ELAPSED-TIME (TIME) 3))
 		     )
-		(!(ArmActions.handleReport @module @id @executionId @stoppable @object )) 
+
 		)
 
 	     ELSEIF(?(ArmActions.stop (VAL @actionId)))

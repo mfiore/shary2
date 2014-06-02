@@ -254,8 +254,8 @@
 		      )
 		   (?(AgentActionMonitor.sphere (VAL @agent) (VAL @target) @sphereId))
 		   (=>(AgentActionMonitor.monitorAction @agent @actionId @sphereId)) ;monitor the action
-		   (^(|| (AgentActionMonitor.actionCompleted (VAL @agent) (VAL @actionId))  ;wait until we complete the action or we have a stopAgent (unexpectedAction is handled in planmanager)
-		      (PlanManager.stopAgent (VAL @agent))))
+		   (^(|| (AgentActionMonitor.actionCompleted (VAL @agent) (VAL @actionId)) 
+		      (PlanManager.stopAgent (VAL @agent))))  ;wait until we complete the action or we have a stopAgent (unexpectedAction is handled in planmanager)
 		   (IF(?(AgentActionMonitor.actionCompleted (VAL @agent) (VAL @actionId)))
 		      (~>(AgentActionMonitor.actionCompleted (VAL @agent) (VAL @actionId)))
 		      (=>(PlanManager.actionReport @actionId OK))

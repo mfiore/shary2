@@ -43,6 +43,7 @@ load db "supervisor/PlannerInterface.db"
 load db "supervisor/Actions.db"
 load db "supervisor/TabletConnector.db"
 load db "supervisor/Queue.db"
+load db "supervisor/AgentActionMonitor.db"
 
 load opf "supervisor/MonitorManager.opf"
 load opf "supervisor/DatabaseInterface.opf"

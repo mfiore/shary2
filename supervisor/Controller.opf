@@ -17,6 +17,10 @@
    :invocation (!(Controller.initAll))
    :documentation "Starts all the modules of the supervisor"
    :body (
+	  (~>(CHECKING-REPLY-G3O-QUEUE))
+	  (~>(CHECKING-REPLY-QUEUE))
+	  (=>(START-AND-CHECK-REPLY-G3O-QUEUE-WITH-PRIORITY))
+	  (=>(START-AND-CHECK-REPLY-QUEUE-WITH-PRIORITY))
 	  (!(MonitorManager.init))
 	  (!(Spark.init))
 	  (!(Mhp.init))
@@ -29,6 +33,7 @@
 	  (!(PlannerInterface.init))
 	  (!(AgentActionMonitor.init))
 	  (!(Acapela.init))
+	  (!(DatabaseInterface.init))
 
 	  (!(Spark.getFreeId @sparkId))
 	  (=>(Spark.request getJointAbsPose PR2_ROBOT Torso @sparkId))
@@ -40,11 +45,11 @@
 	  
 	  (!(AgentActionMonitor.calculateInferencesForAgent HERAKLES_HUMAN1))
 	  
-	  (!(DatabaseInterface.addMonitor (AGENT-STATEMENT PR2_ROBOT HERAKLES_HUMAN1 distance DANGER) (Monitor.positionDanger TRUE)))
-	  (!(DatabaseInterface.addMonitor (AGENT-STATEMENT PR2_ROBOT HERAKLES_HUMAN1 distance CLOSE) (Monitor.positionDanger FALSE)))
-	  (!(DatabaseInterface.addMonitor (AGENT-STATEMENT PR2_ROBOT HERAKLES_HUMAN1 distance FAR) (Monitor.positionDanger FALSE)))	  
-
-
+;	  (!(DatabaseInterface.addMonitor (AGENT-STATEMENT PR2_ROBOT HERAKLES_HUMAN1 distance DANGER) (Monitor.positionDanger TRUE) @result))
+;	  (!(DatabaseInterface.addMonitor (AGENT-STATEMENT PR2_ROBOT HERAKLES_HUMAN1 distance CLOSE) (Monitor.positionDanger FALSE) @result))
+;	  (!(DatabaseInterface.addMonitor (AGENT-STATEMENT PR2_ROBOT HERAKLES_HUMAN1 distance FAR) (Monitor.positionDanger FALSE) @result))	  
+	  (!(DatabaseInterface.addMonitor (AGENT-STATEMENT PR2_ROBOT HERAKLES_HUMAN1 handCloseToRightGripper TRUE) (Monitor.handPositionDanger TRUE) @result) )	  
+	  (!(DatabaseInterface.addMonitor (AGENT-STATEMENT PR2_ROBOT HERAKLES_HUMAN1 handCloseToRightGripper FALSE) (Monitor.handPositionDanger FALSE) @result))	  
 	  )
    )
 )

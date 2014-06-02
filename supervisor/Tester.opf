@@ -394,12 +394,15 @@
 	  (!(Controller.initAll))
 	  (?(Spark.freeId @sparkId))
 	  (=>(Spark.request setGraspedObject LOTR_TAPE 0 0 (VAL @sparkId)))
-	  (!(ExecutionManager.handleReport Spark.report @sparkId @executionId))
+	  (!(ExecutionManager.handleReport Spark @sparkId @executionId FALSE NO_NAME))
+
 
 	  (?(Spark.freeId @sparkId))
 	  (=>(Spark.request setInferrenceForObject LOTR_TAPE 0 PR2_ROBOT 0 SPARK_PRECISE_ROBOT_HAND 1.0 (VAL @sparkId)))  
-	  (!(ExecutionManager.handleReport Spark.report @sparkId @executionId))
-	  
+	  (!(ExecutionManager.handleReport Spark @sparkId @executionId FALSE NO_NAME))
+
+
+
 	  (=>(ExecutionManager.execute take LOTR_TAPE RIGHT 1))
 
 	  )

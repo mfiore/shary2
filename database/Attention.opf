@@ -15,6 +15,14 @@
 	  )
    )
 
+ (defop |handleHumanMonitor|
+   :invocation(HumanMonitor.message @message)
+   :documentation "Receives human monitor messages from ROS and puts them in the database. This is used so that we can call the actual db functions, that make tests and eventually modify the received facts"
+   :body (
+	  (!(Database.add @message))
+	  )
+   )
+
  
  (defop |posterLoop|
    :invocation(!(Attention.posterLoop))

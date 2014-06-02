@@ -18,7 +18,7 @@ declare op_predicate AgentActionMonitor.readMonitorSpheresPoster
 
 
 
-declare ff AgentActionMonitor.isStarted  ;starts false in the db. Set to true after calling the init opf. Used so that we don't call init twice.
+declare ff AgentActionMonitor.isStarted 0  ;starts false in the db. Set to true after calling the init opf. Used so that we don't call init twice.
 declare cwp AgentActionMonitor.isMonitoringAgent
 
 

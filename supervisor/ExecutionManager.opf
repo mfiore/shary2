@@ -149,9 +149,9 @@
 	  (!(= @reportName (MAKE-ATOM @reportName)))
 
 	  ;;we wait until we have a report, we are stopped or paused.
-	 (^(|| (@reportName (VAL @id) @report) (& (EQUAL @stoppable TRUE) ExecutionManager.halt (VAL @executionId)) (& (EQUAL @stoppable TRUE) (ExecutionManager.stop (VAL @executionId)) )))
+	 (^(|| (@reportName (VAL @id) @report) (& (EQUAL @stoppable TRUE) (|| (ExecutionManager.halt (VAL @executionId)) (Monitor.handPositionDanger TRUE))) (& (EQUAL @stoppable TRUE) (ExecutionManager.stop (VAL @executionId)) )))
 	 
-	 (IF(?(@reportName (VAL @id) @report))   e;if we have a report
+	 (IF(?(@reportName (VAL @id) @report))   ;if we have a report
 	    (~>(@reportName (VAL @id) (VAL @report)))
 	    (IF(?(~(EQUAL @report "OK")))   ; if we have a negative report we quit
 	       (!(PRINT @report))
@@ -165,8 +165,8 @@
 	       (!(SEM-V ExecutionManager.sem))
 	       (!(FAILED))
 	       )
- ELSEIF(?(& (EQUAL @stoppable TRUE) (|| (ExecutionManager.halt (VAL @executionId) (Monitor.positionDanger TRUE)))))  ;if we halt we want to pause until we receive a resume or stop order.
-	    (IF(?(Monitor.positionDanger TRUE))
+	    ELSEIF(?(& (EQUAL @stoppable TRUE) (|| (ExecutionManager.halt (VAL @executionId)) (Monitor.handPositionDanger TRUE))))  ;if we halt we want to pause until we receive a resume or stop order.
+	    (IF(?(Monitor.handPositionDanger TRUE))
 	       (!(= @waitingPositionChange TRUE))
 	       
 	       ELSE
@@ -176,9 +176,9 @@
 	    (IF(?(EQUAL @module ArmActions))
 	       (=>(ArmActions.halt (VAL @id)))
 	       )
-	    (^(|| (& (EQUAL @stoppable TRUE) (ExecutionManager.stop (VAL @executionId))) (ExecutionManager.resume (VAL @executionId)) (&(EQUAL @waitingPositionChange TRUE) (Monitor.positionDanger FALSE))))
+	    (^(|| (& (EQUAL @stoppable TRUE) (ExecutionManager.stop (VAL @executionId))) (ExecutionManager.resume (VAL @executionId)) (&(EQUAL @waitingPositionChange TRUE) (Monitor.handPositionDanger FALSE))))
 	    
-	    (IF(?(||(ExecutionManager.resume (VAL @executionId)) (&(EQUAL @waitingPositionChange TRUE) (Monitor.positionDanger FALSE))))  ;we ask to resume and recall this function to wait for the report
+	    (IF(?(||(ExecutionManager.resume (VAL @executionId)) (&(EQUAL @waitingPositionChange TRUE) (Monitor.handPositionDanger FALSE))))  ;we ask to resume and recall this function to wait for the report
 	       (~>(ExecutionManager.resume (VAL @executionId)))
 	       (IF(?(EQUAL @module ArmActions))
 		  (=>(ArmActions.resume (VAL @id)))
