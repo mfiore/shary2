@@ -171,7 +171,7 @@
   :invocation(Agent.hasObject @agent @object)
   :documentation "when an agent takes an object we add throw inference to the trashbins. Should be generalized"
   :body (
-
+	 
 	 (!(DatabaseInterface.findList (AGENT-STATEMENT PR2_ROBOT PINK_TRASHBIN @predicate @value) (. @predicate @value .) @result)) ;used to see if the trashbin is there
 	 (IF(?(~(NULL @result)))
 	    (IF(?(~(AgentActionMonitor.sphere (VAL @agent) PINK_TRASHBIN @sphereId)))  
@@ -189,8 +189,7 @@
   :body (
 
 	 (!(AgentActionMonitor.cleanAgentMonitorSpheres @agent))
-
-  
+ 
 	 )
   )
 

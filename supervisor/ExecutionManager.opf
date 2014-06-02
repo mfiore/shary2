@@ -345,108 +345,80 @@
 
  (defop |getHumanObservations|
    :invocation(!(ExecutionManager.getHumanObservations @agent @executionId $armPosition $distance $orientation))
-   :documentation "utility procedure that calculates the observations for the POMDP. SHOULD GO TO ANOTHER FILE"
+   :documentation "utility procedure that calculates the observations for the POMDP."
    :body (
-	  (?(Spark.robotName @sparkRobotName))
-	  (?(Spark.humanWrist @hWrist))
-	  (?(Spark.humanHip @hHip))
+	  (!(DatabaseInterface.findList (AGENT-STATEMENT PR2_ROBOT HERAKLES_HUMAN1 isPresent @isPresent) (. @isPresent .) @result))
+	  (IF(?(~(NULL @result)))
+	     (!(= @isPresent (CAR(CAR @result))))
+	     
+	     ELSE
+	     (!(= @isPresent FALSE))
+	     )
 
-	  (?(ExecutionManager.oldArmPosition @oldArmPosition))
-	  (?(ExecutionManager.oldDistance @oldDistance))
-
-	 (?(Robot.position TORSO @robotTorsoX @robotTorsoY @robotTorsoZ @robotTorsoYaw @robotTorsoPitch @robotTorsoRoll))	 
-	  ;;get the human right hip position
-	  (!(Spark.getFreeId @sparkId))
-	  (=>(Spark.request getJointAbsPose (VAL @agent) (VAL @hHip) (VAL @sparkId)))
-	  (^(Spark.report (VAL @sparkId) @report))
-
-	  (~>(Spark.report (VAL @sparkId) (VAL @report)))
-
-	  (IF(?(~(EQUAL @report "OK")))   ;;the human is not in sight
-	     (!(= $distance outOfRange))
-	     (!(= $armPosition unknown))
-	     (!(= $orientation unknown))
-	     (=>(ExecutionManager.oldDistance outOfRange))
-	     (=>(ExecutionManager.oldArmPosition unknown))
-	     (=>(ExecutionManager.oldOrientation unknown))
-	     
-	     ELSE   ;human in sight
-	     
-	     (^(Spark.result (VAL @sparkId) @humanHipX @humanHipY @humanHipZ @humanHipYaw @humanHipPitch @humanHipRoll))
-	     (~>(Spark.result (VAL @sparkId) (VAL @humanHipX) (VAL @humanHipY) (VAL @humanHipZ) (VAL @humanHipYaw) (VAL @humanHipPitch) (VAL @humanHipRoll)))
-					;get the human wrist position
-	     (!(Spark.getFreeId @sparkId))
-	     (=>(Spark.request getJointAbsPose (VAL @agent) (VAL @hWrist) (VAL @sparkId)))
-	     (!(ExecutionManager.handleReport Spark @sparkId @executionId TRUE NO_NAME))
-	     (^(Spark.result (VAL @sparkId) @humanWristX @humanWristY @humanWristZ @humanWristYaw @humanWristPitch @humanWristRoll))
-	     (~>(Spark.result (VAL @sparkId) (VAL @humanWristX) (VAL @humanWristY) (VAL @humanWristZ) (VAL @humanWristYaw) (VAL @humanWristPitch) (VAL @humanWristRoll)))
-	     
-	     
-					;calculate distance between robot and human. The distance is squared because oprs as no SQRT operator and i'm too lazy to implement it at the moment.
-	     (!(= @xDiff (- @humanHipX @robotTorsoX)))
-	     (!(= @xDiffSquare (* @xDiff @xDiff)))
-	     (!(= @yDiff (- @humanHipY @robotTorsoY)))
-	     (!(= @YDiffSquare (* @yDiff @yDiff)))
-	     (!(= @zDiff (- @humanHipZ @robotTorsoZ)))
-	     (!(= @zDiffSquare (* @zDiff @zDiff)))	   
-	     (!(= @squareDistance (+ @xDiffSquare @YDiffSquare @zDiffSquare)))
-	     
-
-	     
-	     (IF(?(> @squareDistance 50))
-		(!(= $distance outOfRange))
-		(!(= $armPosition unknown))
-		(!(= $orientation unknown))
-		(=>(ExecutionManager.oldDistance outOfRange))
-		(=>(ExecutionManager.oldArmPosition unknown))
-		(=>(ExecutionManager.oldOrientation unknown))
-		
+	  (IF(?(EQUAL @isPresent TRUE))
+	     (?(ExecutionManager.oldDistance @oldDistance)) 
+	     (?(ExecutionManager.oldArmPosition @oldArmPosition)) 
+	     (IF(?(EQUAL @oldDistance unknown))
+		(!(= @newDistance closer))
+		(IF(?(EQUAL @oldArmPosition unknown))
+		   (!(= @newArmPosition closer))
+		   )
 		
 		ELSE
-		(IF(?(EQUAL @oldDistance outOfRange))
-		   (!(= $distance closer))
-		   ELSEIF(?(< @squareDistance (- @oldDistance 0.5)))
-		   (!(= $distance closer))
-		   ELSEIF(?(> @squareDistance (+ @oldDistance 0.5)))
-		   (!(= $distance farther))
-		   ELSE
-		   (!(= $distance still))
+		(!(DatabaseInterface.findList (AGENT-STATEMENT PR2_ROBOT HERAKLES_HUMAN1 distance @actualDistance) (. @actualDistance .) @result))
+		(IF(?(~(NULL @result)))
+		   (!(= @actualDistance (CAR(CAR @result))))
+		   (IF(?(EQUAL @oldDistance CLOSE))
+		      (IF(?(EQUAL @actualDistance FAR))
+			 (!(= @newDistance farther))
+			 ELSE
+			 (!(= @newDistance still))
+			 )
+		      ELSEIF(?(EQUAL @oldDistance FAR))
+			 (IF(?(EQUAL @actualDistance CLOSE))
+			    (!(= @newDistance closer))
+			    
+			    ELSE
+			    (!(= @newDistance still))
+			    )
+			 )
+		   ELSE 
+		   (!(= @newDistance outOfRange))
 		   )
-
-		(=>(ExecutionManager.oldDistance @squareDistance))
 		
-		(IF(?(EQUAL @oldOrientation unknown))
-		   (!(= $orientation towardRobot))
-		   
-		   ELSE
-		   (!(= $orientation still))
+	       	
+		(!(DatabaseInterface.findList (AGENT-STATEMENT PR2_ROBOT HERAKLES_HUMAN1  armPosition @armPosition) (. @armPosition .) @result))
+		(IF(?(~(NULL @result)))
+		   (!(= @actualArmPosition (CAR(CAR @result))))
+		   (IF(?(EQUAL @oldArmPosition CLOSE))
+		      (IF(?(EQUAL @actualArmPosition EXTENDED))
+			 (!(= @newArmPosition closer))
+			 ELSE
+			 (!(= @newArmPosition still))
+			 )
+		      ELSEIF(?(EQUAL @oldArmPosition CLOSE))
+			 (IF(?(EQUAL @actualArmPosition EXTENDED))
+			    (!(= @newArmPosition closer))
+			    
+			    ELSE
+			    (!(= @newArmPosition still))
+			    )
+			 )
 		   )
-		(=>(ExecutionManager.oldOrientation (VAL $orientation)))
-					;calculate distance between human hand and wrist. The distance is squared because oprs as no SQRT operator and i'm too lazy to implement it at the moment.
-		(!(= @xDiff (- @humanHipX @humanWristX)))
-		(!(= @xDiffSquare (* @xDiff @xDiff)))
-		(!(= @yDiff (-  @humanHipY @humanWristY)))
-		(!(= @YDiffSquare (* @yDiff @yDiff)))
-		(!(= @zDiff (-  @humanHipZ @humanWristZ)))
-		(!(= @zDiffSquare (* @zDiff @zDiff)))	   
-		(!(= @squareDistance (+ @xDiffSquare @YDiffSquare @zDiffSquare)))
-		
-
-		(IF(?(EQUAL @oldArmPosition unknown))
-		   (!(= $armPosition closer))
-		   ELSEIF(?(> @squareDistance (+ @oldArmPosition 0.05)))
-		   (!(= $armPosition closer))
-		   ELSEIF(?(< @squareDistance (- @oldArmPosition 0.05)))
-		   (!(= $armPosition farther))
-		   ELSE
-		   (!(= $armPosition still))
-		   )  
-
-		(=>(ExecutionManager.oldArmPosition @squareDistance))
 		)
-	     
+	     (!(= @newOrientation still))
+	     ELSE
+	     (!(= @newDistance outOfRange))
+	     (!(= @newArmPosition unknown))
+	     (!(= @newOrientation unknown))
 	     )
-	  
+	  (!(= $distance @newDistance))
+	  (!(= $armPosition @newArmPosition))
+	  (!(= $orientation @newOrientation))
+
+	  (=>(ExecutionManager.oldDistance $distance))
+	  (=>(ExecutionManager.oldOrientation $orientation))
+	  (=>(ExecutionManager.oldArmPosition $armPosition))
 	  
 	  )
    )

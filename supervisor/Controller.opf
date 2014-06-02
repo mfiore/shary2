@@ -43,11 +43,12 @@
 	  (~>(Spark.report (VAL @sparkId) @report))
 	  (=>(Robot.position TORSO @x @y @z @yaw @pitch @roll))
 	  
-	  (!(AgentActionMonitor.calculateInferencesForAgent HERAKLES_HUMAN1))
 	  
 ;	  (!(DatabaseInterface.addMonitor (AGENT-STATEMENT PR2_ROBOT HERAKLES_HUMAN1 distance DANGER) (Monitor.positionDanger TRUE) @result))
 ;	  (!(DatabaseInterface.addMonitor (AGENT-STATEMENT PR2_ROBOT HERAKLES_HUMAN1 distance CLOSE) (Monitor.positionDanger FALSE) @result))
 ;	  (!(DatabaseInterface.addMonitor (AGENT-STATEMENT PR2_ROBOT HERAKLES_HUMAN1 distance FAR) (Monitor.positionDanger FALSE) @result))	  
+	  (!(DatabaseInterface.addMonitor (AGENT-STATEMENT PR2_ROBOT HERAKLES_HUMAN1 isPresent TRUE) (Monitor.agentAppears HERAKLES_HUMAN1) @result))  
+	  (!(DatabaseInterface.addMonitor (AGENT-STATEMENT PR2_ROBOT HERAKLES_HUMAN1 isPresent FALSE) (Monitor.agentDisappears HERAKLES_HUMAN1) @result))  
 	  (!(DatabaseInterface.addMonitor (AGENT-STATEMENT PR2_ROBOT HERAKLES_HUMAN1 handCloseToRightGripper TRUE) (Monitor.handPositionDanger TRUE) @result) )	  
 	  (!(DatabaseInterface.addMonitor (AGENT-STATEMENT PR2_ROBOT HERAKLES_HUMAN1 handCloseToRightGripper FALSE) (Monitor.handPositionDanger FALSE) @result))	  
 	  )
