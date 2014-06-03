@@ -198,7 +198,7 @@
   :documentation "add the pick inferences when an agent enters the scene"
   :body (
 
-	 (!(AgentActionMonitor.calculateInferences @agent))
+	 (!(AgentActionMonitor.calculateInferencesForAgent @agent))
 
 	 )
   )

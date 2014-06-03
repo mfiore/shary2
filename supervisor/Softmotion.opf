@@ -315,8 +315,11 @@
 	     )
 	  
 	 (!(= @parameters (PR2SM_gripperGrabRelease (VAL @state))))	     
-	 (!(GenomInterface.handleRequest PR2SOFTMOTION PR2SOFTMOTION_DETECTPRESSION (Softmotion.stop (VAL @id)) @irAddFact @stopFact (FALSE) @parameters @report @result)) 
+	 (!(GenomInterface.handleRequest PR2SOFTMOTION PR2SOFTMOTION_DETECTPRESSION (Softmotion.stop (VAL @id)) @irAddFact (FALSE) @parameters @report @result)) 
 	 (=>(Softmotion.report (VAL @id) (VAL @report)))
+	 (IF(?(EQUAL @report "OK"))
+	    (=>(@stopFact))
+	    )
 	 
 
 	  

@@ -357,7 +357,7 @@ actually know if this really changes something... pressure is pressur."
 	    (~>(ArmActions.hasDetectPressionRequest (VAL @gripper) (VAL @mode) @detectPressionId))
 	    (?(Softmotion.gripperCancel (VAL @gripper) @state))
 	    (!(Softmotion.getFreeId @smId))
-	    (=>(Softmotion.request detectPression @state @smId))
+	    (=>(Softmotion.request useGripper @state @smId))
 	    (^(Softmotion.report (VAL @smId) @report))
 	    )
 	 (=>(ArmActions.report @actionId "OK"))
