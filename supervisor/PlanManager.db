@@ -5,5 +5,5 @@
  (PlanManager.shouldRun TRUE)
  (PlanManager.isRunning FALSE)
  (PlanManager.shouldTellPlan TRUE)
- (PlanManager.planningModality HUMAN)
+ (PlanManager.planningModality ROBOT)
 )

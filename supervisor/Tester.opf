@@ -6,6 +6,68 @@
 
 (
 
+ (defop |testSpeak|
+   :invocation(!(Tester.testSpeak))
+   :body (
+	  (!(Acapela.init))
+
+	  (!(Acapela.say "Hello."))
+	  (^(ELAPSED-TIME (TIME) 1))
+(!(Acapela.say "I think you want to clean the table. Let's see if I can help."))
+	  (^(ELAPSED-TIME (TIME) 1))
+(!(Acapela.say "Let me think of a plan."))
+	  (^(ELAPSED-TIME (TIME) 1))
+(!(Acapela.say "Okay, this is the plan"))
+	  (^(ELAPSED-TIME (TIME) 1))
+(!(Acapela.say "You want to do it in a different way? Let's see If I can help."))
+	  (^(ELAPSED-TIME (TIME) 1))
+(!(Acapela.say "Okay. I wait for further instructions"))
+	  (^(ELAPSED-TIME (TIME) 1))
+(!(Acapela.say "Let me think of another plan"))
+	  (^(ELAPSED-TIME (TIME) 1))
+(!(Acapela.say "First, I take the lord of the rings tape and give it to you."))
+	  (^(ELAPSED-TIME (TIME) 1))
+(!(Acapela.say "Then, you throw it in the pink trashbin."))
+	  (^(ELAPSED-TIME (TIME) 1))
+(!(Acapela.say "After that, I take the walle tape and give it to you."))
+	  (^(ELAPSED-TIME (TIME) 1))
+(!(Acapela.say "To conclude, you throw it in the pink trashbin."))
+	  (^(ELAPSED-TIME (TIME) 1))
+(!(Acapela.say "First you take the lord of the rings tape and then you give it to me. To conclude i throw it in the pink trashbin."))
+	  (^(ELAPSED-TIME (TIME) 1))
+(!(Acapela.say "I take the lord of the rings tape"))
+	  (^(ELAPSED-TIME (TIME) 1))
+(!(Acapela.say "I take the walle tape"))
+	  (^(ELAPSED-TIME (TIME) 1))
+(!(Acapela.say "I give it to you"))
+	  (^(ELAPSED-TIME (TIME) 1))
+(!(Acapela.say "I give you the walle tape"))
+	  (^(ELAPSED-TIME (TIME) 1))
+(!(Acapela.say "I give you the lord of the rings tape"))
+	  (^(ELAPSED-TIME (TIME) 1))
+(!(Acapela.say "I throw it in the pink trash bin"))
+	  (^(ELAPSED-TIME (TIME) 1))
+(!(Acapela.say "I throw the walle tape in the pink trash bin"))
+	  (^(ELAPSED-TIME (TIME) 1))
+(!(Acapela.say "Take the walle tape"))
+	  (^(ELAPSED-TIME (TIME) 1))
+(!(Acapela.say "Take the lord of the rings tape"))
+	  (^(ELAPSED-TIME (TIME) 1))
+(!(Acapela.say "Give me the lord of the rings tape"))
+	  (^(ELAPSED-TIME (TIME) 1))
+(!(Acapela.say "Give it to me"))
+	  (^(ELAPSED-TIME (TIME) 1))
+(!(Acapela.say "Throw it in the pink trashbin"))
+	  (^(ELAPSED-TIME (TIME) 1))
+(!(Acapela.say "Throw the walle tape in the pink trashbin"))
+	  (^(ELAPSED-TIME (TIME) 1))
+(!(Acapela.say "Throw the lord of the rings tape in the pink trashbin"))
+	  (^(ELAPSED-TIME (TIME) 1))
+(!(Acapela.say "I can't seem to reach it"))
+	  (^(ELAPSED-TIME (TIME) 1))
+)
+)
+
  (defop |testGetActionString|
    :invocation(!(Tester.testGetActionString))
    :body (
@@ -332,7 +394,7 @@
 
 	  (!(Spark.getFreeId @sparkId))
 	  (=>(Spark.request setObjectInHand HERAKLES_HUMAN1 LOTR_TAPE RIGHT TRUE (VAL @sparkId)))
-	  (!(ExecutionManager.handleReport Spark @sparkId @executionId TRUE NO_NAME))
+	  (!(ExecutionManager.handleReport Spark @sparkId @executionId FALSE FALSE NO_NAME))
 
 	  (=>(ExecutionManager.execute handover GRAB LOTR_TAPE HERAKLES_HUMAN1 1))
 
@@ -394,12 +456,15 @@
 	  (!(Controller.initAll))
 	  (?(Spark.freeId @sparkId))
 	  (=>(Spark.request setGraspedObject LOTR_TAPE 0 0 (VAL @sparkId)))
-	  (!(ExecutionManager.handleReport Spark.report @sparkId @executionId))
+	  (!(ExecutionManager.handleReport Spark @sparkId @executionId FALSE FALSE NO_NAME))
+
 
 	  (?(Spark.freeId @sparkId))
 	  (=>(Spark.request setInferrenceForObject LOTR_TAPE 0 PR2_ROBOT 0 SPARK_PRECISE_ROBOT_HAND 1.0 (VAL @sparkId)))  
-	  (!(ExecutionManager.handleReport Spark.report @sparkId @executionId))
-	  
+	  (!(ExecutionManager.handleReport Spark @sparkId @executionId FALSE FALSE NO_NAME))
+
+
+
 	  (=>(ExecutionManager.execute take LOTR_TAPE RIGHT 1))
 
 	  )
@@ -411,17 +476,17 @@
 	  (!(Controller.initAll))
 	  (?(Spark.freeId @sparkId))
 	  (=>(Spark.request setGraspedObject GREY_TAPE 0 0 (VAL @sparkId)))
-	  (!(ExecutionManager.handleReport Spark.report @sparkId @executionId))
+	  (!(ExecutionManager.handleReport Spark @sparkId @executionId FALSE FALSE NO_NAME))
 
 	  (?(Spark.freeId @sparkId))
 	  (=>(Spark.request setInferrenceForObject GREY_TAPE 0 PR2_ROBOT 0 SPARK_PRECISE_ROBOT_HAND 1.0 (VAL @sparkId)))  
-	  (!(ExecutionManager.handleReport Spark.report @sparkId @executionId))
+	  (!(ExecutionManager.handleReport Spark @sparkId @executionId FALSE FALSE NO_NAME))
 	  
-	  (=>(ExecutionManager.execute take GREY_TAPE RIGHT 1))
+	  (=>(ExecutionManager.execute take LOTR_TAPE  RIGHT 1))
 	  
 	  (^(ExecutionManager.report (VAL @executionId) @report))
 	  
-	  (=>(ExecutionManager.throw GREY_TAPE PINK_TRASHBIN 2))
+	  (=>(ExecutionManager.execute throw LOTR_TAPE PINK_TRASHBIN 2))
 	  )
   )
 
@@ -446,7 +511,7 @@
 
 	 ;; (=>(Robot.armPosition RIGHT TABLE_4))
 	 
-	 (=>(ExecutionManager.execute throw LOTR_TAPE PINK_TRASHBIN 1))
+	  (=>(ExecutionManager.execute throw LOTR_TAPE PINK_TRASHBIN 1))
 	 )
   )
 

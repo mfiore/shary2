@@ -1,14 +1,12 @@
 (
 (Robot.name PR2)
-(Robot.isMovingArm LEFT FALSE)
-(Robot.isMovingArm RIGHT FALSE)
-(Robot.isMoving FALSE)
-(Robot.gripper RIGHT CLOSE)
-(Robot.gripper LEFT CLOSE)
+(Robot.isMoving LEFT_ARM FALSE)
+(Robot.isMoving RIGHT_ARM FALSE)
+(Robot.isMoving HEAD FALSE)
+(Robot.gripperStatus RIGHT CLOSE)
+(Robot.gripperStatus LEFT CLOSE)
 (Robot.simu FALSE)
-(Robot.armPosition RIGHT FREE)
-(Robot.armPosition LEFT FREE)
-(Robot.pose RIGHT REST)
+(Robot.pose RIGHT NO_NAME NO_NAME REST)
 
 (SUP_NAME OPRS_SUP)
 (PlanManager.shouldRun true)
@@ -30,6 +28,6 @@
 (ExecutionManager.oldDistance outOfRange)
 
 
-(Action take (. (. (SubjectType Subject Predicate isOnTable ValueType Value Truth TRUE) (SubjectType Actor Predicate hasFreeHand ValueType NULL Truth TRUE) .)  (. .) .) (. (. (SubjectType Subject Predicate isOnTable ValueType Value Truth FALSE) (SubjectType Actor Predicate hasGameArtifact ValueType Subject Truth TRUE)  .) (. .) .))
+
 
 )

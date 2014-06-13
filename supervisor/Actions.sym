@@ -1,0 +1,3 @@
+;general
+declare cwp Action.type		;Action.type actionName actionType  associates actions to a certain type (at the moment manipulation, placement, handover or undefined). This is useful because actions of a certain type have characteristics in common (such as which monitor spheres to activate or how to parse parameters)
+declare cwp Action.parameter   ;Action.parameter object type   associates objects to a type. For examples tapes are objects, tables are support and trashbins are placement.

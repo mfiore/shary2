@@ -11,9 +11,13 @@
    :invocation(!(AgentActionMonitor.init))
    :documentation "Inits the module"
    :body (
-	  (!(SEM-CREATE AgentActionMonitor.sem 1 SEM-FIFO))
-	  (!(AgentActionMonitor.cleanMonitorSpheres))
-	  (=>(AgentActionMonitor.startMonitorSphereLoop))
+	  (IF(?(AgentActionMonitor.isStarted FALSE))
+	     (!(SEM-CREATE AgentActionMonitor.sem 1 SEM-FIFO))
+	     (!(AgentActionMonitor.cleanMonitorSpheres))              
+	     (=>(AgentActionMonitor.startMonitorSphereLoop))
+	     (=>(AgentActionMonitor.isStarted TRUE))
+	     
+	     )
 	  )
    )
 
@@ -21,18 +25,19 @@
    :invocation(!(AgentActionMonitor.startMonitoringAgent @agent))
    :documentation "Starts monitoring an agent"
    :body (
-
-	  (!(MonitorManager.getFreeId @monitorId))
+	  (IF(?(~(AgentActionMonitor.isMonitoringAgent (VAL @agent) @id)))
+	     (!(MonitorManager.getFreeId @monitorId))
 
 	  
-	  ;;set the parameters for the monitor manager. We stop when the human has completed his actions
-	  (!(= @successConditions (. (.(PlanManager.agentReport (VAL @agent) OK) .) (. .) .)))
-	  (!(= @failureConditions (. (. (PlanManager.agentReport (VAL @agent) FAILURE) .) (. .) .) )) 		    
-	  (?(Spark.humanHead @sparkHumanHead))
-	  
-	  ;;start the monitoring
-	  (!(MonitorManager.monitorTarget @agent @sparkHumanHead @successConditions @failureConditions MEDIUM @monitorId))
-	  (=>(AgentActionMonitor.isMonitoringAgent @agent @monitorId))
+	     ;;set the parameters for the monitor manager. We stop when the human has completed his actions and we fail if he fails or he's stopped
+	     (!(= @successConditions (. (.(PlanManager.agentReport (VAL @agent) OK) .) (. .) .)))
+	     (!(= @failureConditions (. (. .) (. (PlanManager.agentReport (VAL @agent) FAILURE) (PlanManager.agentReport (VAL @agent) STOPPED) .) .) )) 		   
+	     (?(Spark.humanHead @sparkHumanHead))
+	     
+	     ;;start the monitoring
+	     (!(MonitorManager.monitorTarget @agent @sparkHumanHead @successConditions @failureConditions MEDIUM @monitorId))
+	     (=>(AgentActionMonitor.isMonitoringAgent @agent @monitorId))
+	     )
 	  
 	  )
    )
@@ -42,10 +47,10 @@
    :documentation "Stops monitoring the agent"
    :body (
 	  (IF(?(AgentActionMonitor.isMonitoringAgent (VAL @agent) @monitorId))
-	     ;;we cancel even when the monitoring manager is not monitor the agent because it could be that the module has the agent in it's queue but it's currently monitoring something else. With the current implementation there could be some problems, like the monitoring manager looking for a second at the agent before stopping.
+	     ;;we cancel even when the monitoring manager is not monitoring the agent because maybe the module has the agent in it's queue but it's currently monitoring something else. With the current implementation there could be some problems, like the monitoring manager looking for a second at the agent before stopping.
 	     (=>(MonitorManager.cancelMonitoring (VAL @monitorId)))
 	     (~>(AgentActionMonitor.isMonitoringAgent (VAL @agent) (VAL @monitorId)))
-	     (WHILE(?(AgentActionMonitor.monitorAction (VAL @agent) @action @sphere))
+	     (WHILE(?(AgentActionMonitor.monitorAction (VAL @agent) @action @sphere))   ;;since we are not monitoring the agent anymore we are not monitoring his actions anymore
 		   (~>(AgentActionMonitor.monitorAction (VAL @agent) (VAL @action) (VAL @sphere)))
 		   )
 	     )
@@ -55,20 +60,19 @@
 
 
 
-
-
  (defop |cleanMonitorSpheres|
    :invocation(!(AgentActionMonitor.cleanMonitorSpheres))
    :documentation "Erase every monitor sphere"
    :body (
 	  (!(SEM-P AgentActionMonitor.sem))
-	  (!(= @sphereId 0))
-	  (WHILE(?(< @sphereId 10))
+	  (!(= @sphereId 0))        
+	  (WHILE(?(< @sphereId 10))   ;from 0 to 10 (indexes of the monitor spheres in spark)
 		(!(Spark.getFreeId @sparkId))
+		;we use a fake item and agent
 		(=>(Spark.request updateSphereMonitor (VAL @sphereId) GEN_FALSE GREY_TAPE 0 HERAKLES_HUMAN1 0 0 0 SPARK_PICK_OBJECT (VAL @sparkId)))
 		(^(Spark.report (VAL @sparkId) @report))
 		(~>(Spark.report (VAL @sparkId) @report))
-		(IF(?(AgentActionMonitor.sphere @agent @object (VAL @sphereId)))
+		(IF(?(AgentActionMonitor.sphere @agent @object (VAL @sphereId)))  ;we erase the spheres from the db
 		   (~>(AgentActionMonitor.sphere (VAL @agent) (VAL @object) (VAL @sphereId)))
 		   )
 		(!(= @sphereId (+ @sphereId 1)))
@@ -84,8 +88,8 @@
    :body (
 	  (!(SEM-P AgentActionMonitor.sem))
 	  (!(= @sphereId 0))
-	  (WHILE(?(< @sphereId 10))
-		(IF(?(AgentActionMonitor.sphere (VAL @agent) @object (VAL @sphereId)))
+	  (WHILE(?(< @sphereId 10))  ;from 0 to 9 (index of the monitor spheres in spark)
+		(IF(?(AgentActionMonitor.sphere (VAL @agent) @object (VAL @sphereId)))  ;if there is a sphere for an agent if we cancel it
 		   (!(Spark.getFreeId @sparkId))
 		   (=>(Spark.request updateSphereMonitor (VAL @sphereId) GEN_FALSE GREY_TAPE 0 HERAKLES_HUMAN1 0 0 0 SPARK_PICK_OBJECT (VAL @sparkId)))
 		   (^(Spark.report (VAL @sparkId) @report))
@@ -94,14 +98,15 @@
 		   )
 		(!(= @sphereId (+ @sphereId 1)))
 		)
-	  (!(SEM-v AgentActionMonitor.sem))
+	  (!(SEM-V AgentActionMonitor.sem))
 	  )
    )
+
  (defop |cleanObjectMonitorSpheres|
    :invocation(!(AgentActionMonitor.cleanObjectMonitorSpheres @object))
    :documentation "erases all the monitor spheres associated to an object"
    :body (
-	  (WHILE(?(AgentActionMonitor.sphere @agent (VAL @object) @sphereId))
+	  (WHILE(?(AgentActionMonitor.sphere @agent (VAL @object) @sphereId))   ;while there are still object associated to a monitor sphere
 		(?(AgentActionMonitor.sphere @agent (VAL @object) @sphereId))
 		(!(AgentActionMonitor.cleanMonitorSphere (VAL @sphereId)))
 		)
@@ -132,7 +137,7 @@
 	  (WHILE(?(~(NULL @objectList)))
 		(!(= @currentObject (CAR @objectList)))
 		(!(= @objectList (CDR @objectList)))
-		(IF(?(~(AgentActionMonitor.sphere (VAL @agent) (VAL @currentObject) @sphereId)))
+		(IF(?(~(AgentActionMonitor.sphere (VAL @agent) (VAL @currentObject) @sphereId))) ;if the sphere is not already activated
 		   ;;get the coordinates of the object
 		   (!(Spark.getFreeId @sparkId))
 		   (=>(Spark.request getJointAbsPose @currentObject NO_NAME @sparkId))
@@ -146,7 +151,6 @@
 		   (?(Spark.humanHand RIGHT @sparkHand))
 		   ;;different objects have different affordances associated to them, which translate to different kinds of monitor spheres.
 		   (?(Spark.typeMonitorSphere (VAL @currentObject) @sphereType)) 
-		   
 		   (=>(Spark.request updateSphereMonitor (VAL @sphereId) GEN_TRUE (VAL @currentObject) (VAL @sparkHand)
 				     (VAL @agent) (VAL @x) (VAL @y) (VAL @z) (VAL @sphereType) (VAL @sparkId)))
 		   (^(Spark.report (VAL @sparkId) @report))
@@ -167,10 +171,10 @@
   :invocation(Agent.hasObject @agent @object)
   :documentation "when an agent takes an object we add throw inference to the trashbins. Should be generalized"
   :body (
-
-	 (!(DatabaseInterface.findList (AGENT-STATEMENT PR2_ROBOT PINK_TRASHBIN @predicate @value) (. @predicate @value .) @result))
+	 
+	 (!(DatabaseInterface.findList (AGENT-STATEMENT PR2_ROBOT PINK_TRASHBIN @predicate @value) (. @predicate @value .) @result)) ;used to see if the trashbin is there
 	 (IF(?(~(NULL @result)))
-	    (IF(?(~(AgentActionMonitor.sphere (VAL @agent) PINK_TRASHBIN @sphereId)))
+	    (IF(?(~(AgentActionMonitor.sphere (VAL @agent) PINK_TRASHBIN @sphereId)))  
 	       (!(AgentActionMonitor.activateMonitorSpheres (. PINK_TRASHBIN .) @agent))
 	       )
 	    
@@ -179,15 +183,13 @@
   )
   
 
-
 (defop |removeAgentinferencesOnExit|
   :invocation(Monitor.agentDisappears @agent)
-  :documentation "remove the pick inferences when an agent exits the scene"
+  :documentation "remove the inferences when an agent exits the scene"
   :body (
 
 	 (!(AgentActionMonitor.cleanAgentMonitorSpheres @agent))
-
-  
+ 
 	 )
   )
 
@@ -196,18 +198,20 @@
   :documentation "add the pick inferences when an agent enters the scene"
   :body (
 
-	 (!(AgentActionMonitor.calculateInferences @agent))
+	 (!(AgentActionMonitor.calculateInferencesForAgent @agent))
 
 	 )
   )
 
 (defop |calculateInferencesforAgent|
-  :invocation(!(AgentActionMonitor.calculateInferences @agent))
+  :invocation(!(AgentActionMonitor.calculateInferencesForAgent @agent))
   :documentation "add inferences for an agent for object already present in the scene"
   :body (
 
 
 	 (!(= @putThrowInference FALSE))
+
+	 ;if the pink thrashbin is present we can add throw inferences
 	 (!(DatabaseInterface.find (AGENT-STATEMENT PR2_ROBOT PINK_TRASHBIN isVisible true) @result))
 	 (IF(?(~(NULL @result)))
 	    (!(= @result (CAR @result)))
@@ -217,12 +221,12 @@
 	       ) 
 	    )
 	 
-	 (IF(?(Agent.hasObject (VAL @agent) @object))
+	 (IF(?(Agent.hasObject (VAL @agent) @object))   ;;if the agent has an item in his hands we add throw inferences
 	    (IF(?(EQUAL @putThrowInference TRUE))
 	       (!(AgentActionMonitor.activateMonitorSpheres (. PINK_TRASHBIN .) @agent))
 	       )
 	    ELSE
-	    (!(= @result (. .)))
+	    (!(= @result (. .)))  ;;else we add inferences for items on TABLE_4 
 	    (!(DatabaseInterface.findList (AGENT-STATEMENT PR2_ROBOT @object isOn TABLE_4) (. @object .) @objects))  ;table should not be hardcoded
 	    (WHILE(?(~(NULL @objects)))
 		  (!(= @object (CAR(CAR @objects))))
@@ -240,18 +244,18 @@
 
 (defop |calculateInferences|
   :invocation(!(AgentActionMonitor.calculateInferences))
-  :documentation "adds  inferences for all agents for objects already present in the scene"
+  :documentation "adds inferences for all agents for objects already present in the scene. We duplicate code here but we save some time since if we looped on the calculateInferencesForAgent op we would have done again
+ the requestes to the DB"
   :body (
-
-	 
-
-	 (!(DatabaseInterface.findList (AGENT-STATEMENT PR2_ROBOT @object isOn TABLE_4) (. @object .) @result))  ;table should not be hardcoded
+	 ;get all objects present on TABLE_4
+ 	 (!(DatabaseInterface.findList (AGENT-STATEMENT PR2_ROBOT @object isOn TABLE_4) (. @object .) @result))  ;table should not be hardcoded
 	 (IF(?(NULL @result))
 	    (!(= @objects (. .)))
 	    ELSE
 	    (!(= @objects @result))
 	    )
 	 
+	 ;get the table presence
 	 (!(DatabaseInterface.find (AGENT-STATEMENT PR2_ROBOT PINK_TRASHBIN isVisible true) @result))
 	 (!(= @putThrowInference FALSE))
 	 (IF(?(~(NULL @result)))
@@ -288,11 +292,11 @@
 
  (defop |addNewPickInference|
    :invocation(Monitor.objectAppears @object)
-   :documentation "when an object appears we check if a human had it and in that case remove the inference" 
+   :documentation "change inferences when the robot sees an item" 
    :body (
 	  (!(SEM-P AgentActionMonitor.sem ))
-	  (IF(~(AgentActionMonitor.blockObjectReappears))  ;sometimes we don't want to consider the object
-	     (IF(?(Agent.hasObject @agent (VAL @object))) ;if the agent has the object remove hte inference
+	  (IF(~(AgentActionMonitor.blockObjectReappears))  ;sometimes we don't want to consider the object , for example when it's in the thrashbin because it could generate errors.
+	     (IF(?(Agent.hasObject @agent (VAL @object))) ;if the agent has the object remove the inference, since it means that he doesn't have it anymore
 		(~>(Agent.hasObject (VAL @agent) (VAL @object)))
 		(!(Spark.getFreeId @sparkId))
 		(?(Spark.humanHand RIGHT @sparkHand))
