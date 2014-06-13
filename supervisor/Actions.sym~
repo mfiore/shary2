@@ -1,7 +1,0 @@
-;general
-declare cwp Action.type
-declare symbol MANIPULATION
-declare cwp Action.parameter
-declare symbol OBJECT
-declare symbol SUPPORT
-declare symbol PLACEMENT

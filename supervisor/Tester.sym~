@@ -1,5 +1,0 @@
-;OP DECLARATION
-   
-declare op_predicate Tester.testQueue
-
-;PREDICATE DECLARATION
