@@ -10,7 +10,7 @@
 	  (=>(ExecutionManager.freeId 0))
 	  (!(SEM-CREATE ExecutionManager.sem 1 SEM-FIFO))
 	  )
-   
+
    )
  
  (defop |getFreeId|
@@ -56,7 +56,7 @@
 		 ELSE 
 		 (=>(ExecutionManager.execute handover GIVE @object @agent2 @executionId))
 		 )
-	    ELSEIF(?(EQUAL @actionName undefined))
+	    ELSEIF(?(EQUAL @actionName undefined))  ;this kind of actions are not executed at the moment and the module returns just an ok
 	    (=>(ExecutionManager.report (VAL @executionId) OK))
 	    
 	    )
@@ -75,7 +75,7 @@
 					;If the robot has only one free arm try the take action with that arm. 
 	 (IF(?(& (Robot.hasObject RIGHT @anyObject) (~(Robot.hasObject LEFT @anyObject2))))
 	    (!(= $armForTake LEFT))
-	     
+	    
 	    ELSEIF(?(&(~(Robot.hasObject RIGHT @anyObject)) (Robot.hasObject LEFT @anyObject2)))
 	    (!(= $armForTake RIGHT))
 	     
@@ -125,62 +125,84 @@
   :invocation(!(ExecutionManager.cleanModuleRequestes))
   :documentation "When we stop an action we want to stop all the living requestes like detectPression"
   :body (
-	 (IF(?(ArmActions.detectPression @gripper @mode @smId))
-	    (~>(ArmActions.detectPression (VAL @gripper) (VAL @mode) (VAL @smId)))
+	 (IF(?(ArmActions.hasDetectPressionRequest @gripper @mode @smId))
+	    (~>(ArmActions.hasDetectPressionRequest (VAL @gripper) (VAL @mode) (VAL @smId)))
 	    (?(Softmotion.gripperCancel (VAL @gripper) @state))
 	    (!(Softmotion.getFreeId @smId))
 	    (=>(Softmotion.request useGripper @state @smId))
 	    (^(Softmotion.report (VAL @smId) @report))
 	    )
-	 (^(Robot.isMovingArm RIGHT FALSE))
-	 (^(Robot.isMovingArm LEFT FALSE))
+	 (^(Robot.isMoving RIGHT_ARM FALSE))
+	 (^(Robot.isMoving LEFT_ARM FALSE))
 	 )
   )
  (defop |handleReport|
-   :invocation(!(ExecutionManager.handleReport @module @id @executionId @stoppable @object))
-   :documentation "Utility function to avoid some code duplication when waiting for the response of a genom module. This can't be used when we don't want to fail if the genom request fails"
+   :invocation(!(ExecutionManager.handleReport @module @id @executionId @haltable @stoppable @object))
+   :documentation "Utility function to avoid some code duplication when waiting for the response of a genom module. This can't be used when we don't want to fail if the genom request fails
+                   @module is the name of the module we are waiting a report (Spark, Softmotion...)
+                   @id is the id of the request we are waiting a report
+                   @executionId is the id of the current execution
+                   @stoppable is TRUE when we want to be able to stop while waiting for a report
+                   @object NO_NAME or set to an object name is used to set reachability false when we fail an action oriented to an object. This could be generalized in a better mechanism to input failure facts"
    :body (
-	 (!(= @reportName (TERM-STRING-CAT (VAL @module) ".report")))
-	 (!(= @reportName (MAKE-ATOM @reportName)))
+	  (!(= @reportName (TERM-STRING-CAT (VAL @module) ".report")))   ;we create the real report name
+	  (!(= @reportName (MAKE-ATOM @reportName)))
 
-	 (^(|| (@reportName (VAL @id) @report) (ExecutionManager.halt (VAL @executionId)) (& (EQUAL @stoppable TRUE) (ExecutionManager.stop (VAL @executionId)) )))
+	  ;;we wait until we have a report, we are stopped or paused.
+	 (^(|| (@reportName (VAL @id) @report) (& (EQUAL @haltable TRUE) (|| (ExecutionManager.halt (VAL @executionId)) (Monitor.handPositionDanger TRUE))) (& (EQUAL @stoppable TRUE) (ExecutionManager.stop (VAL @executionId)) )))
 	 
-	 (IF(?(@reportName (VAL @id) @report))   
+	 (IF(?(@reportName (VAL @id) @report))   ;if we have a report
 	    (~>(@reportName (VAL @id) (VAL @report)))
 	    (IF(?(~(EQUAL @report "OK")))   ; if we have a negative report we quit
 	       (!(PRINT @report))
 	       (=> (ExecutionManager.report (VAL @executionId) FAILURE))
 	       (~>(ExecutionManager.isExecutingAction (VAL @executionId)))
 	       (!(ExecutionManager.cleanModuleRequestes))
-	       (IF(?(~(EQUAL @object NO_NAME)))
-		  (!(DatabaseInterface.setReachabilityFalse (VAL @object) @result)) ;;the robot tought that the object was reachable while, in fact, it was not (shouldn't this be in armactions?)
+	       (IF(?(~(EQUAL @object NO_NAME)))  ;if an object name is set the op will call the db to put a reachability to false. It would be better if this was in ArmActions, with the Acapela command here perhaps. The structure of ArmActions rends it a little difficult...
+		  (!(DatabaseInterface.setReachabilityFalse (VAL @object) @result)) 
+		  (!(Acapela.say "I can't seem to reach it..."))   
 		  )
 	       (!(SEM-V ExecutionManager.sem))
 	       (!(FAILED))
 	       )
-	    ELSEIF(?(ExecutionManager.halt (VAL @executionId)))  ;if we halt we want to pause until we receive a resume or stop order.
-	    (~>(ExecutionManager.halt (VAL @executionId)))
+	    ELSEIF(?(& (EQUAL @haltable TRUE) (|| (ExecutionManager.halt (VAL @executionId)) (Monitor.handPositionDanger TRUE))))  ;if we halt we want to pause until we receive a resume or stop order.
+	    (IF(?(Monitor.handPositionDanger TRUE))
+	       (!(= @waitingPositionChange TRUE))
+	       
+	       ELSE
+	       (!(= @waitingPositionChange FALSE))
+	       (~>(ExecutionManager.halt (VAL @executionId)))
+	       )
 	    (IF(?(EQUAL @module ArmActions))
 	       (=>(ArmActions.halt (VAL @id)))
 	       )
-	    (^(|| (& (EQUAL @stoppable TRUE) (ExecutionManager.stop (VAL @executionId))) (ExecutionManager.resume (VAL @executionId))))
+	    (^(|| (& (EQUAL @stoppable TRUE) (ExecutionManager.stop (VAL @executionId))) (ExecutionManager.resume (VAL @executionId)) (&(EQUAL @waitingPositionChange TRUE) (Monitor.handPositionDanger FALSE))))
 	    
-	    (IF(?(ExecutionManager.resume (VAL @executionId)))   ;we ask to resume and recall this function to wait for the report
+	    (IF(?(||(ExecutionManager.resume (VAL @executionId)) (&(EQUAL @waitingPositionChange TRUE) (Monitor.handPositionDanger FALSE))))  ;we ask to resume and recall this function to wait for the report
 	       (~>(ExecutionManager.resume (VAL @executionId)))
 	       (IF(?(EQUAL @module ArmActions))
 		  (=>(ArmActions.resume (VAL @id)))
 		  )
-	       (!(ExecutionManager.handleReport @module @id @executionId @stoppable @object )) 
+	       (!(ExecutionManager.handleReport @module @id @executionId @haltable @stoppable @object )) 
+	       
+	       ELSEIF(?(&(EQUAL @stoppable TRUE) (ExecutionManager.stop (VAL @executionId))))
+	       (~>(ExecutionManager.stop (VAL @executionId)))
+	       (~>(ExecutionManager.isExecutingAction (VAL @executionId)))
+	       (=>(ExecutionManager.report @executionId STOPPED))
+	       (!(ExecutionManager.cleanModuleRequestes))
+	       (!(SEM-V ExecutionManager.sem))
+	       (!(FAILED))
 	       )
+
 	    
-	    
-	    ELSEIF(?(&(ExecutionManager.stop (VAL @executionId)) (EQUAL @stoppable TRUE)))   ;;if we stop we abandon the action. Possible problem of coherency
+	    ELSEIF(?(&(ExecutionManager.stop (VAL @executionId)) (EQUAL @stoppable TRUE)))   ;;if we stop we abandon the action. Possible problem of coherency. Since the stop in softmotion is not working well we will just quit after the action is over
+	 
 
 	    (~>(ExecutionManager.stop (VAL @executionId)))
 	    (~>(ExecutionManager.isExecutingAction (VAL @executionId)))
-	       ;; (IF(?(EQUAL @module ArmActions))
-	       ;; 	  (=>(ArmActions.stop @id))
-		  
+	    (IF(?(EQUAL @module ArmActions))
+	       (=>(ArmActions.stop @id))
+	       )	  
 	       ;; 	  ELSEIF(?(EQUAL @module Spark))
 	       ;; 	  (=>(Spark.stop (VAL @id)))
 		  
@@ -238,12 +260,12 @@
 	     )
 	  (=>(ExecutionManager.isExecutingAction (VAL @executionId)))
 	  ;;set the parameters for the monitor manager
-	   (!(= @failureConditions (. (. .)  (. (ExecutionManager.report (VAL @executionId) FAILURE) (ExecutionManager.report (VAL @executionId) STOPPED) .) .) )) 	 ; item not there 
+	   (!(= @failureConditions (. (. .)  (. (ExecutionManager.report (VAL @executionId) FAILURE) (ExecutionManager.report (VAL @executionId) STOPPED) .) .) )) 	 ; stops monitoring if we fail or if we are stopped
 	  (!(= @successConditions (. (. (ExecutionManager.report (VAL @executionId) OK) .)  (. .) .) ))     ; look at the item until execution is completed
 	  
 
 	  (!(MonitorManager.getFreeId @monitorId))
-
+	  
 	  
 	  ;;start the monitoring
 	  (!(MonitorManager.monitorTarget @object "NO_NAME" @successConditions @failureConditions HIGH @monitorId))
@@ -280,10 +302,10 @@
 
 
 					;open gripper if needed
-	  (IF(?(Robot.gripper (VAL @armForPick) CLOSE))
+	  (IF(?(Robot.gripperStatus (VAL @armForPick) CLOSE))
 	     (!(ArmActions.getFreeId @actionId))
 	     (=>(ArmActions.action openGripper @armForPick @actionId))
-	     (!(ExecutionManager.handleReport ArmActions @actionId @executionId TRUE NO_NAME))
+	     (!(ExecutionManager.handleReport ArmActions @actionId @executionId FALSE FALSE NO_NAME))
 	     )
 
 
@@ -291,19 +313,16 @@
 	  (!(ArmActions.getFreeId @actionId))
 	  (=>(ArmActions.action moveToObject @armForPick @object @actionId))
 
-
-	  (!(ExecutionManager.handleReport ArmActions @actionId @executionId TRUE @object))
+	  (!(ExecutionManager.handleReport ArmActions @actionId @executionId TRUE TRUE @object))
 
 	  
 
 					;close the gripper
 	  (!(ArmActions.getFreeId @actionId))
 	  (=>(ArmActions.action closeGripper @armForPick @actionId))
-	  (!(ExecutionManager.handleReport ArmActions @actionId @executionId FALSE NO_NAME))
+	  (!(ExecutionManager.handleReport ArmActions @actionId @executionId FALSE FALSE NO_NAME))
 	  
 					;updates knowledge of the robot
-
-
 	  (=> (Robot.hasObject (VAL @armForPick) (VAL @object))) ;if we arrive here with no FAILED than we've got the item (hopefully XD)
 
 	  (=>(ExecutionManager.report (VAL @executionId) OK))
@@ -311,9 +330,11 @@
 
 	  (!(Spark.getFreeId @sparkId))
 	  (=>(Spark.request setObjectInHand PR2_ROBOT (VAL @object) (VAL @armForPick) TRUE (VAL @sparkId)))
-	  (!(ExecutionManager.handleReport Spark @sparkId @executionId FALSE NO_NAME))
-	  
+	  (!(ExecutionManager.handleReport Spark @sparkId @executionId FALSE FALSE NO_NAME))
+
 	  (!(DatabaseInterface.add (AGENT-STATEMENT PR2_ROBOT PR2_ROBOT hasInHand (VAL @object)) @result))
+
+	  (!(AgentActionMonitor.cleanObjectMonitorSpheres (VAL @object)))
 	  (~>(ExecutionManager.isExecutingAction (VAL @executionId)))
 	  (!(SEM-V ExecutionManager.sem))
 	  )
@@ -324,108 +345,84 @@
 
  (defop |getHumanObservations|
    :invocation(!(ExecutionManager.getHumanObservations @agent @executionId $armPosition $distance $orientation))
-   :documentation "utility procedure that calculates the observations for the POMDP. SHOULD GO TO ANOTHER FILE"
+   :documentation "utility procedure that calculates the observations for the POMDP."
    :body (
-	  (?(Spark.robotName @sparkRobotName))
-	  (?(Spark.humanWrist @hWrist))
-	  (?(Spark.humanHip @hHip))
+	  (!(DatabaseInterface.findList (AGENT-STATEMENT PR2_ROBOT HERAKLES_HUMAN1 agentPresent @isPresent) (. @isPresent .) @result))
+	  (IF(?(~(NULL @result)))
+	     (!(= @isPresent (CAR(CAR @result))))
+	     
+	     ELSE
+	     (!(= @isPresent FALSE))
+	     )
 
-	  (?(ExecutionManager.oldArmPosition @oldArmPosition))
-	  (?(ExecutionManager.oldDistance @oldDistance))
-
-	 (?(Robot.position TORSO @robotTorsoX @robotTorsoY @robotTorsoZ @robotTorsoYaw @robotTorsoPitch @robotTorsoRoll))	 
-	  ;;get the human right hip position
-	  (!(Spark.getFreeId @sparkId))
-	  (=>(Spark.request getJointAbsPose (VAL @agent) (VAL @hHip) (VAL @sparkId)))
-	  (^(Spark.report (VAL @sparkId) @report))
-
-	  (~>(Spark.report (VAL @sparkId) (VAL @report)))
-
-	  (IF(?(~(EQUAL @report "OK")))   ;;the human is not in sight
-	     (!(= $distance outOfRange))
-	     (!(= $armPosition unknown))
-	     (!(= $orientation unknown))
-	     (=>(ExecutionManager.oldDistance outOfRange))
-	     (=>(ExecutionManager.oldArmPosition unknown))
-	     (=>(ExecutionManager.oldOrientation unknown))
-	     
-	     ELSE   ;human in sight
-	     
-	     (^(Spark.result (VAL @sparkId) @humanHipX @humanHipY @humanHipZ @humanHipYaw @humanHipPitch @humanHipRoll))
-	     (~>(Spark.result (VAL @sparkId) (VAL @humanHipX) (VAL @humanHipY) (VAL @humanHipZ) (VAL @humanHipYaw) (VAL @humanHipPitch) (VAL @humanHipRoll)))
-					;get the human wrist position
-	     (!(Spark.getFreeId @sparkId))
-	     (=>(Spark.request getJointAbsPose (VAL @agent) (VAL @hWrist) (VAL @sparkId)))
-	     (!(ExecutionManager.handleReport Spark @sparkId @executionId TRUE NO_NAME))
-	     (^(Spark.result (VAL @sparkId) @humanWristX @humanWristY @humanWristZ @humanWristYaw @humanWristPitch @humanWristRoll))
-	     (~>(Spark.result (VAL @sparkId) (VAL @humanWristX) (VAL @humanWristY) (VAL @humanWristZ) (VAL @humanWristYaw) (VAL @humanWristPitch) (VAL @humanWristRoll)))
-	     
-	     
-					;calculate distance between robot and human. The distance is squared because oprs as no SQRT operator and i'm too lazy to implement it at the moment.
-	     (!(= @xDiff (- @humanHipX @robotTorsoX)))
-	     (!(= @xDiffSquare (* @xDiff @xDiff)))
-	     (!(= @yDiff (- @humanHipY @robotTorsoY)))
-	     (!(= @YDiffSquare (* @yDiff @yDiff)))
-	     (!(= @zDiff (- @humanHipZ @robotTorsoZ)))
-	     (!(= @zDiffSquare (* @zDiff @zDiff)))	   
-	     (!(= @squareDistance (+ @xDiffSquare @YDiffSquare @zDiffSquare)))
-	     
-
-	     
-	     (IF(?(> @squareDistance 50))
-		(!(= $distance outOfRange))
-		(!(= $armPosition unknown))
-		(!(= $orientation unknown))
-		(=>(ExecutionManager.oldDistance outOfRange))
-		(=>(ExecutionManager.oldArmPosition unknown))
-		(=>(ExecutionManager.oldOrientation unknown))
-		
+	  (IF(?(EQUAL @isPresent TRUE))
+	     (?(ExecutionManager.oldDistance @oldDistance)) 
+	     (?(ExecutionManager.oldArmPosition @oldArmPosition)) 
+	     (IF(?(EQUAL @oldDistance outOfRange))
+		(!(= @newDistance closer))
+		(!(= @actualDistance CLOSE))
+		(IF(?(EQUAL @oldArmPosition unknown))
+		   (!(= @newArmPosition closer))
+		   (!(= @actualArmPosition EXTENDED))
+		   )
 		
 		ELSE
-		(IF(?(EQUAL @oldDistance outOfRange))
-		   (!(= $distance closer))
-		   ELSEIF(?(< @squareDistance (- @oldDistance 0.5)))
-		   (!(= $distance closer))
-		   ELSEIF(?(> @squareDistance (+ @oldDistance 0.5)))
-		   (!(= $distance farther))
-		   ELSE
-		   (!(= $distance still))
+		(!(DatabaseInterface.findList (AGENT-STATEMENT PR2_ROBOT HERAKLES_HUMAN1 distance @actualDistance) (. @actualDistance .) @result))
+		(IF(?(~(NULL @result)))
+		   (!(= @actualDistance (CAR(CAR @result))))
+		   (IF(?(EQUAL @oldDistance CLOSE))
+		      (IF(?(EQUAL @actualDistance FAR))
+			 (!(= @newDistance farther))
+			 ELSE
+			 (!(= @newDistance still))
+			 )
+		      ELSEIF(?(EQUAL @oldDistance FAR))
+			 (IF(?(EQUAL @actualDistance CLOSE))
+			    (!(= @newDistance closer))
+			    
+			    ELSE
+			    (!(= @newDistance still))
+			    )
+			 )
+		   ELSE 
+		   (!(= @newDistance outOfRange))
 		   )
-
-		(=>(ExecutionManager.oldDistance @squareDistance))
 		
-		(IF(?(EQUAL @oldOrientation unknown))
-		   (!(= $orientation towardRobot))
-		   
+	       	
+		(!(DatabaseInterface.findList (AGENT-STATEMENT PR2_ROBOT HERAKLES_HUMAN1  armPosition @armPosition) (. @armPosition .) @result))
+		(IF(?(~(NULL @result)))
+		   (!(= @actualArmPosition (CAR(CAR @result))))
+		   (IF(?(EQUAL @oldArmPosition CLOSE))
+		      (IF(?(EQUAL @actualArmPosition EXTENDED))
+			 (!(= @newArmPosition closer))
+			 ELSE
+			 (!(= @newArmPosition still))
+			 )
+		      ELSEIF(?(EQUAL @oldArmPosition EXTENDED))
+		      (IF(?(EQUAL @actualArmPosition EXTENDED))
+			 (!(= @newArmPosition still))
+			 
+			 ELSE
+			 (!(= @newArmPosition farther))
+			 )
+		      )
 		   ELSE
-		   (!(= $orientation still))
+		   (!(= @newArmPosition unknown))
 		   )
-		(=>(ExecutionManager.oldOrientation (VAL $orientation)))
-					;calculate distance between human hand and wrist. The distance is squared because oprs as no SQRT operator and i'm too lazy to implement it at the moment.
-		(!(= @xDiff (- @humanHipX @humanWristX)))
-		(!(= @xDiffSquare (* @xDiff @xDiff)))
-		(!(= @yDiff (-  @humanHipY @humanWristY)))
-		(!(= @YDiffSquare (* @yDiff @yDiff)))
-		(!(= @zDiff (-  @humanHipZ @humanWristZ)))
-		(!(= @zDiffSquare (* @zDiff @zDiff)))	   
-		(!(= @squareDistance (+ @xDiffSquare @YDiffSquare @zDiffSquare)))
-		
-
-		(IF(?(EQUAL @oldArmPosition unknown))
-		   (!(= $armPosition closer))
-		   ELSEIF(?(> @squareDistance (+ @oldArmPosition 0.05)))
-		   (!(= $armPosition closer))
-		   ELSEIF(?(< @squareDistance (- @oldArmPosition 0.05)))
-		   (!(= $armPosition farther))
-		   ELSE
-		   (!(= $armPosition still))
-		   )  
-
-		(=>(ExecutionManager.oldArmPosition @squareDistance))
 		)
-	     
+	     (!(= @newOrientation still))
+	     ELSE
+	     (!(= @newDistance outOfRange))
+	     (!(= @newArmPosition unknown))
+	     (!(= @newOrientation unknown))
 	     )
-	  
+	  (!(= $distance (VAL @newDistance)))
+	  (!(= $armPosition (VAL @newArmPosition)))
+	  (!(= $orientation (VAL @newOrientation)))
+
+	  (=>(ExecutionManager.oldDistance @actualDistance))
+	  (=>(ExecutionManager.oldOrientation STILL))
+	  (=>(ExecutionManager.oldArmPosition @actualArmPosition))
 	  
 	  )
    )
@@ -496,38 +493,26 @@
 		  
 		  ELSE
 		  (!(= @arm LEFT))
+		  (!(= @armJoint LEFT_ARM))
 		  (!(ArmActions.getFreeId @actionId))
 		  (=>(ArmActions.action openGripper @arm @actionId))
-		  (!(ExecutionManager.handleReport ArmActions @actionId @executionId TRUE NO_NAME))
+		  (!(ExecutionManager.handleReport ArmActions @actionId @executionId FALSE FALSE NO_NAME))
 		  )
 		    
 	       ELSE
 	       (!(= @arm RIGHT))
+	       (!(= @armJoint RIGHT_ARM))
 	       (!(ArmActions.getFreeId @actionId))
 	       (=>(ArmActions.action openGripper @arm @actionId))
 
-	       (!(ExecutionManager.handleReport ArmActions @actionId @executionId TRUE NO_NAME))
+	       (!(ExecutionManager.handleReport ArmActions @actionId @executionId FALSE FALSE NO_NAME))
 	       )
 	    )
 	 
 	 (=>(ExecutionManager.isExecutingAction (VAL @executionId)))
 	 (?(Spark.robotName @sparkRobotName))
 	
-	 ;;get the robot torso position (to compute distance from the user)
-	 (!(Spark.getFreeId @sparkId))
-	 (=>(Spark.request getJointAbsPose (VAL @sparkRobotName) (VAL @rTorso) (VAL @sparkId)))
-	 (!(ExecutionManager.handleReport Spark @sparkId @executionId TRUE NO_NAME))
-	 (?(Spark.result (VAL @sparkId) @robotTorsoX @robotTorsoY @robotTorsoZ @robotTorsoYaw @robotTorsoPitch @robotTorsoRoll))
-	 (~>(Spark.result (VAL @sparkId) (VAL @robotTorsoX) (VAL @robotTorsoY) (VAL @robotTorsoZ) (VAL @robotTorsoYaw) (VAL @robotTorsoPitch) (VAL @robotTorsoRoll)))
-
-	 (=>(Robot.position TORSO @robotTorsoX @robotTorsoY @robotTorsoZ @robotTorsoYaw @robotTorsoPitch @robotTorsoRoll))
 	 
-	 ;move to rest position
-;	 (!(ArmActions.getFreeId @actionId))
-;	 (=>(ArmActions.action moveToRestPosition (VAL @arm) (VAL @actionId)))
-;	 (!(ExecutionManager.handleReport ArmActions @actionId @executionId))
-	
-
 	 ;;Set the starting variables. We only compute observations to set inRange at the start.
 	 (!(ExecutionManager.getHumanObservations @agent  @executionId @armPosition @distance @orientation))
 	 (IF(?(EQUAL @distance outOfRange))
@@ -536,14 +521,10 @@
 	    ELSE
 	    (!(= @inRange true))
 	    (!(ExecutionManager.getQForHuman @arm @agent @q0))
-	    (IF(?(EQUAL @type GIVE))
-	       (!(Acapela.say "I'm ready to give you the item"))
+	    (IF(?(~(AgentActionMonitor.isMonitoringAgent (VAL @agent) @monitorId)))
+		 (!(AgentActionMonitor.startMonitoringAgent @agent))
+		 )
 	       
-	       ELSEIF(?(EQUAL @type GRAB))
-	       (!(Acapela.say "Could you give me the item?"))
-	       )
-	    (!(MonitorManager.getFreeId @monitorId))
-	    (!(MonitorManager.monitorTarget @agent @humanHead @monitorSuccessConditions @monitorFailureConditions HIGH @monitorId)) 
 
 	    )
 	 
@@ -563,15 +544,15 @@
 	       ;;we get a wait action and the user is engaged.
 	       
 	       (IF(?(& (~(EQUAL @robotState armExtended)) (|| (EQUAL @action CONTINUE) (& (EQUAL @action WAIT) (EQUAL @yState engaged)))))  ;if user is engaged and arm is not extended extend it
-		  (IF(?(EQUAL @task waitingGrasp)) ;if we are waiting for grasp we close the gripper, move and then relaunch release to avoid it opening because of the arm moving.
+		  (IF(?(ArmActions.detectPression (VAL @arm) @mode @smId)) ;if we are waiting for grasp we close the gripper, move and then relaunch release to avoid it opening because of the arm moving.
 		     (!(ArmActions.getFreeId @detectPressionId))
-		     (=>(ArmActions.action stopDetectPression @arm @type @detectPressionId))
-		     (!(ExecutionManager.handleReport ArmActions @detectPressionId @executionId TRUE NO_NAME))
-		     )
+		     (=>(ArmActions.action stopDetectPression @arm @mode @detectPressionId))
+		     (!(ExecutionManager.handleReport ArmActions @detectPressionId @executionId FALSE FALSE NO_NAME))
+		  )
 
 		  (!(ArmActions.getFreeId @actionId))
 		  (=>(ArmActions.action moveToExtendedPosition @arm @q0 @actionId))
-		  (!(ExecutionManager.handleReport ArmActions @actionId @executionId TRUE NO_NAME))
+		  (!(ExecutionManager.handleReport ArmActions @actionId @executionId FALSE TRUE NO_NAME))
 		       
 		  (!(ArmActions.getFreeId @detectPressionId))
 		  (=>(ArmActions.action detectPression @arm @type @detectPressionId))
@@ -587,15 +568,15 @@
 		  ;;we get a WAIT or ENGAGE command
 		  ;;task state is not modified here
 		  ELSEIF(?(&(~(EQUAL @robotState armReady)) (EQUAL @yState notEngaged) (EQUAL @inRange true) (|| (EQUAL @action WAIT) (EQUAL @action ENGAGE))))
-		  (^(Robot.isMovingArm (VAL @arm) FALSE))
-		  (IF(?(EQUAL @task waitingGrasp))
+		  (^(Robot.isMoving (VAL @armJoint) FALSE))
+		  (IF(?(ArmActions.detectPression (VAL @arm) @mode @smId)) ;if we are waiting for grasp we close the gripper, move and then relaunch release to avoid it opening because of the arm moving.
 		     (!(ArmActions.getFreeId @detectPressionId))
-		     (=>(ArmActions.action stopDetectPression @arm @type @detectPressionId))
-		     (!(ExecutionManager.handleReport ArmActions @detectPressionId @executionId TRUE NO_NAME))
+		     (=>(ArmActions.action stopDetectPression @arm @mode @detectPressionId))
+		     (!(ExecutionManager.handleReport ArmActions @detectPressionId @executionId FALSE FALSE NO_NAME))
 		     )
 		  (!(ArmActions.getFreeId @actionId))
 		  (=>(ArmActions.action moveToReadyPosition (VAL @arm) @q0 @actionId))
-		  (=>(ExecutionManager.handleReport ArmActions @actionId @executionId TRUE NO_NAME))
+		  (!(ExecutionManager.handleReport ArmActions @actionId @executionId FALSE TRUE NO_NAME))
 		  
 		  (!(ArmActions.getFreeId @detectPressionId))
 		  (=>(ArmActions.action detectPression @arm @type @detectPressionId))
@@ -607,15 +588,16 @@
 		  ;;we go to rest state if
 		  ;;we receive a wait command and the user is out of range and the the robot is not in restState
 		  ELSEIF(?(& (~(EQUAL @robotState armRest)) (EQUAL @inRange false) (EQUAL @action WAIT)))
-		  (^(Robot.isMovingArm (VAL @arm) FALSE))
-		  (IF(?(EQUAL @task waitingGrasp))
+		  (^(Robot.isMoving (VAL @armJoint) FALSE))
+		  (IF(?(ArmActions.detectPression (VAL @arm) @mode @smId)) ;if we are waiting for grasp we close the gripper, move and then relaunch release to avoid it opening because of the arm moving.
 		     (!(ArmActions.getFreeId @detectPressionId))
-		     (=>(ArmActions.action stopDetectPression @arm @type @detectPressionId))
-		     (!(ExecutionManager.handleReport ArmActions @detectPressionId @executionId TRUE NO_NAME))
-		     )
+		     (=>(ArmActions.action stopDetectPression @arm @mode @detectPressionId))
+		     (!(ExecutionManager.handleReport ArmActions @detectPressionId @executionId FALSE FALSE NO_NAME))
+		  )
 		  
 		  (!(ArmActions.getFreeId @actionId))
-		  (=>(ArmActions.action moveToRestPosition @arm @actionId))
+		  (=>(ArmActions.action moveToManipulationPosition @actionId))
+		  (!(ExecutionManager.handleReport ArmActions @actionId @executionId FALSE TRUE NO_NAME))
 		  (!(= @robotState armRest))
 		  (!(= @task notCompleted))
 		  )
@@ -636,10 +618,10 @@
 		     )
 		  (!(= @time ok))
 		  (IF(?(EQUAL @type GIVE))
-		     (!(Acapela.say "I'm ready to give you the item. Are you still interested?"))
+		     (!(Acapela.say "Are you sure you want it?"))
 		  
 		     ELSEIF(?(EQUAL @type GRAB))
-		     (!(Acapela.say "I'm ready to take the item. Could you please give it to me?"))
+		     (!(Acapela.say "Can you give that to me?"))
 		     )
 		  )
 	       ;;WAIT before getting the new observations
@@ -655,38 +637,38 @@
 		  (!(ExecutionManager.getQForHuman @arm @agent @qo))
 		  )
 	       
-	       ;;if the user is out of range and the monitor has not failed stop the monitor. If the user is in range and we are not monitoring it start the monitor.
+	       ;; ;;if the user is out of range and the monitor has not failed stop the monitor. If the user is in range and we are not monitoring it start the monitor.
 	       
-	       (IF(?(EQUAL @inRange true))
-		  (IF(?(~(MonitorManager.isMonitoringTarget (VAL @monitorId))))
-		     (!(MonitorManager.getFreeId @monitorId))
-		     (!(MonitorManager.monitorTarget @agent @humanHead @monitorSuccessConditions @monitorFailureConditions HIGH @monitorId)) 
-		     )
-		  ELSE
-		  (IF(?(MonitorManager.isMonitoringTarget (VAL @monitorId)))
-		     (IF(?(~(MonitorManager.report (VAL @monitorId) @report)))
-			(=>(MonitorManager.cancelMonitoring (VAL @monitorId)))
-			(^(MonitorManager.report (VAL @monitorId) @report))
-			(~>(MonitorManager.report (VAL @monitorId) @report))
-			ELSE
-			(~>(MonitorManager.report (VAL @monitorId) @report))
-			)
-		     )
-		  )
+	       ;; (IF(?(EQUAL @inRange true))
+	       ;; 	  (IF(?(~(MonitorManager.isMonitoringTarget (VAL @monitorId))))
+	       ;; 	     (!(MonitorManager.getFreeId @monitorId))
+	       ;; 	     (!(MonitorManager.monitorTarget @agent @humanHead @monitorSuccessConditions @monitorFailureConditions HIGH @monitorId)) 
+	       ;; 	     )
+	       ;; 	  ELSE
+	       ;; 	  (IF(?(MonitorManager.isMonitoringTarget (VAL @monitorId)))
+	       ;; 	     (IF(?(~(MonitorManager.report (VAL @monitorId) @report)))
+	       ;; 		(=>(MonitorManager.cancelMonitoring (VAL @monitorId)))
+	       ;; 		(^(MonitorManager.report (VAL @monitorId) @report))
+	       ;; 		(~>(MonitorManager.report (VAL @monitorId) @report))
+	       ;; 		ELSE
+	       ;; 		(~>(MonitorManager.report (VAL @monitorId) @report))
+	       ;; 		)
+	       ;; 	     )
+	       ;; 	  )
 	       (IF(?(EQUAL @task waitingGrasp)) ;if we are waiting a grasp and detecting pressure we open or close the gripper depending on the kind of handover
-		  (IF(?(Robot.gripper (VAL @arm) DETECTED_PRESSION))
-		     (~>(Robot.gripper (VAL @arm) DETECTED_PRESSION))
+		  (IF(?(Robot.gripperStatus (VAL @arm) DETECTED_PRESSION))
+		     (~>(Robot.gripperStatus (VAL @arm) DETECTED_PRESSION))
 		     (~>(ArmActions.report @detectPressionId @report))
 		     
 		     (IF(?(EQUAL @type GIVE))
 			(!(ArmActions.getFreeId @actionId))
 			(=>(ArmActions.action openGripper @arm @actionId))
-			(!(ExecutionManager.handleReport ArmActions @actionId @executionId FALSE NO_NAME))
+			(!(ExecutionManager.handleReport ArmActions @actionId @executionId FALSE FALSE NO_NAME))
 					     	     
 			ELSEIF(?(EQUAL @type GRAB))
 			(!(ArmActions.getFreeId @actionId))
 			(=>(ArmActions.action closeGripper @arm @actionId))
-			(!(ExecutionManager.handleReport ArmActions @actionId @executionId FALSE NO_NAME))
+			(!(ExecutionManager.handleReport ArmActions @actionId @executionId FALSE FALSE NO_NAME))
 			)
 		     (!(= @task completed))
 		     (IF(?(EQUAL @type GIVE))
@@ -694,15 +676,15 @@
 			
 			(!(Spark.getFreeId @sparkId))
 			(=>(Spark.request placeObjectForSimu (VAL @object) 0 0 0 0 0 0 1 @sparkId)) 
-			(!(ExecutionManager.handleReport Spark @sparkId @executionId FALSE NO_NAME))
+			(!(ExecutionManager.handleReport Spark @sparkId @executionId FALSE FALSE NO_NAME))
 	       
 			(!(Spark.getFreeId @sparkId))
 			(=>(Spark.request setObjectInHand (VAL @sparkRobotName) (VAL @object) (VAL @arm) FALSE (VAL @sparkId)))
-			(!(ExecutionManager.handleReport Spark @sparkId @executionId FALSE NO_NAME))
+			(!(ExecutionManager.handleReport Spark @sparkId @executionId FALSE FALSE NO_NAME))
 
 			(!(Spark.getFreeId @sparkId))
 			(=>(Spark.request setObjectInHand (VAL @agent) (VAL @object) (VAL @arm) TRUE (VAL @sparkId)))
-			(!(ExecutionManager.handleReport Spark @sparkId @executionId FALSE NO_NAME))
+			(!(ExecutionManager.handleReport Spark @sparkId @executionId FALSE FALSE NO_NAME))
 
 			(=>(Agent.hasObject (VAL @agent) (VAL @object)))
 			(!(DatabaseInterface.remove (AGENT-STATEMENT PR2_ROBOT PR2_ROBOT hasInHand (VAL @object)) @result))
@@ -712,11 +694,11 @@
 			(=>(Robot.hasObjectForThrow (VAL @arm) (VAL @object)))
 			(!(Spark.getFreeId @sparkId))
 			(=>(Spark.request placeObjectForSimu (VAL @object) 0 0 0 0 0 0 1 @sparkId)) 
-			(!(ExecutionManager.handleReport Spark @sparkId @executionId FALSE NO_NAME))
+			(!(ExecutionManager.handleReport Spark @sparkId @executionId FALSE FALSE NO_NAME))
 
 			(!(Spark.getFreeId @sparkId))
 			(=>(Spark.request setObjectInHand (VAL @agent) (VAL @object) (VAL @arm) FALSE (VAL @sparkId)))
-			(!(ExecutionManager.handleReport Spark @sparkId @executionId FALSE NO_NAME))
+			(!(ExecutionManager.handleReport Spark @sparkId @executionId FALSE FALSE NO_NAME))
 
 			(~>(Agent.hasObject (VAL @agent) (VAL @object)))
 			(!(DatabaseInterface.add (AGENT-STATEMENT PR2_ROBOT PR2_ROBOT hasInHand (VAL @object)) @result))
@@ -753,13 +735,17 @@
 	       
 	       )
 	 
-	 ;task is over. We go to rest state
-	 (IF(?(~(EQUAL @robotState armRest)))  
-	    (^(ELAPSED-TIME (TIME) 2)) ;wait some seconds before leaving
-	    (!(ArmActions.getFreeId @actionId))
-	    (=>(ArmActions.action moveToRestPosition @arm @actionId))
-	    (!(ExecutionManager.handleReport ArmActions @actionId @executionId FALSE NO_NAME))
-	    )
+					;task is over. We go to rest state
+	 (!(ExecutionManager.cleanModuleRequestes))
+	 
+	 ;; (IF(?(~(EQUAL @robotState armRest)))  
+	 ;;    (^(ELAPSED-TIME (TIME) 2))
+	 ;; 				;wait some seconds before leaving
+	    
+	 ;;    (!(ArmActions.getFreeId @actionId))
+	 ;;    (=>(ArmActions.action moveToRestPosition @arm @actionId))
+	 ;;    (!(ExecutionManager.handleReport ArmActions @actionId @executionId FALSE NO_NAME))
+	 ;;    )
 
 	 
 	 (IF(?(EQUAL @task completed))
@@ -769,16 +755,7 @@
 	   
 	    ELSE
 	    (=>(ExecutionManager.report @executionId FAILURE))
-	    (!(Acapela.say "Well... too bad. Have a nice day."))
-	    )
-	 (!(ExecutionManager.cleanModuleRequestes))
-	 ;;stop any remaining monitor (should not be there actually but still...)
-	 (IF(?(MonitorManager.target @any1 (VAL @monitorId) @any2))
-	    (^(MonitorManager.report (VAL @monitorId) @report))
-	    (~>(MonitorManager.report (VAL @monitorId) @report))
-	    
-	    ELSEIF(?(MonitorManager.report (VAL @monitorId) @report))
-	    (~>(MonitorManager.report (VAL @monitorId) @report))
+;	    (!(Acapela.say "Well... too bad."))
 	    )
 	 (IF(?(Timer.isRunning (VAL @timerId)))
 	    (=>(Timer.stopTimer @timerId))
@@ -789,6 +766,22 @@
 
 	 (~>(ExecutionManager.isExecutingAction (VAL @executionId)))
 	 (!(SEM-V ExecutionManager.sem))
+
+
+	 ;; (!(ArmActions.getFreeId @actionId))
+	 ;; (IF(?(~(Robot.pose RIGHT @anObject @aSupport REST)))
+	 ;;    (=>(ArmActions.action moveToManipulationPosition @actionId))
+	 ;;    (^(ArmActions.report (VAL @actionId) @report))
+	 ;;    (~>(ArmActions.report (VAL @actionId) @report))
+	 ;;    )
+	 ;;stop any remaining monitor (should not be there actually but still...)
+	 ;; (IF(?(MonitorManager.target @any1 (VAL @monitorId) @any2))
+	 ;;    (^(MonitorManager.report (VAL @monitorId) @report))
+	 ;;    (~>(MonitorManager.report (VAL @monitorId) @report))
+	    
+	 ;;    ELSEIF(?(MonitorManager.report (VAL @monitorId) @report))
+	 ;;    (~>(MonitorManager.report (VAL @monitorId) @report))
+	 ;;    )
 	 )
   )
 
@@ -827,7 +820,7 @@
 					;get coordinates of the placement
 	  (!(Spark.getFreeId @sparkId))
 	  (=>(Spark.request getJointAbsPose (VAL @placement) NO_NAME (VAL @sparkId)))
-	  (!(ExecutionManager.handleReport Spark (VAL @sparkId) (VAL @executionId) TRUE NO_NAME))
+	  (!(ExecutionManager.handleReport Spark (VAL @sparkId) (VAL @executionId) FALSE FALSE NO_NAME))
 	  (^(Spark.result (VAL @sparkId) @xp @yp @zp @yawp @pitchp @rollp))
 	  (~>(Spark.result (VAL @sparkId) (VAL @xp) (VAL @yp) (VAL @zp) (VAL @yawp) (VAL @pitchp) (VAL @rollp)))
 
@@ -839,13 +832,13 @@
 	  ;move the arm over the placement
 	  (!(ArmActions.getFreeId @actionId))
 	  (=>(ArmActions.action moveToX @arm @xp @yp @zf @actionId))
-	  (!(ExecutionManager.handleReport ArmActions @actionId @executionId TRUE (VAL @placement)))
+	  (!(ExecutionManager.handleReport ArmActions @actionId @executionId TRUE TRUE (VAL @placement)))
 	  
 	  
 	  ;;execute the throw
 	  (!(ArmActions.getFreeId @actionId))
 	  (=>(ArmActions.action openGripper @arm @actionId))
-	  (!(ExecutionManager.handleReport ArmActions @actionId @executionId FALSE @placement))
+	  (!(ExecutionManager.handleReport ArmActions @actionId @executionId FALSE FALSE @placement))
 
 	  (=>(ExecutionManager.report @executionId OK))
 	  (~>(Robot.hasObject (VAL @arm) (VAL @object)))
@@ -853,17 +846,17 @@
 
 	  (!(Spark.getFreeId @sparkId))
 	  (=>(Spark.request setObjectInHand PR2_ROBOT (VAL @object) (VAL @armForPick) FALSE (VAL @sparkId)))
-	  (!(ExecutionManager.handleReport Spark @sparkId @executionId FALSE NO_NAME))
+	  (!(ExecutionManager.handleReport Spark @sparkId @executionId FALSE FALSE NO_NAME))
 
 
 	  (!(Spark.getFreeId @sparkId))
 	  (=>(Spark.request getJointAbsPose @placement NO_NAME @sparkId))
-	  (!(ExecutionManager.handleReport Spark @sparkId @executionId FALSE NO_NAME))
+	  (!(ExecutionManager.handleReport Spark @sparkId @executionId FALSE FALSE NO_NAME))
 	  (^(Spark.result (VAL @sparkId) @x @y @z @yaw @pitch @roll))
 
 	  (!(Spark.getFreeId @sparkId))
 	  (=>(Spark.request setInferrenceForObject @object 1 @placement 0 SPARK_IS_IN 1.0 @sparkId))
-	  (!(ExecutionManager.handleReport Spark @sparkId @executionId FALSE NO_NAME))
+	  (!(ExecutionManager.handleReport Spark @sparkId @executionId FALSE FALSE NO_NAME))
 	  (!(DatabaseInterface.remove (AGENT-STATEMENT PR2_ROBOT PR2_ROBOT hasInHand (VAL @object)) @result))
 
 	  (!(SEM-V ExecutionManager.sem))
@@ -893,20 +886,20 @@
 					;move the arm over the placement
 	  (!(ArmActions.getFreeId @actionId))
 	  (=>(ArmActions.action moveToPlaceObject @arm @object @support @placement @actionId))
-	  (!(ExecutionManager.handleReport ArmActions @actionId @executionId TRUE NO_NAME))
+	  (!(ExecutionManager.handleReport ArmActions @actionId @executionId TRUE TRUE NO_NAME))
 	  
 	  
 	  ;;open the gripper
 	  (!(ArmActions.getFreeId @actionId))
 	  (=>(ArmActions.action openGripper @arm @actionId))
-	  (!(ExecutionManager.handleReport ArmActions @actionId @executionId FALSE NO_NAME))
+	  (!(ExecutionManager.handleReport ArmActions @actionId @executionId FALSE FALSE NO_NAME))
 	  
 	  (=>(ExecutionManager.report @executionId OK))
 	  (~>(Robot.hasObject (VAL @arm) (VAL @object)))
   
 	  (!(Spark.getFreeId @sparkId))
 	  (=>(Spark.request setObjectInHand (VAL @object) (VAL @armForPick) FALSE (VAL @sparkId)))
-	  (!(ExecutionManager.handleReport Spark @sparkId @executionId FALSE NO_NAME))
+	  (!(ExecutionManager.handleReport Spark @sparkId @executionId FALSE FALSE NO_NAME))
 
 	  (~>(ExecutionManager.isExecutingAction (VAL @executionId)))
 		  

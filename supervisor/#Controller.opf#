@@ -18,8 +18,8 @@
    :documentation "Starts all the modules of the supervisor"
    :body (
 	  (IF(?(~(CHECKING-REPLY-G30-QUEUE)))
-	  (=>(START-AND-CHECK-REPLY-G3O-QUEUE-WITH-PRIORITY))
-	  (=>(START-AND-CHECK-REPLY-QUEUE-WITH-PRIORITY))
+	     (=>(START-AND-CHECK-REPLY-G3O-QUEUE-WITH-PRIORITY))
+	     (=>(START-AND-CHECK-REPLY-QUEUE-WITH-PRIORITY))
 	  )
 	  (!(MonitorManager.init))
 	  (!(Spark.init))
@@ -52,6 +52,7 @@
 	  (!(DatabaseInterface.addMonitor (AGENT-STATEMENT PR2_ROBOT HERAKLES_HUMAN1 handCloseToRightGripper TRUE) (Monitor.handPositionDanger TRUE) @result) )	  
 	  (!(DatabaseInterface.addMonitor (AGENT-STATEMENT PR2_ROBOT HERAKLES_HUMAN1 handCloseToRightGripper FALSE) (Monitor.handPositionDanger FALSE) @result))	  
 	  (!(AgentActionMonitor.calculateInferencesForAgent HERAKLES_HUMAN1))
+
 	  )
    )
 )

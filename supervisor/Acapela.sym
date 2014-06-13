@@ -1,12 +1,13 @@
-;;GENERAL
-declare ff Acapela.isActive 0
-declare ff Acapela.server 0
+;;PREDICATES
 
-;;init
-declare op_predicate Acapela.init
+declare ff Acapela.isActive 0   ;set to TRUE in Acapela.db to use Acapela
+declare ff Acapela.server 0     ;set to a string containing acapela server
+declare cwp Acapela.sentence    ;to use with the getSentence op. The format of this fact is Acapela.sentence sentenceType number  sentence . The number is an index starting from 0. For each sentenceType the numbers must be unique 
+declare cwp Acapela.number     ;Acapela.number sentenceType maxNumber. maxNumber must be  set in Acapela.db for each sentenceType to  the number of sentences, this is used with the random number generator. Note that indexes start from 0 but maxNumber is the number of sentences. So if we have 2 sentences for a type they will have indexes 0 and 1, but maxNu mber will be 2.
+declare cwp Acapela.translation   ;tr	      anslates object names such as WALLE_TAPE in a string that can be verbalized
 
+declare op_predicate Acapela.init              ;;initializes acapela
+declare op_predicate Acapela.say               ;;verbalizes a message
+declare op_predicate Acapela.getSentence       ;;gets a random sentence of a certain type
 
-;;say
-declare op_predicate Acapela.say
-declare symbol message
-
+declare cwp Acapela.sem

@@ -4,4 +4,4 @@ h2 clean OPRS_SUPR
 
 export OPRS_DATA_PATH=${OPRS_DATA_PATH}:"."
 
-xoprs OPRS_SUP -x ./supervisor/main.inc -x  ${ROBOTPKG_BASE}/share/superv/translink-superv.inc -x  ${ROBOTPKG_BASE}/share/superv/superv-acapela-superv.inc
+xoprs OPRS_SUP -x ./supervisor/main.inc -x ${OPRS_GENOM_PATH} -x ${OPRS_ACAPELA_PATH} 

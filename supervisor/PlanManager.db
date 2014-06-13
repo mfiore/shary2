@@ -4,4 +4,6 @@
  (PlanManager.timeToRetry 5)
  (PlanManager.shouldRun TRUE)
  (PlanManager.isRunning FALSE)
+ (PlanManager.shouldTellPlan TRUE)
+ (PlanManager.planningModality ROBOT)
 )

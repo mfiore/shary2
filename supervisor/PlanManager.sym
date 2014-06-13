@@ -7,6 +7,8 @@ declare ff PlanManage.actionReport 1
 declare cwp PlannerInterface.report 
 declare be PlanManager.managePlans
 declare cwp PlanManager.stop
+declare cwp PlanManager.actionTold 
+declare ff PlanManager.planningModality 0
 
 ;manage plans
 declare be PlanManager.managePlans
@@ -18,59 +20,7 @@ declare ff PlanManager.newGoal 0
 declare ff PlanManager.goal 0
 declare ff PlanManager.shouldTellPlan 0
 
-declare symbol maxPlanningTime
-declare symbol maxPlanningFailures
-declare symbol timeToRetry
-declare symbol goal
-declare symbol plannerFailures
-declare symbol report
-declare symbol plan
-declare symbol robotActions
-declare symbol humanActions
-
-;clean
 declare op_predicate PlanManager.clean
 
-
-;manageRobotActions
 declare be PlanManager.manageRobotActions
-declare symbol actions
-declare symbol robot
-declare symbol currentAction
-declare symbol actionToExecute
-declare symbol actionId
-declare symbol actionLinks
-declare symbol currentLink
-declare symbol report
-declare symbol actionName
-declare symbol actionParameters
-declare symbol object
-declare symbol support
-declare symbol placement
-declare symbol maxTime
-declare symbol executionId
-
-
-;manageHumanActions
-declare symbol human
 declare be PlanManager.manageHumanActions
-declare symbol actions
-declare symbol currentAction
-declare symbol actionToMonitor
-declare symbol actionId
-declare symbol actionLinks
-declare symbol report
-declare symbol currentLink
-declare symbol actionName
-declare symbol actionParameters
-declare symbol object
-declare symbol support
-declare symbol placement
-declare symbol maxTime
-declare symbol lastPriority
-declare symbol monitorId
-declare symbol successConditions
-declare symbol failureConditions
-declare symbol timeTolerance
-declare symbol target
-

@@ -1,16 +1,18 @@
 ;; -*-Lisp-*-
 ;;author: Michelangelo Fiore
-;;this module contains procedures to use the Acapela voice module
+;;this module contains procedures to use the Acapela voice module.
 
 (
  (defop |init|
    :invocation(!(Acapela.init))
    :documentation "Initializes the module"
    :body (
-	  (IF(?(Acapela.isActive TRUE))
+	  (IF(?(Acapela.isActive TRUE))                                                                                   
 	     (?(Acapela.server @server))
 	     (! (acapela_Init_report acapela (VarArg (server @server)) @reportTmp))
-	     (! (acapela_SetVoice_report acapela (VarArg (voice "graham")) @reportTmp))
+	     (! (acapela_SetVoice_report acapela (VarArg (voice "graham")) @reportTmp))	 
+	     (!(SEM-CREATE Acapela.sem 1 SEM-FIFO))
+
 	     )
 	  )
    )
@@ -20,8 +22,20 @@
    :documentation "Speaks the message received in input"
    :body (
 	  (IF(?(Acapela.isActive TRUE))
+	     (!(SEM-P Acapela.sem))
 	     (! (acapela_Say_report acapela (VarArg (message @message)) @reportTmp))
+	     (!(SEM-V Acapela.sem))
 	     )
+	  )
+   )
+
+ (defop |getSentence|
+   :invocation(!(Acapela.getSentence @type $sentence))
+   :documentation "gets a random sentence of a certain @type. This is used to generate sentences with a certain amount of variability. The resulting sentence is returned in $sentence"
+   :body (
+	  (?(Acapela.number (VAL @type) @n))  ;;get the maximum number of sentences of a certain type
+	  (!(= @choice (RAND @n)))    ;;get a random number in the range [0,n[
+	  (?(Acapela.sentence (VAL @type) (VAL @choice) $sentence))   ;;get a random sentence
 	  )
    )
 )
