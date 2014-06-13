@@ -8,6 +8,8 @@
 (Robot.simu FALSE)
 (Robot.armPosition RIGHT FREE)
 (Robot.armPosition LEFT FREE)
+(Robot.headPan 0)
+(Robot.headTilt 0)
 
 
 (SUP_NAME OPRS_SUP)
