@@ -9,7 +9,7 @@ declare be Database.setReachabilityFalse
 declare be DbCopyBM
 
 declare ff Database.lastAgent 0
-declare ff AGENT-STATEMENT 3
+declare cwp AGENT-STATEMENT 
 
 declare symbol request
 declare symbol unboundVariables

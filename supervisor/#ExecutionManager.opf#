@@ -1,5 +1,5 @@
 ;; -*-Lisp-*-
-;;author: Michelangelo Fiore
+;author: Michelangelo Fiore
 ;;this module contains high-level actions like take an item, give, drop.
 (
 
@@ -10,7 +10,7 @@
 	  (=>(ExecutionManager.freeId 0))
 	  (!(SEM-CREATE ExecutionManager.sem 1 SEM-FIFO))
 	  )
-
+   
    )
  
  (defop |getFreeId|
@@ -125,8 +125,8 @@
   :invocation(!(ExecutionManager.cleanModuleRequestes))
   :documentation "When we stop an action we want to stop all the living requestes like detectPression"
   :body (
-	 (IF(?(ArmActions.hasDetectPressionRequest @gripper @mode @smId))
-	    (~>(ArmActions.hasDetectPressionRequest (VAL @gripper) (VAL @mode) (VAL @smId)))
+	 (IF(?(ArmActions.detectPression @gripper @mode @smId))
+	    (~>(ArmActions.detectPression (VAL @gripper) (VAL @mode) (VAL @smId)))
 	    (?(Softmotion.gripperCancel (VAL @gripper) @state))
 	    (!(Softmotion.getFreeId @smId))
 	    (=>(Softmotion.request useGripper @state @smId))
@@ -596,7 +596,7 @@
 		  )
 		  
 		  (!(ArmActions.getFreeId @actionId))
-		  (=>(ArmActions.action moveToManipulationPosition @actionId))
+		  (=>(ArmActions.action moveToManipulationPosition @arm @actionId))
 		  (!(ExecutionManager.handleReport ArmActions @actionId @executionId FALSE TRUE NO_NAME))
 		  (!(= @robotState armRest))
 		  (!(= @task notCompleted))

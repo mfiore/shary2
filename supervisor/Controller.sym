@@ -1,2 +1,3 @@
 declare op_predicate Controller.initAll  ;inits all modules
 declare op_predicate Controller.stopAll  ;stops all modules
+declare cwp CHECKING-REPLY-G30-QUEUE

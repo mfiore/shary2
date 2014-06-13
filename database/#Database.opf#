@@ -1,0 +1,328 @@
+;; -*-Lisp-*--
+;;author: Michelangelo Fiore
+;;this files contains procedures to manage the Database in the supervision system.
+;; GENERAL INFO
+;; $facts are always composed terms like (fact a)
+;; each procuder sends back a message (Database.result $RESULT)
+
+(
+
+(defop |setReachabilityFalse| 
+  :invocation(Database.setReachabilityFalse @object @caller)
+  :documentation "Used to change the reachability of an object from the supervisor. This is used because sometimes (often) SPARK overestimates the capacity of the robot to reach objects"
+  :body (
+	 (=>(AGENT-STATEMENT PR2_ROBOT (VAL @object) isReachable false))
+	 (~>(AGENT-STATEMENT PR2_ROBOT (VAL @object isReachable true)))
+	 (~>(AGENT-STATEMENT PR2_ROBOT (VAL @object) isReachableBy PR2_ROBOT))
+	 (=>(AGENT-STATEMENT HERAKLES_HUMAN1 (VAL @object) isReachable false))
+	 (~>(AGENT-STATEMENT HERAKLES_HUMAN1 (VAL @object isReachable true)))
+	 (~>(AGENT-STATEMENT HERAKLES_HUMAN1 (VAL @object) isReachableBy PR2_ROBOT))
+	 (=>(Flag.ignoreReachability (VAL @object)))
+	 (!(SEND-MESSAGE @caller (Database.result (. OK .) )))
+	 
+	 )
+  )
+
+ 
+ (defop |checkAndApplyDbRules| 
+   :invocation (!(Database.checkAndApplyDbRules @fact $newFactList))
+   :documentation "this procedure looks into the database rules (used at the moment because the planner or other modules may require that the facts are expressed in a different form) for a given fact and applies them. At the
+moment we keep the original fact. This is because different modules could want the facts formatted in different ways and we could need the original formatting too. Doing this procedure in a generic way it's really not
+easy if we want to keep the rules list small. For know I will do a series of IF and then i'll think on how to make it better.
+The result is returned into $newFact. If it's not bounded than no rules have been applied"
+   :body   (
+    (!(= @newFactListTemp (. .)))    
+    (IF(!(== (VAL @fact) (AGENT-STATEMENT @agentModel @subject @predicate @value)))
+
+       (IF(?(dbRuleType @typeSubject (VAL @subject)))
+	  (IF(?(dbRuleType @typeValue (VAL @value)))
+	     (!(= @i 0))
+
+	     (WHILE(?(dbRule (VAL @typeSubject) (VAL @predicate) (VAL @typeValue) @newTypeSubject @newPredicate @newTypeValue (VAL @i)))
+		   (IF(?(~(EQUAL @newTypeSubject @typeSubject)))
+		      (!(= @newFactSubject @value))
+		      (!(= @newFactValue @subject))
+		      
+		      ELSE
+		      (!(= @newFactSubject @subject))
+		      (!(= @newFactValue @value))
+		      )
+		   (!(= @newFact (AGENT-STATEMENT @agentModel @newFactSubject @newPredicate @newFactValue)))
+		   (!(= @newFactListTemp (CONS-TAIL (VAL @newFact) @newFactListTemp)))
+		   (!(= @i (+ @i 1)))
+		   )
+	     )
+	  )
+       
+       )
+    (!(= $newFactList @newFactListTemp))
+    )
+
+   )
+
+ (defop |update|
+   :invocation (Database.update @fact @caller)
+   :body (
+
+	  (!(Database.updateLocal @fact))
+	  (!(SEND-MESSAGE @caller (Database.result (. OK .))))
+	  
+	  
+	  )
+   )
+
+
+ (defop |updateLocal|
+   :invocation (!(Database.update @fact))
+   :body (
+	  
+	  (!(== (VAL @fact) (AGENT-STATEMENT @agentModel @subject @predicate @newValue)))
+       	  (IF(?(AGENT-STATEMENT (VAL @agentModel) (VAL @subject) (VAL @predicate)  @oldValue))
+	  (~>(AGENT-STATEMENT (VAL @agentModel) (VAL @subject) (VAL @predicate) (VAL @oldValue)))
+	  )
+	  (=>(VAL @fact))
+	  
+	  
+	  
+	  )
+   )
+ 
+ (defop |find| 
+   :invocation (Database.find @fact @caller)
+   :documentation "this procedure checks if a fact is present in the Database and send back the message TRUE
+or FALSE to the supervisor"
+   :body
+   (
+    (IF(?(VAL @fact))
+       (!(= @message (Database.result (. TRUE .))))
+       
+       ELSE
+       (!(= @message (Database.result (. FALSE .))))
+       )
+    
+    (!(SEND-MESSAGE @caller @message))
+    
+    )
+   )
+
+ (defop |findListLocal|
+   :invocation (!(Database.findListLocal @request @unboundVariables $result))
+   :body (
+	  (!(= $result (N-ALL @unboundVariables @request)))
+	  
+	  )
+   )
+ (defop |findList|
+   :invocation (Database.findList @request @unboundVariables @caller)
+   :documentation "this procedure returns in the variable $result a list of list, containing the values of the unbound variables. It's used parameters must be set as follows. $request= composed term like (fact 1 @b 3)  
+$unboundVariables= lisp-list containing the variables for which we want to find values. Continuing from the previous examples this would be (. @b .)"
+   :body 
+   (
+    
+					;    (!(= @request (fact 1 @b)))
+					;   (!(= @result (N-ALL (. @a @b .)
+    
+    
+    
+    (!(= @result (N-ALL @unboundVariables @request)))
+    (!(SEND-MESSAGE @caller (Database.result @result)))
+    
+    )
+   
+   )
+ 
+ (defop |addLocal|
+   :invocation (!(Database.add @fact))
+   :body (
+	  (?(Database.supervisorName @supName))
+
+	     (!(Database.checkAndApplyDbRules @fact @newFactList))
+	     (=> (VAL @fact))	  
+	     (WHILE(?(~(NULL @newFactList)))
+		   (!(= @newFact (CAR @newFactList)))
+		   (!(= @newFactList (CDR @newFactList)))
+		   (=>(VAL @newFact))
+		   (IF(? (toMonitor (VAL @newFact) @event))
+		      (! (SEND-MESSAGE @supName @event))
+		      )
+		   )
+	     
+	     (IF (? (toMonitor (VAL @fact) @event))
+		 (! (SEND-MESSAGE @supName @event))
+		 )
+	     
+	     )
+   )
+
+
+   
+ (defop |add|
+   :invocation (Database.add @fact @caller)
+   :documentation "this procedure adds $fact into the database and returns $result. $fact= a composed term like (isOn cup_0 table_0). SHOULD CHECK FOR RULES BEFORE ADDING (What are these rules? To check)" 
+   :body ( 
+	     (!(Database.add @fact))	  
+	     (!(SEND-MESSAGE @caller (Database.result (. OK .))))
+	  
+
+
+	     )
+   )
+(defop |removeLocal|
+  :invocation(!(Database.remove @fact))
+  :body (
+	 (?(Database.supervisorName @supName))	 
+	 (!(Database.checkAndApplyDbRules @fact @newFactList))
+
+	 (WHILE(?(~(NULL @newFactList)))
+	       (!(= @newFact (CAR @newFactList)))
+	       (!(= @newFactList (CDR @newFactList)))
+	       (IF(? (toMonitor (~(VAL @newFact)) @event))
+		  (! (SEND-MESSAGE @supName @event))
+		  )
+;	       (!(PRINT @newFact))
+	       (~>(VAL @newFact))
+	       )
+	 (IF(? (toMonitor (~(VAL @fact)) @event))
+	    (! (SEND-MESSAGE @supName @event))
+	    )
+;	 (!(PRINT @fact))
+	 (~> (VAL @fact))
+		  
+	 )
+)
+ (defop |remove|
+   :invocation (Database.remove @fact @caller)
+   :documentation "this procedure removes $fact from the database. $fact= a composed termi like (isOn cup_0 table_0)"
+   :body (
+	 
+	  (!(Database.remove @fact))
+	  
+	  (!(SEND-MESSAGE @caller (Database.result (. OK .))))
+	  
+	   
+	  )
+   )
+ (defop |monitorFact|
+   :invocation (Database.addMonitor @factToMonitor @event @caller)
+   :documentation "this procedure sets up a monitor for a given fact. When this fact is first added to the Database it returns $eventName to the current kernel. $fact and $event are both composed terms"
+   :body (
+	  
+	  (IF (?(toMonitor (VAL @factToMonitor) @anEvent))
+	      (!(SEND-MESSAGE @caller (Database.result (. ERROR .))))
+	      
+	      ELSE
+	      (=> (toMonitor (VAL @factToMonitor) (VAL @event)))
+	      (!(SEND-MESSAGE @caller (Database.result (. OK .))))
+	      
+	      )	  
+	  )
+   )
+ (defop |removeMonitorFact|
+   :invocation (Database.removeMonitor @factToMonitor @caller)
+   :documentation "this procedure removes a monitor for a given fact."
+   :body (
+	  
+	  (~> (toMonitor (VAL @factToMonitor) @event))
+	  (!(SEND-MESSAGE @caller (Database.result (. OK .))))	  
+	  )
+   )
+
+
+(defop |DbCopyBM|
+  :invocation (DbCopyBM @senderId @dbCopyId @agent @requestList)
+  :body (
+
+	 (!(= @resultList (. .)))
+
+	 (WHILE(?(~(NULL @requestList)))
+	       (!(= @request (CAR @requestList)))
+	       (!(= @requestList (CDR @requestList)))
+	       
+	       (!(= @subject (CAR @request)))
+	       (!(= @request (CDR @request)))
+	       (!(= @result (. .)))
+	       (WHILE(?(~(NULL @request)))
+		     (!(= @predicate (CAR @request)))
+		     (!(= @request (CDR @request)))
+		     
+		     (!(= @result (ALL @someValue (AGENT-STATEMENT (VAL @agent) (VAL @subject) (VAL @predicate) @someValue))))
+		     (!(= @resultList (CONS-TAIL @result @resultList)))
+		   ;  (IF(?(AGENT-STATEMENT (VAL @agent) (VAL @subject) (VAL @predicate) @value))
+		;	(!(= @result (CONS-TAIL @value @result)))
+		;	)
+		     
+		     )
+
+	       )
+	 (!(= @message (DbCopyRes @dbCopyId ok @resultList)))
+	 (!(PRINT @message))
+	 (!(SEND-MESSAGE @senderId @message))
+	 ;DbCopyRes 0 ok ((. (. .) (. .)   .))
+	 )
+ 
+   )
+
+;;  (defop |DbCopyBMWithSenderId|
+;;    :invocation (DbCopyBM $senderId $DbCopyId $agent $DbCopyRequestsList)
+;;    :documentation "MATTHIEU'S CODE. Appereantly this procedure handles HATP requests in the ontology. This 
+;; fact is sent by the msgconnector-OPRS-bridge. Looks like the request is hardcoded there to be this way."
+;;    :body (
+	  
+	 
+;; 	  (!(= @statusTmp OK))
+;; 	  (!(= @DbCopyRequestsList $DbCopyRequestsList))
+;; 	  (!(= @DbCopyResultsList (. .)))
+	  
+;; 	  (!(= @iterOnDbCopyRequests 0))
+;; 	  ;;(! (SEM-P ORO-SIMULATOR-SEM))
+	  
+;; 	  (WHILE(?(~ (NULL @DbCopyRequestsList)))
+;; 		(!(= @curDbCopyRequest (CAR @DbCopyRequestsList)))		
+		
+;; 		(!(= @iterOnDbCopyRequests (+ @iterOnDbCopyRequests 1)))
+;; 		;;;;;;;;;;
+;; 		;;
+;; 		;;;;;;;;;;;;;
+;; 		(!(= @iterOnCurDbCopyRequest 0))
+;; 		(WHILE(?(~ (NULL @curDbCopyRequest)))
+;; 		      (IF(?(EQUAL @iterOnCurDbCopyRequest 0))
+;; 			 (!(= @subject (CAR @curDbCopyRequest)))
+;; 			 ELSE
+;; 			 (!(= @predicate (CAR @curDbCopyRequest)))
+;; 			 (!(= @resultList (ALL @someValue (AGENT-STATEMENT (VAL $agent) (VAL @subject) (VAL @predicate) @someValue ))))
+;; 			 (!(= @DbCopyResultsList (CONS-TAIL @resultList @DbCopyResultsList)))
+;; 			 )
+;; 		      (!(= @iterOnCurDbCopyRequest (+ @iterOnCurDbCopyRequest 1)))
+;; 		      (!(= @curDbCopyRequest (CDR @curDbCopyRequest)))
+;; 		      )
+		
+;; 		(IF(?(< @iterOnCurDbCopyRequest 2))
+;; 		   (!(PRINTF (FORMAT "To few values (les than two) for @iterOnDbCopyRequests th list in list of list %s\n"  $senderId $DbCopyId $agent $DbCopyRequestsList @iterOnDbCopyRequests $DbCopyRequestsList)))  	  
+;; 		   (!(= @statusTmp ERROR))
+;; 		   )
+		
+		
+;; 		(!(= @DbCopyRequestsList (CDR @DbCopyRequestsList)))
+;; 		)
+
+	  
+;; 	  ;;(! (SEM-V ORO-SIMULATOR-SEM))
+	  
+;; 	  (IF(?(EQUAL @statusTmp OK))
+;; 	     (!(= $status ok))
+;; 	     ELSE
+;; 	     (!(= $status @statusTmp))
+;; 	     )
+
+;; 	  (!(= $DbCopyResult (DbCopyRes $DbCopyId $status @DbCopyResultsList)))	  
+;; 	  (!(SEND-MESSAGE $senderId $DbCopyResult))
+
+;; 	  (!(PRINTF (FORMAT "DbCopyBM  End : %s %s %s %s %s %s\n"  $senderId $DbCopyId $agent $DbCopyRequestsList $status $DbCopyResult)))  
+;; 	  )
+;;    )
+ 
+
+ 
+
+
+ )

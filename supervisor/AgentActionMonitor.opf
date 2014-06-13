@@ -98,7 +98,7 @@
 		   )
 		(!(= @sphereId (+ @sphereId 1)))
 		)
-	  (!(SEM-v AgentActionMonitor.sem))
+	  (!(SEM-V AgentActionMonitor.sem))
 	  )
    )
 

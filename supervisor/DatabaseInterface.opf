@@ -20,10 +20,12 @@
   :invocation(!(DatabaseInterface.setReachabilityFalse @object $result))
   :documentation "Used to change the reachability of an object from the supervisor. This is used because sometimes (often) SPARK overestimates the capacity of the robot to reach objects"
   :body (
+	 (!(SEM-P DatabaseInterface.sem))
 	 (? (ONTO_NAME $ONTO_NAME))
 	 (? (SUP_NAME $SUP_NAME))
 	 (!(SEND-MESSAGE $ONTO_NAME (Database.setReachabilityFalse (VAL @object) $SUP_NAME)))
 	 (!(DatabaseInterface.getResult $result))
+	 (!(SEM-V DatabaseInterface.sem))
 	 )
   )
 
@@ -31,10 +33,12 @@
    :invocation (! (DatabaseInterface.find $fact $result))
    :documentation "this procedure contacts the Database to check if $fact is present. It returns Database.result TRUE, Database.result FALSE or Database.result ERROR in $result"
    :body (
+	  (!(SEM-P DatabaseInterface.sem))
 	  (? (ONTO_NAME $ONTO_NAME))
 	  (? (SUP_NAME $SUP_NAME))
 	  (!(SEND-MESSAGE $ONTO_NAME (Database.find $fact $SUP_NAME)))
 	  (!(DatabaseInterface.getResult $result))
+	  (!(SEM-V DatabaseInterface.sem))
 	  )
    )
 
@@ -43,44 +47,50 @@
    :documentation "this procedure returns in the variable $result a list of list, containing the values of the unbound variables. It's used parameters must be set as follows. $request= composed term like (fact 1 @b 3)  
 $unboundVariables= lisp-list containing the variables for which we want to find values. Continuing from the previous examples this would be (. @b .)"
    :body 
-   (
+   (	 
+    (!(SEM-P DatabaseInterface.sem))
     (? (ONTO_NAME $ONTO_NAME))
     (? (SUP_NAME $SUP_NAME))
     (!(SEND-MESSAGE $ONTO_NAME (Database.findList $request $unboundVariables $SUP_NAME)))
     (!(DatabaseInterface.getResult $result))
+    (!(SEM-V DatabaseInterface.sem))
     )	
    )	
  (defop |add|
    :invocation (!(DatabaseInterface.add $fact $result))
    :documentation "this procedure adds $fact into the database and returns $result. $fact= a composed term like (isOn cup_0 table_0)."
-   :body (	  
+   :body (
+	  (!(SEM-P DatabaseInterface.sem))
 	  (? (ONTO_NAME $ONTO_NAME))
 	  (? (SUP_NAME $SUP_NAME))
 	  (!(SEND-MESSAGE $ONTO_NAME (Database.add $fact $SUP_NAME)))
 	  (!(DatabaseInterface.getResult $result))   
-	  
+	  (!(SEM-V DatabaseInterface.sem))
 	)	
    )
 
  (defop |remove|
    :invocation (!(DatabaseInterface.remove $fact $result))
    :documentation "this procedure removes $fact from the database. $fact= a composed termi like (isOn cup_0 table_0)"
-   :body (
+   :body (	
+	  (!(SEM-P DatabaseInterface.sem))
 	  (? (ONTO_NAME $ONTO_NAME))
 	  (? (SUP_NAME $SUP_NAME))
 	  (!(SEND-MESSAGE $ONTO_NAME (Database.remove $fact $SUP_NAME)))
 	  (!(DatabaseInterface.getResult $result))	
+	  (!(SEM-V DatabaseInterface.sem))
    )
 )
  (defop |addMonitor|
    :invocation (!(DatabaseInterface.addMonitor $factToMonitor $event $result))
    :documentation "this procedure sets up a monitor for a given fact. When this fact is first added to the Database it returns $eventName to the current kernel. $fact and $event are both composed terms"
    :body (
+	  (!(SEM-P DatabaseInterface.sem))
 	  (? (ONTO_NAME $ONTO_NAME))
 	  (? (SUP_NAME $SUP_NAME))
 	  (!(SEND-MESSAGE $ONTO_NAME (Database.addMonitor (VAL $factToMonitor) (VAL $event) $SUP_NAME)))
 	  (!(DatabaseInterface.getResult $result))
-	  
+	  (!(SEM-V DatabaseInterface.sem))
 	  
 	)	
    )
@@ -88,11 +98,12 @@ $unboundVariables= lisp-list containing the variables for which we want to find 
    :invocation (!(DatabaseInterface.removeMonitor $factToMonitor $result))
    :documentation "this procedure removes the monitor for a given fact."
    :body (
+	  (!(SEM-P DatabaseInterface.sem))
 	  (? (ONTO_NAME $ONTO_NAME))
 	  (? (SUP_NAME $SUP_NAME))
 	  (!(SEND-MESSAGE $ONTO_NAME (Database.removeMonitor $factToMonitor $SUP_NAME)))
 	  (!(DatabaseInterface.getResult $result))
-	  
+	  (!(SEM-V DatabaseInterface.sem))
 
 	  
 	)	
@@ -101,15 +112,15 @@ $unboundVariables= lisp-list containing the variables for which we want to find 
    :invocation(!(DatabaseInterface.getResult $result))
    :documentation "this procedure handles the return message of the DB"
    :body (
-	  (!(SEM-P DatabaseInterface.sem))
+
 	  (? (TIME_TO_WAIT_DB $TIME_TO_WAIT_DB))
-	  (^ (|| (Database.result $result)(ELAPSED-TIME (TIME) $TIME_TO_WAIT_DB)))
+	  (^ (|| (Database.result $result)));(ELAPSED-TIME (TIME) $TIME_TO_WAIT_DB)))
 	  (IF(?(Database.result $result))
 	     (~>(Database.result $result))
 	     ELSE
 	     (!(= $result (. .)))
 	     )
-	  (!(SEM-V DatabaseInterface.sem))
+
 	  )
    )	  
    

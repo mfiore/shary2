@@ -51,6 +51,7 @@
 	  (!(DatabaseInterface.addMonitor (AGENT-STATEMENT PR2_ROBOT HERAKLES_HUMAN1 agentPresent FALSE) (Monitor.agentDisappears HERAKLES_HUMAN1) @result))  
 	  (!(DatabaseInterface.addMonitor (AGENT-STATEMENT PR2_ROBOT HERAKLES_HUMAN1 handCloseToRightGripper TRUE) (Monitor.handPositionDanger TRUE) @result) )	  
 	  (!(DatabaseInterface.addMonitor (AGENT-STATEMENT PR2_ROBOT HERAKLES_HUMAN1 handCloseToRightGripper FALSE) (Monitor.handPositionDanger FALSE) @result))	  
+	  (!(AgentActionMonitor.calculateInferencesForAgent HERAKLES_HUMAN1))
 	  )
    )
 )

@@ -309,16 +309,16 @@
 	     (!(= @stopFact (Robot.gripperStatus RIGHT DETECTED_PRESSION)))
 	     (!(= @irAddFact (Robot.gripperStatus RIGHT DETECTING_PRESSION)))	     
 	     ELSE
-
 	     (!(= @stopFact (Robot.gripperStatus LEFT DETECTED_PRESSION)))
 	     (!(= @irAddFact (Robot.gripperStatus LEFT DETECTING_PRESSION)))	     
 	     )
 	  
-	 (!(= @parameters (PR2SM_gripperGrabRelease (VAL @state))))	     
-	 (!(GenomInterface.handleRequest PR2SOFTMOTION PR2SOFTMOTION_DETECTPRESSION (Softmotion.stop (VAL @id)) @irAddFact (FALSE) @parameters @report @result)) 
-	 (=>(Softmotion.report (VAL @id) (VAL @report)))
-	 (IF(?(EQUAL @report "OK"))
-	    (=>(@stopFact))
+	  (!(= @parameters (PR2SM_gripperGrabRelease (VAL @state))))	     
+	  (!(GenomInterface.handleRequest PR2SOFTMOTION PR2SOFTMOTION_DETECTPRESSION (Softmotion.stop (VAL @id)) @irAddFact (FALSE) (FALSE) @parameters @report @result)) 
+	  (=>(Softmotion.report (VAL @id) (VAL @report)))
+	  (IF(?(EQUAL @report "OK"))
+	     (=> (VAL @stopFact))
+	     
 	    )
 	 
 

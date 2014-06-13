@@ -27,12 +27,32 @@
   :invocation(!(TabletConnector.handleReport ))
   :documentation "used to generalize common operations after receiving a command "
   :body (
-	 (^(|| (PlanManager.report @report) (order stop)))
+	 (^(|| (PlanManager.report @report) (order stop) (order pause)))
 	 (IF(?(order stop))
 	    (~>(order stop))
 	    (=>(PlanManager.stop))
 	    (^(PlanManager.report @report))
+	    
+	 ELSEIF(?(order pause))
+	 (~>(order pause))
+	 (IF(?(ExecutionManager.isExecutingAction @executionId))
+	    (?(ExecutionManager.isExecutingAction @executionId))
+	    (=>(ExecutionManager.halt (VAL @executionId)))
+
+	    (^(|| (order stop) (order resume)))
+	    (IF(?(order stop))
+	       (~>(order stop))
+	       (=>(PlanManager.stop))
+	       (^(PlanManager.report @report))
+
+	       ELSEIF(?(order resume))
+	       (~>(order resume))
+	       (=>(ExecutionManager.resume (VAL @executionId)))
+	       (^(PlanManager.report (VAL @report)))
+	       )
 	    )
+	 )
+
 	 
 	 (~>(PlanManager.report (VAL @report)))
 	 (!(TabletConnector.sendMessage (order stop))) 
@@ -68,7 +88,7 @@
 	       (~> (order (VAL @command)))
 	       (!(= @idStr (TERM-STRING-CAT @id)))  
 	       (!(= @id (+ @id 1)))
-	       (=>(PlanManager.modality HUMAN))
+	       (=>(PlanManager.planningModality HUMAN))
 	       (IF(?(EQUAL @command stop))
 		  (!(TabletConnector.sendMessage (order stop))) 
 		  (=>(TabletConnector.shouldRun FALSE))
@@ -105,6 +125,7 @@
 		  (=>(PlanManager.goal Clean (. TABLE_4 .)))
 		  (=>(PlanManager.newGoal TRUE))
 		  (!(TabletConnector.handleReport))
+
 		  
 		  ELSEIF(?(EQUAL @command stop))
 		  (=>(PlanManager.stop))

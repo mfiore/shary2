@@ -79,15 +79,16 @@
 	  (!(Mhp.getFreeId @mhpId))
 	  (=>(Mhp.request setTrajectory GEN_TRUE (VAL @task) (VAL @mhpArm) (VAL @armStart) (VAL @armGoto) (VAL @object) (VAL @support) (VAL @placement) GEN_FALSE 0 (VAL @objStart) (VAL @useObjGoto) (VAL @objGoto) (VAL @mhpId)))
 	  
-	  (!(ArmActions.handleReport Mhp @mhpId @actionId))
+	  (!(ArmActions.handleReport Mhp @mhpId @actionId FALSE))
 	  
 
 	  (!(Softmotion.getFreeId @smId))
 	  (=>(Softmotion.request moveArm @smArm @smId))
-	  (!(ArmActions.handleReport Softmotion @smId @actionId))
+	  (!(ArmActions.handleReport Softmotion @smId @actionId FALSE))
 	  ;everything went okay
 	  (=>(ArmActions.report (VAL @actionId) "OK"))
-	  (=>(Robot.pose (VAL @arm) (VAL @realSupport) (VAL @object) (VAL @pose)))
+	  (~>(Robot.pose @a @b @c @d))
+	  (=>(Robot.pose (VAL @arm) (VAL @object) (VAL @realSupport) (VAL @pose)))
 
 	  )
 	  	  
@@ -113,6 +114,7 @@
 	  (!(Mhp.makeArmGotoParameter 0 0 0 0 0 0 0 @armGoto))
 	  (!(= @objGoto (objGoto (VAL @x) (VAL @y) (VAL @z) 0.0 0.0 0.0)))
 
+	  
 	  (=>(ArmActions.action moveTo @arm @task @armGoto @object @support NO_NAME 15 @objGoto OTHER @actionId))
 	  
 	  )
@@ -170,7 +172,7 @@
 	  ;get the position of the placement
 	  (!(Spark.getFreeId @sparkId))
 	  (=>(Spark.request getJointAbsPose @placement NO_NAME @sparkId))
-	  (!(ArmActions.handleReport Spark @sparkId @actionId))
+	  (!(ArmActions.handleReport Spark @sparkId @actionId FALSE))
 	  (^(Spark.result (VAL @sparkId) @xp @yp @zp @yawp @pitchp @rollp))
 	  (~>(Spark.result (VAL @sparkId) (VAL @xp) (VAL @yp) (VAL @zp) (VAL @yawp) (VAL @pitchp) (VAL @rollp))) 
 	  (!(= @objGoto (objGoto @xp @yp @zp 0.0 0.0 0.0)))
@@ -219,7 +221,7 @@
   :invocation (ArmActions.action moveToManipulationPosition @actionId)
   :documentation "Moves to a position suitable for manipulation with the right arm"
   :body (
-	 (!(ArmActions.checkAndEscapeObject @arm))
+	 (!(ArmActions.checkAndEscapeObject RIGHT))
 	 (=>(ArmActions.action moveToQ RIGHT -1.7 -0.098069 -0.8 -1.8 0.5 -0.432614 -1.730387 MANIPULATION (VAL @actionId)))
 	 )
   )
@@ -273,7 +275,7 @@
 	     ELSEIF(?(EQUAL @state LGRAB))
 	     (=>(ArmActions.hasGripperGrabRequest LEFT (VAL @smId) (VAL @actionId)))
 	     )
-	  (!(ArmActions.handleReport Softmotion @smId @actionId))
+	  (!(ArmActions.handleReport Softmotion @smId @actionId FALSE))
 	  (=>(ArmActions.report @actionId "OK")) 
 	  
 	  )
@@ -340,7 +342,7 @@ actually know if this really changes something... pressure is pressur."
 	  (!(Softmotion.getFreeId @smId))
 	  (=>(Softmotion.request detectPression @state @smId))
 	  (=>(ArmActions.hasDetectPressionRequest (VAL @gripper) (VAL @mode) (VAL @smId))) ;remember the request for stopdetectPressionRequestes
-	  (!(ArmActions.handleReport Softmotion @smId @actionId))
+	  (!(ArmActions.handleReport Softmotion @smId @actionId TRUE))
 	  (=>(ArmActions.report @actionId "OK")) 
 	  (~>(ArmActions.hasDetectPressionRequest (VAL @gripper) (VAL @mode) (VAL @smId)))
 
@@ -384,7 +386,7 @@ actually know if this really changes something... pressure is pressur."
 
 
   (defop |handleReport|
-     :invocation(!(ArmActions.handleReport @module @id @actionId))
+     :invocation(!(ArmActions.handleReport @module @id @actionId @detectPression))
      :documentation "Utility function to avoid some code duplication when waiting for the response of a genom module. This can't be used when we don't want to fail if the genom request fails"
      :body (
 	  (!(= @reportName (TERM-STRING-CAT (VAL @module) ".report")))
@@ -397,47 +399,88 @@ actually know if this really changes something... pressure is pressur."
 	  (IF(?(ArmActions.halt (VAL @actionId)))
 	     (~>(ArmActions.halt (VAL @actionId)))
 	     (IF(?(EQUAL @module Softmotion))
-		(!(Softmotion.getFreeId @smId))
-		(=>(Softmotion.request halt (VAL @smId)))
-		(^(Softmotion.report (VAL @smId) @smReport))
-		(~>(Softmotion.report (VAL @smId) (VAL @smReport)))
-		(^(@reportName (VAL @id) @report))
-		(~>(@reportName (VAL @id) (VAL @report)))
+		(IF(?(EQUAL @detectPression FALSE))
+		   (!(Softmotion.getFreeId @smId))
+		   (=>(Softmotion.request halt (VAL @smId)))
+		   (^(Softmotion.report (VAL @smId) @smReport))
+		   (~>(Softmotion.report (VAL @smId) (VAL @smReport)))
+		   (^(@reportName (VAL @id) @report))
+		   (~>(@reportName (VAL @id) (VAL @report)))
+		   )
 		)
 	     ;we wait for a stop or for a resume
 	     (^(|| (ArmActions.stop (VAL @actionId)) (ArmActions.resume (VAL @actionId))))
 	     (IF(?(ArmActions.resume (VAL @actionId)))   ;we ask to resume and recall this function to wait for the report
 		(~>(ArmActions.resume (VAL @actionId)))
 		(IF(?(EQUAL @module Softmotion))
-		     (!(Softmotion.getFreeId @smId))
-		     (=>(Softmotion.request resume @smId))
-		     (^(Softmotion.report (VAL @smId) @smReport))
-		     (~>(Softmotion.report (VAL @smId) (VAL @smReport)))
-		     (^(ELAPSED-TIME (TIME) 3))
-		     )
-
+		   (IF(?(EQUAL @detectPression FALSE))
+		      (!(Softmotion.getFreeId @smId))
+		      (=>(Softmotion.request resume @smId))
+		      (^(Softmotion.report (VAL @smId) @smReport))
+		      (~>(Softmotion.report (VAL @smId) (VAL @smReport)))
+		      (^(ELAPSED-TIME (TIME) 3))
+		      )
+		   )
+		ELSEIF(?(ArmActions.stop (VAL @actionId)))
+		(~>(ArmActions.stop (VAL @actionId)))
+		
+		(IF(?(EQUAL @module Softmotion))
+		   (IF(?(EQUAL @detectPression FALSE))
+		      ;;we stopx
+		      (=>(Softmotion.stop (VAL @id)))    
+		      (!(Softmotion.getFreeId @smId))
+		      (=>(Softmotion.request stop (VAL @smId)))
+		      (^(Softmotion.report (VAL @smId) @smReport))
+		      (~>(Softmotion.report (VAL @smId) (VAL @smReport)))
+		      (^(|| (@reportName (VAL @id) @report)))
+		      (~>(@reportName (VAL @id) @report))
+		      
+		      ELSE
+		      (IF(?(ArmActions.hasDetectPressionRequest @gripper @mode (VAL @id)))
+			 (!(ArmActions.getFreeId @newActionId))
+			 (=>(ArmActions.action stopDetectPression (VAL @gripper) (VAL @mode) (VAL @newActionId)))
+			 (^(ArmActions.report @newActionId @report))
+			 (~>(ArmActions.report (VAL @newActionId) (VAL @report)))
+			 )
+		      )
+		   
+		   ELSEIF(?(EQUAL @module Mhp))
+		   (=>(Mhp.stop (VAL @id)))
+		   )
+		(=>(ArmActions.report @actionId STOPPED))
+		(!(FAILED))
 		)
-
+	     
 	     ELSEIF(?(ArmActions.stop (VAL @actionId)))
 	     (~>(ArmActions.stop (VAL @actionId)))
 	     
-	     (IF(?(EQUAL @module Softmotion))
-		;;we stopx
-		(=>(Softmotion.stop (VAL @id)))    
-		(!(Softmotion.getFreeId @smId))
-		(=>(Softmotion.request stop (VAL @smId)))
-		(^(Softmotion.report (VAL @smId) @smReport))
-		(~>(Softmotion.report (VAL @smId) (VAL @smReport)))
-	      
+ 	     (IF(?(EQUAL @module Softmotion))
+		(IF(?(EQUAL @detectPression FALSE))
+		   ;;we stopx
+		   (=>(Softmotion.stop (VAL @id)))    
+		   (!(Softmotion.getFreeId @smId))
+		   (=>(Softmotion.request stop (VAL @smId)))
+		   (^(Softmotion.report (VAL @smId) @smReport))
+		   (~>(Softmotion.report (VAL @smId) (VAL @smReport)))
+		   (^(|| (@reportName (VAL @id) @report)))
+		   (~>(@reportName (VAL @id) @report))
+		   
+		   ELSE
+		   (IF(?(ArmActions.hasDetectPressionRequest @gripper @mode (VAL @id)))
+		      (!(ArmActions.getFreeId @newActionId))
+		      (=>(ArmActions.action stopDetectPression (VAL @gripper) (VAL @mode) (VAL @newActionId)))
+		      (^(ArmActions.report @newActionId @report))
+		      (~>(ArmActions.report (VAL @newActionId) (VAL @report)))
+		      )
+		   )
+		
 		ELSEIF(?(EQUAL @module Mhp))
 		(=>(Mhp.stop (VAL @id)))
 		)
-	     ;we wait for the stopped report and then fail
-	     (^(|| (@reportName (VAL @id) @report)))
-	     (~>(@reportName (VAL @id) @report))
 	     (=>(ArmActions.report @actionId STOPPED))
 	     (!(FAILED))
-	    
+		
+	     
 	     
 	     ELSE	 ;we got a report. If it's a good report we continue if not we report a fail and exit.
 	     (~>( @reportName (VAL @id) (VAL @report)))
