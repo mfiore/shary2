@@ -9,6 +9,11 @@
    :body (
 	  (=>(ExecutionManager.freeId 0))
 	  (!(SEM-CREATE ExecutionManager.sem 1 SEM-FIFO))
+	  (=>(ExecutionManager.oldOrientation unknown))
+	  (=>(ExecutionManager.oldArmPosition unknown))
+	  (=>(ExecutionManager.oldDistance outOfRange))
+
+
 	  )
 
    )
@@ -906,4 +911,43 @@
 	 (!(SEM-V ExecutionManager.sem))	 
 	 )
   )
+
+
+
+(defop |go| 
+  :invocation (ExecutionManager.execute go @goal @subgoal @executionId)
+  :documentation "Operation to make the robot reach a destination. @goal is the node in the map the should be reached, @subgoal the item"
+  :body (
+	 (!(SEM-P ExecutionManager.sem))
+	 
+	 ;;get list of nodes in semantic map
+	 (?(Robot.location @source))
+	 (!(PathPlanner.getFreeId @pathPlannerId))
+	 (=>(PathPlanner.plan @source @goal))
+	 (!(ExecutionManager.handleReport PathPlanner @pathPlannerId @executionId TRUE TRUE NO_NAME))
+	 (?(PathPlanner.result @pathPlannerId @path))
+	 ;;get coordinates in these nodes
+	 (!(PathPlanner.getCoordinates @path @waypoints))
+ 
+	 ;;move to place
+	 (=>(BaseActions.action move @waypoints))
+	 (!(ExecutionManager.handleReport BaseActions @baseActionsId @executionId TRUE TRUE NO_NAME))
+	 
+	 (!(SEM-V ExecutionManager.sem))
+	 )
+  )
+(defop |approach|
+  :invocation(ExecutionManager.execute approach @support @object @executionId)
+  :documentation "Approaches a furniture to be able to pick an object. If @object NO_NAME will approach from a random side. Otherwise, if the robot knows the position of the object, it will go on the correct side."
+  :body (
+	 )
+  )
+
+(defop |relocate|
+  :invocation(ExecutionManager.execute relocate @support @object @executionId)
+  :documentation "Reposition the robot to go around a furniture in order to reach an object)"
+  :body (
+	 )
+  )
+
 )

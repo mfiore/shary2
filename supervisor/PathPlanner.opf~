@@ -1,0 +1,17 @@
+;; -*-Lisp-*-
+;;author: Michelangelo Fiore
+;;this module contains procedures related to high level path planning on semantic maps, and mapping from semantic maps to real world coordinates
+
+(
+
+(defop |init|
+  :invocation(!(PathPlanner.init))
+  :documentation "Inits the module"
+  :body (
+	 (=>(PathPlanner.freeId 0))
+	 (!(SEM-CREATE PathPlanner.sem 1 SEM-FIFO))
+	 
+	 )
+  )
+
+)

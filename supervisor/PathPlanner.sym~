@@ -1,0 +1,5 @@
+declare ff PathPlanner.bridgeName 0
+declare ff PathPlanner.timeToWait 0
+declare cwp PathPlanner.response 
+declare cwp PathPlanner.report
+declare cwp PathPlanner.result

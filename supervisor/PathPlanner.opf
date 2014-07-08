@@ -1,0 +1,61 @@
+;; -*-Lisp-*-
+;;author: Michelangelo Fiore
+;;this module contains procedures related to high level path planning on semantic maps, and mapping from semantic maps to real world coordinates
+
+(
+
+(defop |init|
+  :invocation(!(PathPlanner.init))
+  :documentation "Inits the module"
+  :body (
+	 (=>(PathPlanner.freeId 0))
+	 (!(SEM-CREATE PathPlanner.sem 1 SEM-FIFO))
+	 )
+  )
+
+(defop |getFreeId|
+  :invocation(!(PathPlanner.getFreeId $id))
+  :documentation "returns an available id for requestes"
+  :body (
+	 (!(SEM-P PathPlanner.sem))
+	 (?(PathPlanner.freeId $id))
+	 (=>(PathPlanner.freeId (+ $id 1)))
+	 (!(SEM-V PathPlanner.sem))
+	 )
+  )
+
+(defop |plan|
+  :invocation(PathPlanner.plan @source @goal @id)
+  :documentation "Plans in the semantic map from source node to goal node and returns a list of nodes"
+  :body (
+	 (?(PathPlanner.bridgeName @name))
+	 (?(PathPlanner.timeToWait @time))
+	 (!(SEND-MESSAGE @name (calculatePath @source @goal)))
+	 (^(|| (PathPlanner.response (VAL @name) @path) (ELAPSED-TIME (TIME) @time)))
+	 (IF(?(PathPlanner.response (VAL @name) @path))
+	    (~>(PathPlanner.response (VAL @name) (VAL @path)))
+	    (=>(PathPlanner.report @id "OK"))
+	    (=>(PathPlanner.result @id @path))
+	    
+	    ELSE
+	    (=>(PathPlanner.report @id FAILURE))
+	    )
+	 )
+  )
+
+(defop |getCoordinates|
+  :invocation(!(PathPlanner.getCoordinates @nodes $coordinates))
+  :documentation "translates the nodes into the real world coordinates"
+  :body (
+	 (!(= @tempCoordinates (. .)))
+	 (WHILE(?(~(NULL @nodes)))
+	       (!(= @currentNode (CAR @nodes)))
+	       (!(= @nodes (CDR @nodes)))
+	       (?(PathPlanner.coordinates (VAL @currentNode) @x @y @z))
+	       (!(= @tempCoordinates (CONS-TAIL (. @x @y @z .) @tempCoordinates)))
+	       )
+	 (!(= $coordinates @tempCoordinates))
+	 
+	 )
+  )
+)

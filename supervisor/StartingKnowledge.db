@@ -1,12 +1,5 @@
 (
-(Robot.name PR2)
-(Robot.isMoving LEFT_ARM FALSE)
-(Robot.isMoving RIGHT_ARM FALSE)
-(Robot.isMoving HEAD FALSE)
-(Robot.gripperStatus RIGHT CLOSE)
-(Robot.gripperStatus LEFT CLOSE)
-(Robot.simu FALSE)
-(Robot.pose RIGHT NO_NAME NO_NAME REST)
+
 
 (SUP_NAME OPRS_SUP)
 (PlanManager.shouldRun true)
@@ -15,17 +8,6 @@
 (MAX_PLANNING_WAIT 30)
 (MAX_PLANNING_FAILURES 3)
 (TIME_TO_RETRY 5)
-
-(MonitorManager.lastPriority 0)
-(MonitorManager.freeId 1)
-(ExecutionManager.freeId 1)
-
-
-
-
-(ExecutionManager.oldOrientation unknown)
-(ExecutionManager.oldArmPosition unknown)
-(ExecutionManager.oldDistance outOfRange)
 
 
 

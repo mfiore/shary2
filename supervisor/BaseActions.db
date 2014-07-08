@@ -1,0 +1,5 @@
+(
+	(BaseActions.bridgeName Navigation)
+	(BaseActions.timeToWait 300)
+	
+)
