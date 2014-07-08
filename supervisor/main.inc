@@ -34,6 +34,7 @@ include "supervisor/Robot.sym"
 include "supervisor/PathPlanner.sym"
 include "supervisor/BaseActions.sym"
 
+
 load db "supervisor/GlobalConstants.db"
 load db "supervisor/StartingKnowledge.db"
 load db "supervisor/Spark.db"
@@ -76,3 +77,4 @@ load opf "supervisor/TabletConnector.opf"
 load opf "supervisor/Queue.opf"
 load opf "supervisor/PathPlanner.opf"
 load opf "supervisor/BaseActions.opf"
+load opf "supervisor/RobotMonitors.opf"

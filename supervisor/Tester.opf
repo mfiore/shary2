@@ -6,6 +6,15 @@
 
 (
 
+(defop |testBaseActions|
+  :invocation(!(Tester.testBaseActions))
+  :body (
+	 (!(BaseActions.init))
+	 (!(BaseActions.getFreeId @id))
+	 (=>(BaseActions.action move (. (. 7.0 3.71 0 0 0 0 1 .) .)))
+	 )
+  )
+
  (defop |testSpeak|
    :invocation(!(Tester.testSpeak))
    :body (
