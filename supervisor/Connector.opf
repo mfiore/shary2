@@ -5,26 +5,24 @@
 
 (
  (defop |sendMessage|
-  :invocation (!(TabletConnector.sendMessage @message))
+  :invocation (!(Connector.sendMessage @name @message))
   :documentation "Sends a message to the tablet"
   :body (
-	 (?(TabletConnector.tabletName @name))
   	(!(SEND-MESSAGE @name @message))	
 	)
   )
 
 (defop |sendStringMessage|
-  :invocation (!(TabletConnector.sendStringMessage @message))
+  :invocation (!(Connector.sendStringMessage @name @message))
   :documentation "sends a message to the tablet in string format"
   :body (
-	 (?(TabletConnector.tabletName @name))
   	(!(SEND-STRING @name @message))	
 	 )
   )
 
 
-(defop |handleReport|
-  :invocation(!(TabletConnector.handleReport ))
+(defop |handleTabletReport|
+  :invocation(!(Connector.handleTabletReport ))
   :documentation "used to generalize common operations after receiving a command "
   :body (
 	 (^(|| (PlanManager.report @report) (order stop) (order pause)))
@@ -55,7 +53,7 @@
 
 	 
 	 (~>(PlanManager.report (VAL @report)))
-	 (!(TabletConnector.sendMessage (order stop))) 
+	 (!(Connector.sendMessage @tabletName (order stop))) 
 	 (^(order stop))
 	 (~>(order stop))
 	 
@@ -63,10 +61,9 @@
   )
 
 (defop |setPlanManager|
-  :invocation (!(TabletConnector.setPlanManager))
+  :invocation (!(Connector.setPlanManager))
   :documentation "utility function to save some coding. Stops running plans on the robot and eventually starts the planning manager"
   :body (
-
 	 (IF(?(PlanManager.isManagingAgent @agent))
 	    (=>(PlanManager.stop))
 	    (^(PlanManager.report @report))
@@ -74,34 +71,67 @@
 	    )
 	 
 	 (IF(?(PlanManager.isRunning FALSE))
+	    (=>(PlanManager.takeInitiative TRUE))
 	    (=>(PlanManager.managePlans))
 	    )
 
 	 )
   )
-(defop |getCommand|
-  :invocation (!(TabletConnector.getCommand))
+
+(defop |kernelLoop|
+  :invocation(!(Connector.kernelLoop))
+  :documentation "Loop to wait for commands in the oprs kernel"
+  :body (
+	 (?(Connector.robot SELF @selfKernel))
+	 (WHILE(?(Connector.kernelLoop TRUE))
+	       (^(Connector.command @kernelName order @currentAction))
+
+	       (!(== (VAL @currentAction) (. @actionToExecute @actionId @actionLinks .)))
+	       (!(== (VAL @actionToExecute) (. @actionName @actionParameters .)))
+	       (!(Connector.setPlanManager))
+	       (=>(PlanManager.goal @actionName @actionParameters))
+	       (^(|| (PlanManager.report @report) (Connector.command stop)))
+	       (IF(?(Connector.command stop))
+		  (=>(PlanManager.stop))
+		  (~(PlanManager.report @report))
+		  (~>(PlanManager.report (VAL @report)))
+		  (!(SEND-MESSAGE @kernelName (PlanManager.actionReport @actionId STOPPED)))
+	
+		  ELSEIF(?(PlanManager.report OK))
+		  (~>(PlanManager.report OK))
+		  (!(SEND-MESSAGE @kernelName (PlanManager.actionReport @actionId OK)))
+
+		  ELSE
+		  (~>(PlanManager.report @report))
+		  (!(SEND-MESSAGE @kernelName (PlanManager.actionReport @actionId FAILED)))
+		  )       
+	       )
+	 )
+  )
+(defop |tabletLoop|
+  :invocation (!(Connector.tabletLoop))
   :body (
 	 (!(= @id 1))
-	 (WHILE(?(TabletConnector.shouldRun TRUE))
+	 (?(Connector.tabletName @tablet))
+	 (WHILE(?(Connector.tabletLoop TRUE))
 	       (^(order @command))
 	       (~> (order (VAL @command)))
 	       (!(= @idStr (TERM-STRING-CAT @id)))  
 	       (!(= @id (+ @id 1)))
 	       (=>(PlanManager.planningModality HUMAN))
 	       (IF(?(EQUAL @command stop))
-		  (!(TabletConnector.sendMessage (order stop))) 
-		  (=>(TabletConnector.shouldRun FALSE))
+		  (!(Connector.sendMessage @tabletName (order stop))) 
+		  (=>(Connector.shouldRun FALSE))
 		  
 		  ELSEIF(?(EQUAL @command take))
 		  (^(parameter name @objectName))
 		  (~>(parameter name (VAL @objectName)))
 	
-		  (!(TabletConnector.setPlanManager))
+		  (!(Connector.setPlanManager))
 		  (=>(PlanManager.goal TakeObject (. PR2_ROBOT (VAL @objectName) .)))
 		  (=>(PlanManager.newGoal TRUE))
 
-		  (!(TabletConnector.handleReport))
+		  (!(Connector.handleTabletReport))
 		  
 		     
 		  
@@ -111,20 +141,20 @@
 
 		  (IF(?(Robot.hasObject RIGHT @objectName))
 
-		     (!(TabletConnector.setPlanManager))
+		     (!(Connector.setPlanManager))
 		     (=>(PlanManager.goal ThrowObject (. PR2_ROBOT (VAL @objectName) PINK_TRASHBIN .)))
 		     (=>(PlanManager.newGoal TRUE))
-		     (!(TabletConnector.handleReport))
+		     (!(Connector.handleTabletReport))
 
 		     
 		     )
 		  
 		  ELSEIF(?(EQUAL @command clean))
 		 
-		  (!(TabletConnector.setPlanManager))
+		  (!(Connector.setPlanManager))
 		  (=>(PlanManager.goal Clean (. TABLE_4 .)))
 		  (=>(PlanManager.newGoal TRUE))
-		  (!(TabletConnector.handleReport))
+		  (!(Connector.handleTabletReport))
 
 		  
 		  ELSEIF(?(EQUAL @command stop))
@@ -136,7 +166,7 @@
 		  (^(parameter actor @actorName))
 		  (~>(parameter actor (VAL @actorName)))
 
-		  (!(TabletConnector.setPlanManager))
+		  (!(Connector.setPlanManager))
 		  (IF(?(EQUAL @actorName robot))
 		     (=>(PlanManager.goal GiveObject (. PR2_ROBOT HERAKLES_HUMAN1 (VAL @objectName) .)))
 
@@ -145,16 +175,16 @@
 				  
 		     )
 		  (=>(PlanManager.newGoal TRUE))
-		  (!(TabletConnector.handleReport))
+		  (!(Connector.handleTabletReport))
 
 
 		  ELSEIF(?(EQUAL @command list))
 		  (^(parameter type @listType))
 		  (~>(parameter type (VAL @listType)))
 		  (IF(?(EQUAL @listType objects))
-		     (!(TabletConnector.sendMessage (GREY_TAPE LOTR_TAPE WALLE_TAPE)))
+		     (!(Connector.sendMessage @tabletName (GREY_TAPE LOTR_TAPE WALLE_TAPE)))
 		     ELSEIF(?(EQUAL @listType places))
-		     (!(TabletConnector.sendMessage (PINK_TRASHBIN TABLE)))
+		     (!(Connector.sendMessage @tabletName (PINK_TRASHBIN TABLE)))
 		     )
 		  )
 	       )

@@ -27,7 +27,7 @@ include "supervisor/HeadActions.sym"
 include "supervisor/Actions.sym"
 include "supervisor/PlannerInterface.sym"
 include "supervisor/AgentActionMonitor.sym"
-include "supervisor/Connector.sym"
+include "supervisor/TabletConnector.sym"
 include "supervisor/Queue.sym"
 include "supervisor/Monitors.sym"
 
@@ -41,7 +41,7 @@ load db "supervisor/Acapela.db"
 load db "supervisor/PlanManager.db"
 load db "supervisor/PlannerInterface.db"
 load db "supervisor/Actions.db"
-load db "supervisor/Connector.db"
+load db "supervisor/TabletConnector.db"
 load db "supervisor/Queue.db"
 load db "supervisor/AgentActionMonitor.db"
 
@@ -66,5 +66,9 @@ load opf "supervisor/HeadActions.opf"
 load opf "supervisor/Timer.opf"
 load opf "supervisor/PlannerInterface.opf"
 load opf "supervisor/AgentActionMonitor.opf"
+<<<<<<< HEAD
 load opf "supervisor/Connector.opf"
+=======
+load opf "supervisor/TabletConnector.opf"
+>>>>>>> mike-experimental
 load opf "supervisor/Queue.opf"

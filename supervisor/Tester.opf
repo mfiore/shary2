@@ -277,18 +277,18 @@
 	  ;(^(ArmActions.report 1 @report))
 
 	  (!(PRINT "MoveToRest"))
-	  (=>(ArmActions.action moveToRestPosition RIGHT 1))
+	  (=>(ArmActions.action moveToPose REST RIGHT 0 1))
 	  (^(ArmActions.report 1 @report))
 	  (~>(ArmActions.report 1 @report))
 
 	  (!(PRINT "MoveToReady"))
-	  (=>(ArmActions.action moveToReadyPosition RIGHT 0 1))
+	  (=>(ArmActions.action moveToPose READY RIGHT 0 1))
 	  (^(ArmActions.report 1 @report))
 	  (~>(ArmActions.report 1 @report))	  
 
 
 	  (!(PRINT "MoveToExtended"))
-	  (=>(ArmActions.action moveToExtendedPosition RIGHT 0 1))
+	  (=>(ArmActions.action moveToPose EXTENDED RIGHT 0 1))
 	  (^(ArmActions.report 1 @report))
 	  (~>(ArmActions.report 1 @report))
 	  )

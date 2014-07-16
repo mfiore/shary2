@@ -39,9 +39,25 @@
 
 	    ELSEIF(?(EQUAL @type PLACEMENT))
 	    (!(== (VAL @actionParameters) (. @object @placement .)))
+	    
+	    ELSEIF(?(EQUAL @type POSE))
+	    (!(== (VAL @actionParameters) (. @pose @arm @q0 .)))
+
+	    ELSEIF(?(EQUAL @type GRIPPER))
+	    (!(== (VAL @actionParameters) (. @gripper .)))
 
 	    )
-	 (IF(?(EQUAL @actionName take))
+
+	 (IF(?(EQUAL @actionName closeGripper))
+	    (=>(ExecutionManager.execute closeGripper @gripper @executionId))
+	    
+	    ELSEIF(?(EQUAL @actionName openGripper))
+	    (=>(ExecutionManager.execute openGripper @gripper @executionId))
+	    
+	    ELSEIF(?(EQUAL @actionName moveToPose))
+	    (=>(ExecutionManager.execute moveToPose @pose @arm @q0 @executionId))
+	    
+	    ELSEIF(?(EQUAL @actionName take))
 	    (=>(ExecutionManager.execute take @object NO_NAME @executionId))
 	    
 	    ELSEIF(?(EQUAL @actionName throw))
@@ -301,7 +317,7 @@
 	     )
 
 
-					;open gripper if needed
+	  ;;open gripper if needed
 	  (IF(?(Robot.gripperStatus (VAL @armForPick) CLOSE))
 	     (!(ArmActions.getFreeId @actionId))
 	     (=>(ArmActions.action openGripper @armForPick @actionId))
@@ -317,12 +333,12 @@
 
 	  
 
-					;close the gripper
+	  ;;close the gripper
 	  (!(ArmActions.getFreeId @actionId))
 	  (=>(ArmActions.action closeGripper @armForPick @actionId))
 	  (!(ExecutionManager.handleReport ArmActions @actionId @executionId FALSE FALSE NO_NAME))
 	  
-					;updates knowledge of the robot
+	  ;;updates knowledge of the robot
 	  (=> (Robot.hasObject (VAL @armForPick) (VAL @object))) ;if we arrive here with no FAILED than we've got the item (hopefully XD)
 
 	  (=>(ExecutionManager.report (VAL @executionId) OK))
@@ -551,7 +567,7 @@
 		  )
 
 		  (!(ArmActions.getFreeId @actionId))
-		  (=>(ArmActions.action moveToExtendedPosition @arm @q0 @actionId))
+		  (=>(ArmActions.action moveToPose EXTENDED @arm @q0 @actionId))
 		  (!(ExecutionManager.handleReport ArmActions @actionId @executionId FALSE TRUE NO_NAME))
 		       
 		  (!(ArmActions.getFreeId @detectPressionId))
@@ -575,7 +591,7 @@
 		     (!(ExecutionManager.handleReport ArmActions @detectPressionId @executionId FALSE FALSE NO_NAME))
 		     )
 		  (!(ArmActions.getFreeId @actionId))
-		  (=>(ArmActions.action moveToReadyPosition (VAL @arm) @q0 @actionId))
+		  (=>(ArmActions.action moveToPose READY (VAL @arm) @q0 @actionId))
 		  (!(ExecutionManager.handleReport ArmActions @actionId @executionId FALSE TRUE NO_NAME))
 		  
 		  (!(ArmActions.getFreeId @detectPressionId))
@@ -596,7 +612,7 @@
 		  )
 		  
 		  (!(ArmActions.getFreeId @actionId))
-		  (=>(ArmActions.action moveToManipulationPosition @actionId))
+		  (=>(ArmActions.action moveToPose MANIPULATION @actionId))
 		  (!(ExecutionManager.handleReport ArmActions @actionId @executionId FALSE TRUE NO_NAME))
 		  (!(= @robotState armRest))
 		  (!(= @task notCompleted))
@@ -738,14 +754,6 @@
 					;task is over. We go to rest state
 	 (!(ExecutionManager.cleanModuleRequestes))
 	 
-	 ;; (IF(?(~(EQUAL @robotState armRest)))  
-	 ;;    (^(ELAPSED-TIME (TIME) 2))
-	 ;; 				;wait some seconds before leaving
-	    
-	 ;;    (!(ArmActions.getFreeId @actionId))
-	 ;;    (=>(ArmActions.action moveToRestPosition @arm @actionId))
-	 ;;    (!(ExecutionManager.handleReport ArmActions @actionId @executionId FALSE NO_NAME))
-	 ;;    )
 
 	 
 	 (IF(?(EQUAL @task completed))
@@ -755,7 +763,6 @@
 	   
 	    ELSE
 	    (=>(ExecutionManager.report @executionId FAILURE))
-;	    (!(Acapela.say "Well... too bad."))
 	    )
 	 (IF(?(Timer.isRunning (VAL @timerId)))
 	    (=>(Timer.stopTimer @timerId))
@@ -768,20 +775,6 @@
 	 (!(SEM-V ExecutionManager.sem))
 
 
-	 ;; (!(ArmActions.getFreeId @actionId))
-	 ;; (IF(?(~(Robot.pose RIGHT @anObject @aSupport REST)))
-	 ;;    (=>(ArmActions.action moveToManipulationPosition @actionId))
-	 ;;    (^(ArmActions.report (VAL @actionId) @report))
-	 ;;    (~>(ArmActions.report (VAL @actionId) @report))
-	 ;;    )
-	 ;;stop any remaining monitor (should not be there actually but still...)
-	 ;; (IF(?(MonitorManager.target @any1 (VAL @monitorId) @any2))
-	 ;;    (^(MonitorManager.report (VAL @monitorId) @report))
-	 ;;    (~>(MonitorManager.report (VAL @monitorId) @report))
-	    
-	 ;;    ELSEIF(?(MonitorManager.report (VAL @monitorId) @report))
-	 ;;    (~>(MonitorManager.report (VAL @monitorId) @report))
-	 ;;    )
 	 )
   )
 
@@ -1891,4 +1884,41 @@
 )
 
 
+(defop |closeGripper|
+  :invocation(ExecutionManager.execute closeGripper @gripper @executionId)
+  :body (
+	 (=>(ExecutionManager.isExecuting @executionId))
+	 (!(ArmActions.getFreeId @id))
+	 (=>(ArmActions.action closeGripper @gripper @id))
+	 (!(ExecutionManager.handleReport ArmActions @id @executionId FALSE FALSE NO_NAME))
+	 (~>(ExecutionManager.isExecuting @executionId))
+	 (=>(ExecutionManager.report (VAL @executionId) OK))
+	 )
+  )
+
+(defop |openGripper|
+  :invocation(ExecutionManager.execute openGripper @gripper @executionId)
+  :body (
+	 (=>(ExecutionManager.isExecuting @executionId))
+	 (!(ArmActions.getFreeId @id))
+	 (=>(ArmActions.action openGripper @gripper @id))
+	 (!(ExecutionManager.handleReport ArmActions @id @executionId FALSE FALSE NO_NAME))
+	 (~>(ExecutionManager.isExecuting @executionId))
+	 (=>(ExecutionManager.report (VAL @executionId) OK))
+	 )
+)
+
+(defop |goToPose|
+  :invocation(ExecutionManager.execute moveToPose @pose @arm @q0 @executionId)
+  :body (
+	 (=>(ExecutionManager.isExecuting @executionId))
+	 (!(ArmActions.getFreeId @id))
+	 (=>(ArmActions.action moveToPose @pose @arm @q0 @id))
+	 (!(ExecutionManager.handleReport ArmActions @id @executionId TRUE TRUE NO_NAME))
+	 (~>(ExecutionManager.isExecuting @executionId))
+	 (=>(ExecutionManager.report (VAL @executionId) OK))
+	 )
+  )
+	    
+	  
 )
