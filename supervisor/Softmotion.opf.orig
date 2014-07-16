@@ -151,37 +151,6 @@
 	   )
    )
 
-(defop |halt|
-  :invocation (Softmotion.request halt @id)
-  :documentation "Halts the execution, waiting for a resume"
-  :body (
-	  (!(SEM-P Softmotion.semStop))
-	  
-	  (=>(Softmotion.freeId (+ @id 1)))
-	  
-	  (!(GenomInterface.handleRequest PR2SOFTMOTION PR2SOFTMOTION_HALT (Softmotion.stop (VAL @id)) (FALSE) (FALSE) 300  NIL @report @result))
-	  (=>(Softmotion.report (VAL @id) (VAL @report)))
-
-	  (!(SEM-V Softmotion.semStop))
-	  )
-  )
-  
-
-(defop |resume|
-  :invocation (Softmotion.request resume @id)
-  :documentation "Halts the execution, waiting for a resume"
-  :body (
-	  (!(SEM-P Softmotion.semStop))
-	  
-	  (=>(Softmotion.freeId (+ @id 1)))
-	  
-	  (!(GenomInterface.handleRequest PR2SOFTMOTION PR2SOFTMOTION_RESUME (Softmotion.stop (VAL @id)) (FALSE) (FALSE) 300  NIL @report @result))
-	  (=>(Softmotion.report (VAL @id) (VAL @report)))
-
-	  (!(SEM-V Softmotion.semStop))
-	  )
-  )
-
  (defop |stop|
    :invocation (Softmotion.request stop @id)
    :documentation "Stops the robot. This is not really safe i guess. The user should cancel all ongoing softmotion requestes or prepare for some failure reports"
@@ -191,9 +160,63 @@
 	  (=>(Softmotion.freeId (+ @id 1)))
 	  
 	  (!(GenomInterface.handleRequest PR2SOFTMOTION PR2SOFTMOTION_STOP (Softmotion.stop (VAL @id)) (FALSE) (FALSE) 300  NIL @report @result))
+	  (=> (Robot.isMovingHead FALSE))
+	  (=> (Robot.isMovingArm RIGHT FALSE))
+	  (=> (Robot.isMovingArm LEFT FALSE))
+	  (=> (Robot.isMoving FALSE))
+	  (=>(Softmotion.report (VAL @id) (VAL @report)))
+
+	  (!(SEM-V Softmotion.semStop))
+	  )
+   )
+
+ (defop |halt|
+   :invocation (Softmotion.request halt @id)
+   :documentation "Halt the robot. For resume we should use this and not stop"
+   :body (
+	  (!(SEM-P Softmotion.semStop))
+	  
+	  (=>(Softmotion.freeId (+ @id 1)))
+	  
+	  (!(GenomInterface.handleRequest PR2SOFTMOTION PR2SOFTMOTION_HALT (Softmotion.stop (VAL @id)) (FALSE) (FALSE) 300  NIL @report @result))
+	  (=> (Robot.isMovingHead FALSE))
+	  (=> (Robot.isMovingArm RIGHT FALSE))
+	  (=> (Robot.isMovingArm LEFT FALSE))
+	  (=> (Robot.isMoving FALSE))
+	  (=>(Softmotion.report (VAL @id) (VAL @report)))
+
+	  (!(SEM-V Softmotion.semStop))
+	  )
+   )
+
+ (defop |resume|
+   :invocation (Softmotion.request resume @joint @id)
+   :documentation "Restart the movment of the robot : NOT TESTED, @joint : joint which will move after"
+   :body (
+	  (!(SEM-P Softmotion.semStop))
+	  
+	  (=>(Softmotion.freeId (+ @id 1)))
+	  
+<<<<<<< HEAD
+	  (!(GenomInterface.handleRequest PR2SOFTMOTION PR2SOFTMOTION_RESUME (Softmotion.stop (VAL @id)) (FALSE) (FALSE) 300  NIL @report @result))
+	  (IF(?(EQUAL @joint "HEAD"))
+	 	 (=> (Robot.isMovingHead TRUE))
+		)
+	  (IF(?(EQUAL @joint "RARM"))
+	  	(=> (Robot.isMovingArm RIGHT TRUE))
+		)
+	  (IF(?(EQUAL @joint "LARM"))
+	  	(=> (Robot.isMovingArm LEFT TRUE))
+		)
+	  (IF(?(EQUAL @joint "TORSO"))
+	  	(=> (Robot.isMoving TRUE))
+		)
+=======
+	  (!(GenomInterface.handleRequest PR2SOFTMOTION PR2SOFTMOTION_STOP (Softmotion.stop (VAL @id)) (FALSE) (FALSE) 300  NIL @report @result))
 	  (=> (Robot.isMoving HEAD FALSE))
 	  (=> (Robot.isMoving RIGHT_ARM FALSE))
 	  (=> (Robot.isMoving LEFT_ARM FALSE))
+>>>>>>> mike-stable
 	  (=>(Softmotion.report (VAL @id) (VAL @report)))
 
 	  (!(SEM-V Softmotion.semStop))

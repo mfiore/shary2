@@ -1,0 +1,4 @@
+(
+(TabletConnector.tabletName jidotab)
+(TabletConnector.shouldRun TRUE)
+)

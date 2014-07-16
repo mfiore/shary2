@@ -1,3 +1,0 @@
-;PREDICATE DECLARATION
-
-declare predicate be ExecutionManager.execute

@@ -184,7 +184,7 @@
  ;;ROBOT POSES
 
 (defop |moveToRestPosition|
-   :invocation(ArmActions.action moveToRestPosition @arm @actionId)
+   :invocation(ArmActions.action moveToPose REST @arm @q0 @actionId)
    :documentation "Goes to a rest pose with the arm nearby the body"
    :body (
 	  (!(ArmActions.checkAndEscapeObject @arm))
@@ -196,7 +196,7 @@
    )
 
  (defop |moveToExtendedPosition|
-   :invocation(ArmActions.action moveToExtendedPosition @arm @q0 @actionId)
+   :invocation(ArmActions.action moveToPose EXTENDED @arm @q0 @actionId)
    :documentation "Utility function to extend the arm"
    :body (
 	  (!(ArmActions.checkAndEscapeObject @arm))
@@ -208,7 +208,7 @@
    )
 
  (defop |moveToReadyPosition|
-   :invocation (ArmActions.action moveToReadyPosition @arm @q0 @actionId)
+   :invocation (ArmActions.action moveToPose READY @arm @q0 @actionId)
    :documentation "For now just utility function but should become an actual request. Goes to a rest pose with the arm nearby the body"
    :body (
 	  (!(ArmActions.checkAndEscapeObject @arm))
@@ -218,13 +218,15 @@
    )
 
 (defop |moveToManipulationPosition|
-  :invocation (ArmActions.action moveToManipulationPosition @actionId)
+  :invocation (ArmActions.action moveToPose MANIPULATION @q0 @actionId)
   :documentation "Moves to a position suitable for manipulation with the right arm"
   :body (
 	 (!(ArmActions.checkAndEscapeObject RIGHT))
 	 (=>(ArmActions.action moveToQ RIGHT -1.7 -0.098069 -0.8 -1.8 0.5 -0.432614 -1.730387 MANIPULATION (VAL @actionId)))
 	 )
   )
+
+
 
  ;;GRIPPER FUNCTIONS
 

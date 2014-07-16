@@ -10,7 +10,6 @@
 	  (!(SEM-CREATE Spark.sem 1 SEM-FIFO))
 	  (=>(Spark.freeId 0))
 	  (=>(Spark.freeSphereId 0))
-<<<<<<< HEAD
 	  (=>(Spark.freeSphereId 1))
 	  (=>(Spark.freeSphereId 2))
 	  (=>(Spark.freeSphereId 3))
@@ -20,8 +19,6 @@
 	  (=>(Spark.freeSphereId 7))
 	  (=>(Spark.freeSphereId 8))
 	  (=>(Spark.freeSphereId 9))
-=======
->>>>>>> 2716516a4eb14a47bb2f6ec3b0d468fd26a53c61
 	  )
    )
  
@@ -30,15 +27,7 @@
    :body (
 	  (!(SEM-P Spark.sem))
 	  (?(Spark.freeSphereId $id))
-<<<<<<< HEAD
 	  (~>(Spark.freeSphereId (VAL $id)))
-=======
-	  (!(= @newId (+ $id 1)))
-	  (IF(?(EQUAL @newId 10))
-	     (!(= @newId 0))
-	     )
-	  (=>(Spark.freeSphereId @newId))
->>>>>>> 2716516a4eb14a47bb2f6ec3b0d468fd26a53c61
 	  (!(SEM-V Spark.sem))
 	  )
    )
@@ -113,6 +102,8 @@
 	 )
   )
 
+
+
 (defop |updateSphereMonitor|
   :invocation(Spark.request updateSphereMonitor @sphereId @activateSphere @objectName @hand @agent @x @y @z @type @id)
   :body (
@@ -120,18 +111,8 @@
 	 (=>(Spark.freeId (+ @id 1)))
 	 
 
-<<<<<<< HEAD
 	 (IF(?(EQUAL @activateSphere GEN_FALSE))
 	    (=>(Spark.freeSphereId @id))
-=======
-	 (IF(?(EQUAL @activateSphere GEN_TRUE))
-	    (!(= @freeSphereId (+ @sphereId 1)))
-	    
-	    (IF(?(EQUAL @freeSphereId 10))
-	       (!(= @freeSphereId 0))
-	       )
-	    (=>(Spark.freeSphereId @freeSphereId))
->>>>>>> 2716516a4eb14a47bb2f6ec3b0d468fd26a53c61
 	    )
 	 (!(= @radius 10))
 	 
@@ -270,12 +251,12 @@
 	 )
   )
 (defop |setObjectInHand|
-  :invocation(Spark.request setObjectInHand @object @arm @value @id)
+  :invocation(Spark.request setObjectInHand @agent @object @arm @value @id)
   :body (
 	 (IF(?(EQUAL @value TRUE))
 	      (?(Spark.freeId @sparkId))
 	      (=>(Spark.request placeObjectForSimu (VAL @object) 0 0 0 0 0 0 1 (VAL @sparkId)))
-	      (!(ExecutionManager.handleReport Spark.report @sparkId @executionId))
+	      (!(ExecutionManager.handleReport Spark @sparkId @executionId FALSE NO_NAME))
 	      (!(= @flag 1))
 	      
 	    ELSE 
@@ -284,16 +265,25 @@
 	 
 	  (?(Spark.robotHand (VAL @arm) @sparkHand))
 	  (?(Spark.robotName @sparkRobotName))
+
+	  (IF(?(~(EQUAL @agent @sparkRobotName)))
+	       (!(Spark.getFreeId @sparkId))
+	       (=>(Spark.request setInferrenceForObject (VAL @object) (VAL @flag) (VAL @agent) (VAL @sparkHand) SPARK_HUMAN_HAND 1.0 (VAL @sparkId)))  
+	       (^(Spark.report @sparkId @report))
+	       (~>(Spark.report (VAL @sparkId) @report))	       
+
+	       ELSE
+	       (!(Spark.getFreeId @sparkId))
+	       (=>(Spark.request setGraspedObject (VAL @object) (VAL @flag) (VAL @sparkHand) (VAL @sparkId)))
+	       (^(Spark.report @sparkId @report))
+	       (~>(Spark.report (VAL @sparkId) @report))
+	       
+	       (!(Spark.getFreeId @sparkId))
+	       (=>(Spark.request setInferrenceForObject (VAL @object) (VAL @flag) (VAL @agent) (VAL @sparkHand) SPARK_PRECISE_ROBOT_HAND 1.0 (VAL @sparkId)))  
+	       (^(Spark.report @sparkId @report))
+	       (~>(Spark.report (VAL @sparkId) @report))
 	  
-	  (!(Spark.getFreeId @sparkId))
-	  (=>(Spark.request setGraspedObject (VAL @object) (VAL @flag) (VAL @sparkHand) (VAL @sparkId)))
-	  (^(Spark.report @sparkId @report))
-	  (~>(Spark.report (VAL @sparkId) @report))
-	  
-	  (!(Spark.getFreeId @sparkId))
-	  (=>(Spark.request setInferrenceForObject (VAL @object) (VAL @flag) (VAL @sparkRobotName) (VAL @sparkHand) SPARK_PRECISE_ROBOT_HAND 1.0 (VAL @sparkId)))  
-	  (^(Spark.report @sparkId @report))
-	  (~>(Spark.report (VAL @sparkId) @report))
+	       )
 	  
 	  (=>(Spark.report @id "OK"))
 

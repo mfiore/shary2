@@ -240,9 +240,16 @@
    :invocation(!(Tester.testPlace))
    :body (
 	  (!(Controller.initAll))
-	  (=>(Robot.hasObject RIGHT GREY_TAPE))
+	  (=>(Robot.hasObject RIGHT LOTR_TAPE))
 	  (=>(Robot.armPosition RIGHT FREE))
-	  (=>(ExecutionManager.execute placeObject GREY_TAPE TABLE_4 PLACEMAT_BLUE 1))
+	  (=>(ExecutionManager.execute placeSandra LOTR_TAPE TABLE_4 PLACEMAT_RED 2))
+	  )
+   )
+
+ (defop |testPlaceAfterTake|
+   :invocation(!(Tester.testPlaceAfterTake))
+   :body (
+	  (=>(ExecutionManager.execute placeSandra LOTR_TAPE TABLE_4 PLACEMAT_RED 3))
 	  )
    )
 
@@ -279,18 +286,18 @@
 	  ;(^(ArmActions.report 1 @report))
 
 	  (!(PRINT "MoveToRest"))
-	  (=>(ArmActions.action moveToRestPosition RIGHT 1))
+	  (=>(ArmActions.action moveToPose REST RIGHT 0 1))
 	  (^(ArmActions.report 1 @report))
 	  (~>(ArmActions.report 1 @report))
 
 	  (!(PRINT "MoveToReady"))
-	  (=>(ArmActions.action moveToReadyPosition RIGHT 0 1))
+	  (=>(ArmActions.action moveToPose READY RIGHT 0 1))
 	  (^(ArmActions.report 1 @report))
 	  (~>(ArmActions.report 1 @report))	  
 
 
 	  (!(PRINT "MoveToExtended"))
-	  (=>(ArmActions.action moveToExtendedPosition RIGHT 0 1))
+	  (=>(ArmActions.action moveToPose EXTENDED RIGHT 0 1))
 	  (^(ArmActions.report 1 @report))
 	  (~>(ArmActions.report 1 @report))
 	  )
@@ -320,9 +327,34 @@
   :body (
 	 (!(HeadActions.init))
 	 (!(Controller.initAll))
+	(!(PRINT "INIT FAITES !!!!!!!!!!!!!!!!!!!!!"))
+	(!(HeadActions.getFreeId @headId))
+	(=>(HeadActions.action headExplore @headId))
+	 (^(HeadActions.report (VAL @headId) @report))
+	(~>(HeadActions.report (VAL @headId) @report))
+	(IF(?(EQUAL @report FAILED))
+		(!(PRINT "Explore failed"))
+	 )
+	
+	(!(HeadActions.getFreeId @headId))
+	 (=>(HeadActions.action lookAt LOTR_TAPE NO_NAME @headId))
+	 (^(HeadActions.report (VAL @headId) @report))
+	(~>(HeadActions.report (VAL @headId) @report))	
+	(IF(?(EQUAL @report FAILED))
+		(!(PRINT "LookAt failed"))
+	 )
 
-	 (=>(HeadActions.action lookAt GREY_TAPE NO_NAME 1))
-	 (^(HeadActions.report 1 @report))
+	(!(HeadActions.getFreeId @headId))
+	 (=>(HeadActions.action isLookingAt LOTR_TAPE NO_NAME @headId))
+	 (^(HeadActions.report (VAL @headId) @report))
+	(~>(HeadActions.report (VAL @headId) @report))
+	(IF(?(EQUAL @report "TRUE"))
+		(!(PRINT "Object is looking"))
+		ELSEIF(?(EQUAL @report "FALSE"))
+			(!(PRINT "Object is not looking"))
+			ELSE
+				(!(PRINT "FAILED"))
+		)
 	 )
   )
  
@@ -385,8 +417,8 @@
    :documentation " "
    :body (
 	  (!(Controller.initAll))
-	  (=>(Robot.hasObject RIGHT LOTR_TAPE))
-	  (=>(ExecutionManager.execute handover GIVE LOTR_TAPE HERAKLES_HUMAN1 1))
+	  (=>(Robot.hasObject RIGHT WALLE_TAPE))
+	  (=>(ExecutionManager.execute handover GIVE WALLE_TAPE HERAKLES_HUMAN1 1))
 
 	    
 	  )
@@ -403,7 +435,7 @@
 
 	  (!(Spark.getFreeId @sparkId))
 	  (=>(Spark.request setObjectInHand HERAKLES_HUMAN1 LOTR_TAPE RIGHT TRUE (VAL @sparkId)))
-	  (!(ExecutionManager.handleReport Spark @sparkId @executionId FALSE FALSE NO_NAME))
+	  (!(ExecutionManager.handleReport Spark @sparkId @executionId TRUE NO_NAME))
 
 	  (=>(ExecutionManager.execute handover GRAB LOTR_TAPE HERAKLES_HUMAN1 1))
 
@@ -465,15 +497,12 @@
 	  (!(Controller.initAll))
 	  (?(Spark.freeId @sparkId))
 	  (=>(Spark.request setGraspedObject LOTR_TAPE 0 0 (VAL @sparkId)))
-	  (!(ExecutionManager.handleReport Spark @sparkId @executionId FALSE FALSE NO_NAME))
-
+	  (!(ExecutionManager.handleReport Spark.report @sparkId @executionId))
 
 	  (?(Spark.freeId @sparkId))
 	  (=>(Spark.request setInferrenceForObject LOTR_TAPE 0 PR2_ROBOT 0 SPARK_PRECISE_ROBOT_HAND 1.0 (VAL @sparkId)))  
-	  (!(ExecutionManager.handleReport Spark @sparkId @executionId FALSE FALSE NO_NAME))
-
-
-
+	  (!(ExecutionManager.handleReport Spark.report @sparkId @executionId))
+	  
 	  (=>(ExecutionManager.execute take LOTR_TAPE RIGHT 1))
 
 	  )
@@ -485,17 +514,17 @@
 	  (!(Controller.initAll))
 	  (?(Spark.freeId @sparkId))
 	  (=>(Spark.request setGraspedObject GREY_TAPE 0 0 (VAL @sparkId)))
-	  (!(ExecutionManager.handleReport Spark @sparkId @executionId FALSE FALSE NO_NAME))
+	  (!(ExecutionManager.handleReport Spark.report @sparkId @executionId))
 
 	  (?(Spark.freeId @sparkId))
 	  (=>(Spark.request setInferrenceForObject GREY_TAPE 0 PR2_ROBOT 0 SPARK_PRECISE_ROBOT_HAND 1.0 (VAL @sparkId)))  
-	  (!(ExecutionManager.handleReport Spark @sparkId @executionId FALSE FALSE NO_NAME))
+	  (!(ExecutionManager.handleReport Spark.report @sparkId @executionId))
 	  
-	  (=>(ExecutionManager.execute take LOTR_TAPE  RIGHT 1))
+	  (=>(ExecutionManager.execute take GREY_TAPE RIGHT 1))
 	  
 	  (^(ExecutionManager.report (VAL @executionId) @report))
 	  
-	  (=>(ExecutionManager.execute throw LOTR_TAPE PINK_TRASHBIN 2))
+	  (=>(ExecutionManager.throw GREY_TAPE PINK_TRASHBIN 2))
 	  )
   )
 
@@ -520,7 +549,7 @@
 
 	 ;; (=>(Robot.armPosition RIGHT TABLE_4))
 	 
-	  (=>(ExecutionManager.execute throw LOTR_TAPE PINK_TRASHBIN 1))
+	 (=>(ExecutionManager.execute throw LOTR_TAPE PINK_TRASHBIN 1))
 	 )
   )
 
@@ -583,16 +612,18 @@
   :body (
 	 (!(Controller.initAll))
 	 (?(Spark.freeId @sparkId))
-	 (=>(Spark.request setGraspedObject GREY_TAPE 0 0 (VAL @sparkId)))
+	 (=>(Spark.request setGraspedObject LOTR_TAPE 0 0 (VAL @sparkId)))
 	 (!(ExecutionManager.handleReport Spark.report @sparkId @executionId))
 
 	 (?(Spark.freeId @sparkId))
-	 (=>(Spark.request setInferrenceForObject GREY_TAPE 0 PR2_ROBOT 0 SPARK_PRECISE_ROBOT_HAND 1.0 (VAL @sparkId)))  
+	 (=>(Spark.request setInferrenceForObject LOTR_TAPE 0 PR2_ROBOT 0 SPARK_PRECISE_ROBOT_HAND 1.0 (VAL @sparkId)))  
 	 (!(ExecutionManager.handleReport Spark.report @sparkId @executionId))
 	 
-	 (=>(ExecutionManager.execute take GREY_TAPE RIGHT 1))
-	 (^(ExecutionManager.report 1 @report))
-	 (=>(ExecutionManager.execute place GREY_TAPE TABLE_4 PLACEMAT_BLUE 2))
+	 (=>(ExecutionManager.execute takeSandra LOTR_TAPE NO_NAME 10))
+	 (^(ExecutionManager.report 10 @report))
+	 (IF(?(EQUAL @report "OK"))
+	 	(=>(ExecutionManager.execute placeSandra LOTR_TAPE TABLE_4 PLACEMAT_RED 20))
+		)
 	 )
   )
 
