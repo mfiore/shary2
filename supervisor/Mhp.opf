@@ -13,6 +13,7 @@
    :body (
 	  (!(SEM-CREATE Mhp.sem 1 SEM-FIFO))
 	  (=>(Mhp.freeId 0))
+	  (=>(Mhp.previousTask -1 -1))
 	  )
    )
  
@@ -277,4 +278,320 @@
 		)
 	  )
    )
- )
+
+(defop |initGtp|
+  :invocation(Mhp.request initGtp @id)
+  :documentation "inits the geometrical task planner module"
+  :body (
+	 (!(GenomInterface.handleRequest MHP MHP_INITGTP (Mhp.stop (VAL @id)) (FALSE) (FALSE) 300 nil @report @result))
+	 (=>(Mhp.report (VAL @id) (VAL @report)))
+	 
+	 )
+  )
+
+(defop |fetchEnvironment|
+  :invocation(Mhp.request fetchEnvironment @id)
+  :documentation ""
+  :body (
+	 (!(GenomInterface.handleRequest MHP MHP_FETCHENVIRONMENT (Mhp.stop (VAL @id)) (FALSE) (FALSE) 300 nil @report @result))
+	 (=>(Mhp.report (VAL @id) (VAL @report)))
+	 )
+  )
+(defop |planTaskGtp|
+  :invocation(Mhp.request planTaskGtp @task @object @support @id)
+  :documentation ""
+  :body (
+	 (IF(?(EQUAL @task place))
+	    (!(= @objectKey2 supportObject))
+	    
+	    ELSE
+	    (!(= @objectKey2 NO_NAME))
+	    )
+	 (?(Mhp.previousTask @previousTaskId @previousTaskAlternativeId))
+	 
+	 (!(= @params     (STRUCT_TASK_INPUT 
+			   (type 
+			    (name  (TERM-STRING-CAT @task)))
+			   
+			   (agentKey1 
+			    (name  (TERM-STRING-CAT mainAgent))
+			    )
+
+			   (agentValue1 
+			    (name  (TERM-STRING-CAT PR2_ROBOT)))
+
+			   (agentKey2 
+			    (name  (TERM-STRING-CAT NO_NAME)))
+
+			   (agentValue2 
+			    (name  (TERM-STRING-CAT NO_NAME)))
+
+			   (agentKey3 
+			    (name  (TERM-STRING-CAT NO_NAME)))
+
+			   (agentValue3 
+			    (name  (TERM-STRING-CAT NO_NAME)))
+
+			   (agentKey4 
+			    (name  (TERM-STRING-CAT NO_NAME)))
+
+			   (agentValue4 
+			    (name  (TERM-STRING-CAT NO_NAME)))
+
+			   (objectKey1 
+			    (name  (TERM-STRING-CAT mainObject)))
+
+			   (objectValue1 
+			    (name  (TERM-STRING-CAT @object)))
+
+			   (objectKey2 
+			    (name  (TERM-STRING-CAT @objectKey2)))
+
+			   (objectValue2 
+			    (name  (TERM-STRING-CAT @support)))
+
+			   (objectKey3 
+			    (name   (TERM-STRING-CAT NO_NAME)))
+
+			   (objectValue3 
+			    (name   (TERM-STRING-CAT NO_NAME)))
+
+			   (objectKey4 
+			    (name   (TERM-STRING-CAT NO_NAME)))
+
+			   (objectValue4 
+			    (name   (TERM-STRING-CAT NO_NAME)))
+
+			   (dataKey1 
+			    (name   (TERM-STRING-CAT hand)))
+
+			   (dataValue1 
+			    (name   (TERM-STRING-CAT @hand)))
+
+			   (dataKey2 
+			    (name   (TERM-STRING-CAT NO_NAME)))
+
+			   (dataValue2 
+			    (name   (TERM-STRING-CAT NO_NAME)))
+
+			   (dataKey3 
+			    (name   (TERM-STRING-CAT NO_NAME)))
+
+			   (dataValue3 
+			    (name   (TERM-STRING-CAT NO_NAME)))
+
+			   (dataKey4 
+			    (name   (TERM-STRING-CAT NO_NAME)))
+
+			   (dataValue4 
+			    (name   (TERM-STRING-CAT NO_NAME)))
+
+			   (pointKey1 
+			    (name   (TERM-STRING-CAT NO_NAME)))
+
+			   (pointValue1 
+			    (x  0.0)
+			    (y  0.0)
+			    (z  0.0))
+
+			   (pointKey2 
+			    (name   (TERM-STRING-CAT NO_NAME)))
+
+			   (pointValue2 
+			    (x  0.0)
+			    (y  0.0)
+			    (z  0.0))
+
+			   (pointKey3 
+			    (name  (TERM-STRING-CAT NO_NAME))
+
+			   (pointValue3 
+			    (x  0.0)
+			    (y  0.0)
+			    (z  0.0))
+
+			   (pointKey4 
+			    (name  (TERM-STRING-CAT NO_NAME))
+
+			   (pointValue4 
+			    (x  0.0)
+			    (y  0.0)
+			    (z  0.0))
+
+			   (previousTaskId  @previousTaskId)
+			   (previousTaskAlternativeId  @previousTaskAlternativeId))
+			   ))))
+	 (!(GenomInterface.handleRequest MHP MHP_PLANTASKGTP (Mhp.stop (VAL @id)) (FALSE) (FALSE) 300 @params @report @result))
+	 (=>(Mhp.report (VAL @id) (VAL @report)))
+	 (IF(?(EQUAL @report "OK"))
+	    (!(== (VAL @result) (STRUCT_TASK_OUTPUT 
+				 (taskId  @newTaskId)
+				 (taskAlternativeId  @newTaskAId)
+				 (cost @cost)
+				 
+				 )))
+	    (~>(Mhp.previousTask @a @b))
+	    (=>(Mhp.previousTask @newTaskId @newTaskAId))
+	    )
+	  
+	 )
+  )
+(defop |smoothGtpTraj|
+  :invocation(Mhp.request smoothGtpTraj @taskId @alternativeId @id)
+  :documentation ""
+  :body (
+	 
+	 (!(= @params         (STRUCT_TASK_ID_ONLY 
+			       (taskId  @taskId)
+			       (alternativeId  @alternativeId))
+	      )
+	   )
+	 (!(GenomInterface.handleRequest MHP MHP_SMOOTHGTPTRAJ (Mhp.stop (VAL @id)) (FALSE) (FALSE) 300 @params @report @result))
+	 (=>(Mhp.report @id @report))
+	 )
+  )
+(defop |getGtpTaskDetails|
+  :invocation(Mhp.request getGtpTaskDetails @taskId @alternativeId @id)
+  :documentation ""
+  :body (
+	 
+	 (!(= @params         (STRUCT_TASK_ID_ONLY 
+			       (taskId  @taskId)
+			       (alternativeId  @alternativeId))
+	      )
+	   )
+	 (!(GenomInterface.handleRequest MHP MHP_GETGTPTASKDETAILS (Mhp.stop (VAL @id)) (FALSE) (FALSE) 300 @params @report @result))
+	 (=>(Mhp.report @id @report))
+	 (IF(?(EQUAL @report "OK"))
+	    (!(== (VAL @result)     (STRUCT_TASK_DETAILS 
+			       (taskType 
+				(name  @name))
+
+			       (nbOfAlternatives  @nbOfAlternatives)
+			       (nbSubTrajs  @nSubTrajs)
+			       (subTrajs 
+				(subTrajId  @subTrajId1)
+				(dummy  @dummy1)
+				(subTrajName 
+				 (name  @subTrajName1))
+
+				(robot 
+				 (name  @robot1))
+
+				(subTrajId  @subTrajId2)
+				(dummy  @dummy2)
+				(subTrajName 
+				 (name  @subTrajName2))
+
+				(robot 
+				 (name  @robot2))
+
+				(subTrajId  @subTrajId3)
+				(dummy  @dummy3)
+				(subTrajName 
+				 (name  @subTrajName3))
+
+				(robot 
+				 (name  @robot3))
+
+				(subTrajId  @subTrajId4)
+				(dummy  @dummy4)
+				(subTrajName 
+				 (name  @subTrajName4))
+
+				(robot 
+				 (name  @robot4))
+
+				(subTrajId  @subTrajId5)
+				(dummy  @dummy5)
+				(subTrajName 
+				 (name  @subTrajName5))
+
+				(robot 
+				 (name  @robot5))
+
+				(subTrajId  @subTrajId6)
+				(dummy  @dummy6)
+				(subTrajName 
+				 (name  @subTrajName6))
+
+				(robot 
+				 (name  @robot6))
+
+				(subTrajId  @subTrajId7)
+				(dummy  @dummy7)
+				(subTrajName 
+				 (name  @subTrajName7))
+
+				(robot 
+				 (name  @robot7))
+
+				(subTrajId  @subTrajId8)
+				(dummy  @dummy8)
+				(subTrajName 
+				 (name  @subTrajName8))
+
+				(robot 
+				 (name  @robot8))
+
+				(subTrajId  @subTrajId9))
+				(dummy  @dummy9)
+				(subTrajName 
+				 (name  @subTrajName9))
+
+				(robot 
+				 (name  @robot9))
+
+				(subTrajId  @subTrajId10)
+				(dummy  @dummy10)
+				(subTrajName 
+				 (name  @subTrajName10))
+
+				(robot 
+				 (name  @robot10))
+				)
+		  )
+	      )
+	    (!(= @i 0))
+	    (!(= @trajList (. (. @subTrajId1 @dummy1 @subTrajName1 @robot1 .)  
+			      (. @subTrajId2 @dummy2 @subTrajName2 @robot2 .)
+			      (. @subTrajId3 @dummy3 @subTrajName3 @robot3 .)
+			      (. @subTrajId4 @dummy4 @subTrajName4 @robot4 .)
+			      (. @subTrajId5 @dummy5 @subTrajName5 @robot5 .)
+			      (. @subTrajId6 @dummy6 @subTrajName6 @robot6 .)
+			      (. @subTrajId7 @dummy7 @subTrajName7 @robot7 .)
+			      (. @subTrajId8 @dummy8 @subTrajName8 @robot8 .)
+			      (. @subTrajId9 @dummy9 @subTrajName9 @robot9 .)
+			      (. @subTrajId10 @dummy10 @subTrajName10 @robot10 .)
+			      .) ))
+	    (?(Robot.name @robotName))
+	    (!(= @resultList (. .)))
+	    (WHILE(?(< @i @nSubTrajs))
+		  (!(= @traj (CAR @trajList)))
+		  (!(= @trajList (CDR @trajList)))
+		  (!(== (VAL @traj) (@subTrajId @dummy @subTrajName @robot .)))
+		  (IF(?(EQUAL @robot @robotName))
+		     (!(= @resultList (CONS-TAIL (VAL @traj) @resultList)))
+		     )
+		  )
+	    (=>(Mhp.result @id @resultList))
+	    )
+	 )
+  )
+
+(defop |loadGtpTaskTraj|
+  :invocation(Mhp.request loadGtpTaskTraj @taskId @alternativeId @subTrajId @follow @id)
+  :documentation ""
+  :body (
+	 (!(= @params        (STRUCT_TRAJ_ID 
+			      (taskId  @taskId)
+			      (alternativeId  @alternativeId)
+			      (subTrajId  @subTrajId)
+			      (follow  @follow))
+	      ))
+	 (!(GenomInterface.handleRequest MHP MHP_LOADGTPTASKTRAJ (Mhp.stop (VAL @id)) (FALSE) (FALSE) 300 @params @report @result))
+	 (=>(Mhp.report (VAL @id) (VAL @report)))
+	 )
+  )
+
+)

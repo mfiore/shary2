@@ -194,13 +194,20 @@
 	       )
 	    (IF(?(EQUAL @module ArmActions))
 	       (=>(ArmActions.halt (VAL @id)))
+	      
+	       ELSEIF(?(EQUAL @module Gtp))
+	       (=>(GtpActions.halt (VAL @id)))
 	       )
+	    (=>(ExecutionManager.status @executionId HALTED))
 	    (^(|| (& (EQUAL @stoppable TRUE) (ExecutionManager.stop (VAL @executionId))) (ExecutionManager.resume (VAL @executionId)) (&(EQUAL @waitingPositionChange TRUE) (Monitor.handPositionDanger FALSE))))
-	    
+	    (~>(ExecutionManager.status @executionId HALTED))	    
 	    (IF(?(||(ExecutionManager.resume (VAL @executionId)) (&(EQUAL @waitingPositionChange TRUE) (Monitor.handPositionDanger FALSE))))  ;we ask to resume and recall this function to wait for the report
 	       (~>(ExecutionManager.resume (VAL @executionId)))
 	       (IF(?(EQUAL @module ArmActions))
 		  (=>(ArmActions.resume (VAL @id)))
+		  
+		  ELSEIF(?(EQUAL @module GtpActions))
+		  (=>(GtpActions.resume (VAL @id)))
 		  )
 	       (!(ExecutionManager.handleReport @module @id @executionId @haltable @stoppable @object )) 
 	       
@@ -221,7 +228,14 @@
 	    (~>(ExecutionManager.isExecutingAction (VAL @executionId)))
 	    (IF(?(EQUAL @module ArmActions))
 	       (=>(ArmActions.stop @id))
+	       
+	       ELSEIF(?(EQUAL @module Gtp))
+	       (=>(GtpActions.stop @id))
+
+	       ELSEIF(?(EQUAL @module BaseActions))
+	       (=>(BaseActions.stop @id))
 	       )	  
+	    
 	       ;; 	  ELSEIF(?(EQUAL @module Spark))
 	       ;; 	  (=>(Spark.stop (VAL @id)))
 		  
@@ -320,26 +334,30 @@
 	     )
 
 
-	  ;;open gripper if needed
-	  (IF(?(Robot.gripperStatus (VAL @armForPick) CLOSE))
-	     (!(ArmActions.getFreeId @actionId))
-	     (=>(ArmActions.action openGripper @armForPick @actionId))
-	     (!(ExecutionManager.handleReport ArmActions @actionId @executionId FALSE FALSE NO_NAME))
-	     )
+	  ;; ;;open gripper if needed
+	  ;; (IF(?(Robot.gripperStatus (VAL @armForPick) CLOSE))
+	  ;;    (!(ArmActions.getFreeId @actionId))
+	  ;;    (=>(ArmActions.action openGripper @armForPick @actionId))
+	  ;;    (!(ExecutionManager.handleReport ArmActions @actionId @executionId FALSE FALSE NO_NAME))
+	  ;;    )
 
 
-	  ;;plan and execute the trajectory
-	  (!(ArmActions.getFreeId @actionId))
-	  (=>(ArmActions.action moveToObject @armForPick @object @actionId))
+	  ;; ;;plan and execute the trajectory
+	  ;; (!(ArmActions.getFreeId @actionId))
+	  ;; (=>(ArmActions.action moveToObject @armForPick @object @actionId))
 
-	  (!(ExecutionManager.handleReport ArmActions @actionId @executionId TRUE TRUE @object))
+	  ;; (!(ExecutionManager.handleReport ArmActions @actionId @executionId TRUE TRUE @object))
 
 	  
 
-	  ;;close the gripper
-	  (!(ArmActions.getFreeId @actionId))
-	  (=>(ArmActions.action closeGripper @armForPick @actionId))
-	  (!(ExecutionManager.handleReport ArmActions @actionId @executionId FALSE FALSE NO_NAME))
+	  ;; ;;close the gripper
+	  ;; (!(ArmActions.getFreeId @actionId))
+	  ;; (=>(ArmActions.action closeGripper @armForPick @actionId))
+	  ;; (!(ExecutionManager.handleReport ArmActions @actionId @executionId FALSE FALSE NO_NAME))
+
+	  (!(GtpActions.getFreeId @gtpId))
+	  (=>(GtpActions.executeTask pick @object NO_NAME @gtpId))
+	  (!(ExecutionManager.handleReport Gtp @gtpId @executionId TRUE TRUE @object))
 	  
 	  ;;updates knowledge of the robot
 	  (=> (Robot.hasObject (VAL @armForPick) (VAL @object))) ;if we arrive here with no FAILED than we've got the item (hopefully XD)
@@ -778,6 +796,137 @@
 	 )
   )
 
+(defop |getGuideObservations|
+  :invocation(!(ExecutionManager.getGuideObservations @group $distance $info $orientation $speed $inRange))
+  :documentation "calculates observations for a group
+at the moment this works only with groups of one person called HERAKLES_HUMAN1 and $info is not computed
+
+@group (. @human1 @human2 ... @humann .)
+$distance , $info, $orientation, $speed, $inRange  the output observations"
+  :body (
+	  (!(DatabaseInterface.findList (AGENT-STATEMENT PR2_ROBOT HERAKLES_HUMAN1 agentPresent @isPresent) (. @isPresent .) @result))
+	  (IF(?(~(NULL @result)))
+	     (!(= @isPresent (CAR(CAR @result))))
+	     
+	     ELSE
+	     (!(= @isPresent FALSE))
+	     )
+
+	  (IF(?(EQUAL @isPresent TRUE))
+	     (!(= $info none))
+	     (!(Database.findList (AGENT-STATEMENT PR2_ROBOT HERAKLES_HUMAN1 distance @distance) (. @distance .) @result))
+	     (IF(?(~(NULL @result)))
+		(!(= $inRange true))
+		(!(= @actualDistance (CAR(CAR @result))))
+		(IF(?(EQUAL @actualDistance CLOSE))
+		   (!(= $distance close))
+		   
+		   ELSE
+		   (!(= $distance far))
+		   )
+		
+		(!(= $distance outOfRange))
+	     )
+	     (!(Database.findList (AGENT-STATEMENT PR2_ROBOT HERAKLES_HUMAN1 orientation @orientation) (. @orientation .) @result))
+	     (IF(?(~(NULL @result)))
+		(!(= @actualOrientation (CAR(CAR @result))))
+		(IF(?(EQUAL @actualOrientation TOWARD_ROBOT))
+		   (!(= $orientation towardRobot))
+		   
+		   ELSE
+		   (!(= $orientation other))
+		   )
+		
+		(!(= $orientation unknown))
+	     )
+	     (!(Database.findList (AGENT-STATEMENT PR2_ROBOT HERAKLES_HUMAN1 speed @speed) (. @speed .) @result))
+	     (IF(?(~(NULL @result)))
+		(!(= @actualSpeed (CAR(CAR @result))))
+		(IF(?(EQUAL @actualSpeed NOT_MOVING))
+		   (!(= $speed notMoving))
+		   
+		   ELSEIF(?(EQUAL @actualSpeed SLOW))
+		   (!(= $speed slow))
+
+		   ELSEIF(?(EQUAL @actualSpeed NORMAL))
+		   (!(= $speed normal))
+
+		   ELSE
+		   (!(= $speed fast))
+		   )
+		
+		(!(= $speed outOfRange))
+	     )
+
+	     
+
+	     ELSE
+	     (!(= $distance outOfRange))
+	     (!(= $info none))
+	     (!(= $speed unknown))
+	     (!(= $orientation unknown))
+	     (!(= $inRange false))
+	     )
+
+	 )
+  )
+
+(defop |guide|
+  :invocation(ExecutionManager.execute guide @group @goal @executionId)
+  :documentation "guides a group of people to a destination
+
+@group  (. @human1 @human2 ... @humann .)
+@goal ID of the semantic destination node
+@executionId ID of the execution"
+  :body (
+	 (!(SEM-P ExecutionManager.sem))
+	 
+	 ;;set local function variables
+	 (!(= @robotStatus STOPPED))  ;;STOPPED or GUIDING 
+	 (!(= @nFailures 0))   ;;to deal with failures in motion planning
+	 (!(= @maxFailures 3))
+
+	 (!(ExecutionManager.getGuideObservations @group @distance @info @orientation @speed @inRange))
+	 (!(= @task notCompleted))
+	 (!(= @time ok))
+	 (!(= @xState (TERM-STRING-CAT @inRange @task @time)))
+	 (!(POMDP.init Guide @xState @action @yState))
+	 (WHILE(?(& (~(EQUAL @task completed)) (~(EQUAL @action ABANDON)) (ExecutionManager.stop (VAL @executionId))))
+	       (IF(?(EQUAL @action CONTINUE))
+		  (IF(?(EQUAL @robotStatus STOPPED))
+		     (!(ExecutionManager.getFreeId @goId))
+		     (=>(ExecutionManager.execute go @goal NO_NAME @goId))
+		     (!(= @robotStatus GUIDING))    
+		     )
+		  
+		  ELSEIF(?(EQUAL @action WAIT))
+		  (IF(?(EQUAL @robotStatus GUIDING))
+		     (=>(ExecutionManager.stop @goId))
+		     (!(= @robotStatus STOPPED))
+		     )
+		  )
+	       (!(ExecutionManager.getGuideObservations @group @distance @info @orientation @speed @inRange))
+	       (IF(?(ExecutionManager.report (VAL @goId) @report))
+		  (IF(?(EQUAL @report OK))
+		     (!(= @task completed))
+		     ELSE
+		     (!(= @robotStatus STOPPED))
+		     (!(= @nFailures (+ @nFailures 1)))
+		     )
+		  )
+	       
+	       (!(= @xState (TERM-STRING-CAT @inRange @task @time)))
+	       (!(= @obs (TERM-STRING-CAT @distance @info @orientation @speed)))
+	       (!(POMDP.update Guide @xState @obs @action @yState))
+	       (IF(?(> @nFailures @maxFailures))
+		  (!(= @action ABANDON))
+		  )
+	       )
+	 
+	 
+	 (!(SEM-V ExecutionManager.sem))
+	 )
+  )
 
 
 
@@ -860,7 +1009,7 @@
    )
 
 (defop |place|
-  :invocation(ExecutionManager.execute place @object @support @placement @executionId)
+  :invocation(ExecutionManager.execute place @object @support @executionId)
   :documentation "Places an object on a support in a specific placement or a casual one if placement is NO_NAME. For now the casual version is not implemented"
   :body (
 	 (!(SEM-P ExecutionManager.sem))
@@ -876,19 +1025,23 @@
 	 (=>(ExecutionManager.isExecutingAction (VAL @executionId)))
 
 
-					;move the arm over the placement
-	  (!(ArmActions.getFreeId @actionId))
-	  (=>(ArmActions.action moveToPlaceObject @arm @object @support @placement @actionId))
-	  (!(ExecutionManager.handleReport ArmActions @actionId @executionId TRUE TRUE NO_NAME))
+	  ;; 				;move the arm over the placement
+	  ;; (!(ArmActions.getFreeId @actionId))
+	  ;; (=>(ArmActions.action moveToPlaceObject @arm @object @support @placement @actionId))
+	  ;; (!(ExecutionManager.handleReport ArmActions @actionId @executionId TRUE TRUE NO_NAME))
 	  
 	  
-	  ;;open the gripper
-	  (!(ArmActions.getFreeId @actionId))
-	  (=>(ArmActions.action openGripper @arm @actionId))
-	  (!(ExecutionManager.handleReport ArmActions @actionId @executionId FALSE FALSE NO_NAME))
-	  
-	  (=>(ExecutionManager.report @executionId OK))
-	  (~>(Robot.hasObject (VAL @arm) (VAL @object)))
+	  ;; ;;open the gripper
+	  ;; (!(ArmActions.getFreeId @actionId))
+	  ;; (=>(ArmActions.action openGripper @arm @actionId))
+	  ;; (!(ExecutionManager.handleReport ArmActions @actionId @executionId FALSE FALSE NO_NAME))
+
+	 (!(GtpActions.getFreeId @id))
+	 (=>(Gtp.executeTask place @object @support @gtpId))
+	 (!(ExecutionManager.handleReport Gtp @gtpId @executionId TRUE TRUE NO_NAME))
+
+	 (=>(ExecutionManager.report @executionId OK))
+	 (~>(Robot.hasObject (VAL @arm) (VAL @object)))a
   
 	  (!(Spark.getFreeId @sparkId))
 	  (=>(Spark.request setObjectInHand (VAL @object) (VAL @armForPick) FALSE (VAL @sparkId)))
@@ -1920,6 +2073,7 @@
   :documentation "Operation to make the robot reach a destination. @goal is the node in the map the should be reached, @subgoal the item"
   :body (
 	 (!(SEM-P ExecutionManager.sem))
+	 (=>(ExecutionManager.isExecutingAction @executionId))
 	 
 	 ;;get list of nodes in semantic map
 	 (?(Robot.location @source))
@@ -1931,9 +2085,11 @@
 	 (!(PathPlanner.getCoordinates @path @waypoints))
  
 	 ;;move to place
-	 (=>(BaseActions.action move @waypoints))
-	 (!(ExecutionManager.handleReport BaseActions @baseActionsId @executionId TRUE TRUE NO_NAME))
-	 
+	 (!(BaseActions.getFreeId @id))
+	 (=>(BaseActions.action move @waypoints @id))
+	 (!(ExecutionManager.handleReport BaseActions @baseActionsId @executionId FALSE TRUE NO_NAME))
+
+	 (~>(ExecutionManager.isExecutingAction @executionId))	 
 	 (!(SEM-V ExecutionManager.sem))
 	 )
   )

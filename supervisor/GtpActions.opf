@@ -1,0 +1,185 @@
+;; -*-Lisp-*-
+;;author: Michelangelo Fiore
+;;This file contains procedures to handle GTP actions. Probably
+;;there's no need for a whole file for this but i don't know where to
+;;put them XD.
+
+(
+ (defop |init|
+   :invocation(!(GtpActions.init))
+   :documentation "init the module"
+   :body (
+	  (!(Mhp.getFreeId @id))
+	  (=>(Mhp.request initGtp @id))
+	  (^(Mhp.report (VAL @id) @report))
+	  (=>(GtpActions.freeId 0))
+	  ) 
+   )
+ (defop |getFreeId|
+   :invocation(!(GtpActions.getFreeId $id))
+   :body (
+	  (?(GtpActions.freeId $id))
+	  (=>(GtpActions.freeId (+ $id 1)))
+	  )
+   )
+ (defop |executeTask|
+   :invocation(GtpActions.executeTask @task @object @support @gtpId)
+   :body (
+	  (!(Mhp.getFreeId @id))
+	  (=>(Mhp.request fetchEnvironment @id))
+	  (!(GtpActions.handleReport Mhp @id @gtpId))
+
+	  (!(Mhp.getFreeId @id))
+	  (=>(Mhp.request planTaskGtp @task @object @support @id))
+	  (!(GtpActions.handleReport Mhp @id @gtpId))
+
+	  (?(Mhp.previousTask @taskId @alternativeId))
+
+	  (!(Mhp.getFreeId @id))
+	  (=>(Mhp.request smootGtpTraj @taskId @alternativeId @id))
+	  (!(GtpActions.handleReport Mhp @id @gtpId))
+
+
+	  (!(Mhp.getFreeId @id))
+	  (=>(Mhp.request getGtpTaskDetails @taskId @alternativeId @id))
+	  (^(Mhp.report (VAL @id) @report))
+	  (~>(Mhp.report (VAL @id) (VAL @report)))
+	  
+	  (!(= @follow 0))
+	  (IF(?(EQUAL @report "OK"))
+	     (^(Mhp.result (VAL @id) @trajList))
+	     (~>(Mhp.result (VAL @id) (VAL @trajList)))
+	     (WHILE(?(~(NULL @trajList)))
+		   (!(= @traj (CAR @trajList)))
+		   (!(= @trajList (CDR @trajList)))
+		   
+		   (!(== (VAL @traj) (@subTrajId @dummy @subTrajName @robot .)))
+		   
+		   (!(Mhp.getFreeId @id))
+		   (=>(Mhp.request loadGtpTraskTraj @taskId @alternativeId @subTrajId @follow @id))
+		   (!(GtpActions.handleReport Mhp @id @gtpId))
+
+		   (IF(?(EQUAL @subTrajName grasp))
+		      (!(ArmActions.getFreeId @id))
+		      (=>(ArmActions.action closeGripper RIGHT @id))
+		      (!(GtpActions.handleReport ArmActions @id @gtpId))
+		      
+		      ELSEIF(?(EQUAL @subTrajName release))
+		      (!(ArmActions.getFreeId @id))
+		      (=>(ArmActions.action openGripper RIGHT @id))
+		      (!(GtpActions.handleReport ArmActions @id @gtpId))
+
+		      ELSE
+		      (!(Softmotion.getFreeId @id))
+		      (=>(Softmotion.request moveArm 0 @id))
+		      (!(GtpActions.handleReport Softmotion @id @gtpId))
+		      )
+		   (!(Mhp.getFreeId @id))
+		   (=>(Mhp.request fetchEnvironment @id))
+		   (!(GtpActions.handleReport Mhp @id @gtpId))
+	  
+
+		   (!(= @follow 1))
+		   )
+	     )
+
+	  )
+   )
+(defop |handleReport|
+     :invocation(!(GtpActions.handleReport @module @id @actionId))
+     :documentation "Utility function to avoid some code duplication when waiting for the response of a genom module. This can't be used when we don't want to fail if the genom request fails"
+     :body (
+	  (!(= @reportName (TERM-STRING-CAT (VAL @module) ".report")))
+	  (!(= @reportName (MAKE-ATOM @reportName)))
+
+	  ;wait for a report or until we are paused or until we are stopped
+	  (^(|| (@reportName (VAL @id) @report) (GtpActions.halt (VAL @actionId)) (GtpActions.stop (VAL @actionId))))
+		
+	  ;if we are paused we give a halt request if we were doing a softmotion request or simply wait for a resume
+	  (IF(?(GtpActions.halt (VAL @actionId)))
+	     (~>(GtpActions.halt (VAL @actionId)))
+	     (IF(?(EQUAL @module Softmotion))
+		   (!(Softmotion.getFreeId @smId))
+		   (=>(Softmotion.request halt (VAL @smId)))
+		   (^(Softmotion.report (VAL @smId) @smReport))
+		   (~>(Softmotion.report (VAL @smId) (VAL @smReport)))
+		   (^(@reportName (VAL @id) @report))
+		   (~>(@reportName (VAL @id) (VAL @report)))
+
+		   ELSEIF(?(EQUAL @module ArmActions))
+		   (=>(ArmActions.halt (VAL @id)))
+		   )
+	     ;we wait for a stop or for a resume
+	     (^(|| (GtpActions.stop (VAL @actionId)) (GtpActions.resume (VAL @actionId))))
+	     (IF(?(GtpActions.resume (VAL @actionId)))   ;we ask to resume and recall this function to wait for the report
+		(~>(GtpActions.resume (VAL @actionId)))
+		(IF(?(EQUAL @module Softmotion))
+		   (!(Softmotion.getFreeId @smId))
+		   (=>(Softmotion.request resume @smId))
+		   (^(Softmotion.report (VAL @smId) @smReport))
+		   (~>(Softmotion.report (VAL @smId) (VAL @smReport)))
+		   (^(ELAPSED-TIME (TIME) 3))
+
+		   ELSEIF(?(EQUAL @module ArmActions))
+		   (=>(ArmActions.resume (VAL @id)))
+		   )
+		ELSEIF(?(GtpActions.stop (VAL @actionId)))
+		(~>(GtpActions.stop (VAL @actionId)))
+		
+		(IF(?(EQUAL @module Softmotion))
+		   (=>(Softmotion.stop (VAL @id)))    
+		      (!(Softmotion.getFreeId @smId))
+		      (=>(Softmotion.request stop (VAL @smId)))
+		      (^(Softmotion.report (VAL @smId) @smReport))
+		      (~>(Softmotion.report (VAL @smId) (VAL @smReport)))
+		      (^(|| (@reportName (VAL @id) @report)))
+		      (~>(@reportName (VAL @id) @report))
+		      
+		      
+		      ELSEIF(?(EQUAL @module ArmActions))
+		      (=>(ArmActions.stop @id))
+		      
+		      ELSEIF(?(EQUAL @module Mhp))
+		      (=>(Mhp.stop (VAL @id)))
+		      )
+		(=>(GtpActions.report @actionId STOPPED))
+		(!(FAILED))
+		)
+	     
+	     
+	     ELSEIF(?(GtpActions.stop (VAL @actionId)))
+	     (~>(GtpActions.stop (VAL @actionId)))
+	     
+ 	     (IF(?(EQUAL @module Softmotion))
+		(=>(Softmotion.stop (VAL @id)))    
+		(!(Softmotion.getFreeId @smId))
+		(=>(Softmotion.request stop (VAL @smId)))
+		(^(Softmotion.report (VAL @smId) @smReport))
+		(~>(Softmotion.report (VAL @smId) (VAL @smReport)))
+		(^(|| (@reportName (VAL @id) @report)))
+		(~>(@reportName (VAL @id) @report))
+		
+		ELSEIF(?(EQUAL @module ArmActions))
+		(=>(ArmActions.stop @id))
+	       	
+		ELSEIF(?(EQUAL @module Mhp))
+		(=>(Mhp.stop (VAL @id)))
+		)
+	     (=>(GtpActions.report @actionId STOPPED))
+	     (!(FAILED))
+	     
+	     
+	     ELSE	 ;we got a report. If it's a good report we continue if not we report a fail and exit.
+	     (~>( @reportName (VAL @id) (VAL @report)))
+	     (IF(?(~(EQUAL @report "OK")))
+		(!(PRINT @report))
+		(=> (GtpActions.report (VAL @actionId) @report))
+		(!(FAILED))
+		)
+	     )
+	  )
+     )
+
+ 
+
+)

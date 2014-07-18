@@ -5,6 +5,7 @@ declare op_predicate ExecutionManager.handleReport     ;handles a report
 declare op_predicate ExecutionManager.getHumanObservations  ;gets the observations related to a human
 declare op_predicate ExecutionManager.getQForHuman    ;finds the best q0 (i.e. arm direction) to extend the arm toward a human
 declare op_predicate ExecutionManager.cleanModuleRequestes ;stops lingering requestes when we stop an action
+declare ff ExecutionManager.status 1
 
 
 declare ff ExecutionManager.freeId 0  ;id for requestes

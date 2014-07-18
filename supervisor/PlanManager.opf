@@ -359,7 +359,7 @@
 
 (defop |manageOtherRobotActions|
   :invocation(PlanManager.manageOtherRobotActions @robot @actions)
-  :documentations "manages actions for other robot agents"
+  :documentation "manages actions for other robot agents"
   :body (
 	 (?(Connector.robot (VAL @robot) @robotKernel))
 	 (?(Connector.robot SELF @selfKernel))

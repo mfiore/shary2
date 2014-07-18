@@ -7,4 +7,4 @@ declare ff Robot.location 0
 declare cwp Robot.pose              ;Robot.pose @arm(RIGHT, LEFT)  @object (NO_NAME or value) @support(NO_NAME or value) @pose (EXTENDED, REST, OTHER). Support means if the arm is on a support or not. Object means if the arm is close to an object or not (doesn't mean that the robot has picked the object)  
 declare ff Robot.hasObject 1
 declare ff Robot.hasObjectForThrow 1
-
+declare ff Robot.name 0

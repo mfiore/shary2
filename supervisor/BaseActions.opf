@@ -24,21 +24,38 @@
 	 )
   )
 (defop |move|
-  :invocation(BaseActions.action move @waypoints)
+  :invocation(BaseActions.action move @waypoints @id)
   :documentation "moves the robot through a list of waypoints"
   :body (
 	 (!(SEM-P BaseActions.sem))
 	 (?(BaseActions.bridgeName @name))
 	 (?(BaseActions.timeToWait @time))
 	 (!(SEND-MESSAGE @name (move @waypoints)))
-	 (^(|| (BaseActions.response (VAL @name) @response) (ELAPSED-TIME (TIME) @time)))
-	 (IF(?(BaseActions.response (VAL @name) OK))
+	 (^(|| (BaseActions.response (VAL @name) @response) (BaseActions.stop (VAL@id)) (ELAPSED-TIME (TIME) @time)))
+	 (IF(?(BaseActions.stop (VAL @id)))
+	    (!(BaseActions.stop))
+	    (=>(BaseActions.report @id "STOPPED"))
+	    
+	    ELSEIF(?(BaseActions.response (VAL @name) OK))
 	    (=>(BaseActions.report @id "OK"))   
 	    ELSE
 	    (=>(BaseActions.report @id "FAILURE"))
 	    )
 	 (~>(BaseActions.response @name @response))
 	 (!(SEM-V BaseActions.sem))
+	 )
+  )
+
+(defop |stop|
+  :invocation(!(BaseActions.action))
+  :documentation "halts the robot movement"
+  :body (
+	 (?(BaseActions.bridgeName @name))
+	 (?(BaseActions.timeToWait @time))
+	 (!(SEND-MESSAGE @name (stop)))
+	 (^(||(BaseActions.response (VAL @name @response) (ELAPSED-TIME (TIME) @time))))
+	 (~>(BaseActions.response @name @response))
+	 (=>(BaseActions.report @id "OK"))
 	 )
   )
 
