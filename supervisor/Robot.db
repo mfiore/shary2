@@ -1,5 +1,5 @@
 (
-(Robot.name PR2)
+(Robot.name PR2_ROBOT)
 (Robot.isMoving LEFT_ARM FALSE)
 (Robot.isMoving RIGHT_ARM FALSE)
 (Robot.isMoving HEAD FALSE)

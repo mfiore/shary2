@@ -53,43 +53,48 @@
                    @pose we want to set the robot to EXTENDED, REST, OTHER. 
                    "
    :body (
-	  (IF(?(~(EQUAL @object NO_NAME)))
-	     (!(= @result NULL))
-	     ;;this is done because in take requestes MHP doesn't need the support that the object is on but we still want to record this information in the system
-	     (!(DatabaseInterface.findList (AGENT-STATEMENT PR2_ROBOT (VAL @object) isOn @realSupport) (. @realSupport .) @result) )
-	     
-	     (IF(?(~(NULL @result)))
-		(!(= @realSupport (CAR(CAR @result))))
+	  (IF(?(Robot.simu FALSE))
+	     (IF(?(~(EQUAL @object NO_NAME)))
+		(!(= @result NULL))
+		;;this is done because in take requestes MHP doesn't need the support that the object is on but we still want to record this information in the system
+		(!(DatabaseInterface.findList (AGENT-STATEMENT PR2_ROBOT (VAL @object) isOn @realSupport) (. @realSupport .) @result) )
+		
+		(IF(?(~(NULL @result)))
+		   (!(= @realSupport (CAR(CAR @result))))
 		   
+		   ELSE
+		   (!(= @realSupport NO_NAME))
+		   )
 		ELSE
 		(!(= @realSupport NO_NAME))
 		)
+	     
+					;make parameters
+	     (?(Mhp.arm (VAL @arm) @mhpArm))
+	     (?(Softmotion.arm (VAL @arm) @smArm))
+
+	     (!(Mhp.makeArmStartParameter 0 0 0 0 0 0 0 @armStart))
+	     (!(= @objStart (objStart 0.0 0.0 0.0 0.0 0.0 0.0)))
+	     
+					;make request to mhp and softmotion
+	     (!(Mhp.getFreeId @mhpId))
+	     (=>(Mhp.request setTrajectory GEN_TRUE (VAL @task) (VAL @mhpArm) (VAL @armStart) (VAL @armGoto) (VAL @object) (VAL @support) (VAL @placement) GEN_FALSE 0 (VAL @objStart) (VAL @useObjGoto) (VAL @objGoto) (VAL @mhpId)))
+	     
+	     (!(ArmActions.handleReport Mhp @mhpId @actionId FALSE))
+	     
+
+	     (!(Softmotion.getFreeId @smId))
+	     (=>(Softmotion.request moveArm @smArm @smId))
+	     (!(ArmActions.handleReport Softmotion @smId @actionId FALSE))
+					;everything went okay
+	     (=>(ArmActions.report (VAL @actionId) "OK"))
+	     (~>(Robot.pose @a @b @c @d))
+	     (=>(Robot.pose (VAL @arm) (VAL @object) (VAL @realSupport) (VAL @pose)))
+	     
 	     ELSE
-	     (!(= @realSupport NO_NAME))
+	     (=>(ArmActions.report (VAL @actionId) "OK"))
+	     (=>(Robot.pose (VAL @arm) (VAL @object) (VAL @realSupport) (VAL @pose)))
 	     )
-	  
-	  ;make parameters
-	  (?(Mhp.arm (VAL @arm) @mhpArm))
-	  (?(Softmotion.arm (VAL @arm) @smArm))
-
-	  (!(Mhp.makeArmStartParameter 0 0 0 0 0 0 0 @armStart))
-	  (!(= @objStart (objStart 0.0 0.0 0.0 0.0 0.0 0.0)))
-	  
-	  ;make request to mhp and softmotion
-	  (!(Mhp.getFreeId @mhpId))
-	  (=>(Mhp.request setTrajectory GEN_TRUE (VAL @task) (VAL @mhpArm) (VAL @armStart) (VAL @armGoto) (VAL @object) (VAL @support) (VAL @placement) GEN_FALSE 0 (VAL @objStart) (VAL @useObjGoto) (VAL @objGoto) (VAL @mhpId)))
-	  
-	  (!(ArmActions.handleReport Mhp @mhpId @actionId FALSE))
-	  
-
-	  (!(Softmotion.getFreeId @smId))
-	  (=>(Softmotion.request moveArm @smArm @smId))
-	  (!(ArmActions.handleReport Softmotion @smId @actionId FALSE))
-	  ;everything went okay
-	  (=>(ArmActions.report (VAL @actionId) "OK"))
-	  (~>(Robot.pose @a @b @c @d))
-	  (=>(Robot.pose (VAL @arm) (VAL @object) (VAL @realSupport) (VAL @pose)))
-
 	  )
 	  	  
    )
@@ -262,24 +267,27 @@
    :invocation(ArmActions.action useGripper @state @actionId)
    :documentation "Moves the gripper to state @state"
    :body (
-	  
-	  (!(Softmotion.getFreeId @smId))
-	  
-	  (=>(Softmotion.request useGripper (VAL @state) (VAL @smId)))
-	  (IF(?(EQUAL @state RRELEASE))
-	     (=>(ArmActions.hasGripperReleaseRequest RIGHT (VAL @smId) (VAL @actionId)))
-	     ELSEIF(?(EQUAL @state LRELEASE))
-	     (=>(ArmActions.hasGripperReleaseRequest LEFT (VAL @smId) (VAL @actionId)))
+	  (IF(?(Robot.simu FALSE))
+	     (!(Softmotion.getFreeId @smId))
 	     
-	     ELSEIF(?(EQUAL @state RGRAB))
-	     (=>(ArmActions.hasGripperGrabRequest RIGHT (VAL @smId) (VAL @actionId)))
+	     (=>(Softmotion.request useGripper (VAL @state) (VAL @smId)))
+	     (IF(?(EQUAL @state RRELEASE))
+		(=>(ArmActions.hasGripperReleaseRequest RIGHT (VAL @smId) (VAL @actionId)))
+		ELSEIF(?(EQUAL @state LRELEASE))
+		(=>(ArmActions.hasGripperReleaseRequest LEFT (VAL @smId) (VAL @actionId)))
+		
+		ELSEIF(?(EQUAL @state RGRAB))
+		(=>(ArmActions.hasGripperGrabRequest RIGHT (VAL @smId) (VAL @actionId)))
+		
+		ELSEIF(?(EQUAL @state LGRAB))
+		(=>(ArmActions.hasGripperGrabRequest LEFT (VAL @smId) (VAL @actionId)))
+		)
+	     (!(ArmActions.handleReport Softmotion @smId @actionId FALSE))
+	     (=>(ArmActions.report @actionId "OK")) 
 	     
-	     ELSEIF(?(EQUAL @state LGRAB))
-	     (=>(ArmActions.hasGripperGrabRequest LEFT (VAL @smId) (VAL @actionId)))
-	     )
-	  (!(ArmActions.handleReport Softmotion @smId @actionId FALSE))
-	  (=>(ArmActions.report @actionId "OK")) 
-	  
+	     ELSE
+	     (=>(ArmActions.report @actionId "OK")) 	     
+	     )	  
 	  )
    )
 (defop |stopOpenGripperOnPressure|

@@ -33,53 +33,56 @@
   :invocation(ExecutionManager.executeAction @actionName @actionParameters @executionId)
   :documentation "Launching point to allow other modules to launch actions in a generic way"
   :body (
-	 (?(Action.type (VAL @actionName) @type))
-	 (IF(?(EQUAL @type MANIPULATION))
-	    (!(== (VAL @actionParameters) (. @object .)))
-	 
-	    ELSEIF(?(EQUAL @type HANDOVER))
-	    (!(== (VAL @actionParameters) (. @object @agent1 @agent2 .)))
+	 (IF(?(Robot.simu FALSE))
+	    (?(Action.type (VAL @actionName) @type))
+	    (IF(?(EQUAL @type MANIPULATION))
+	       (!(== (VAL @actionParameters) (. @object .)))
+	       
+	       ELSEIF(?(EQUAL @type HANDOVER))
+	       (!(== (VAL @actionParameters) (. @object @agent1 @agent2 .)))
 
-	    ELSEIF(?(EQUAL @type PLACEMENT))
-	    (!(== (VAL @actionParameters) (. @object @placement .)))
-	    
-	    ELSEIF(?(EQUAL @type POSE))
-	    (!(== (VAL @actionParameters) (. @pose @arm @q0 .)))
+	       ELSEIF(?(EQUAL @type PLACEMENT))
+	       (!(== (VAL @actionParameters) (. @object @placement .)))
+	       
+	       ELSEIF(?(EQUAL @type POSE))
+	       (!(== (VAL @actionParameters) (. @pose @arm @q0 .)))
 
-	    ELSEIF(?(EQUAL @type GRIPPER))
-	    (!(== (VAL @actionParameters) (. @gripper .)))
+	       ELSEIF(?(EQUAL @type GRIPPER))
+	       (!(== (VAL @actionParameters) (. @gripper .)))
 
-	    )
+	       )
 
-	 (IF(?(EQUAL @actionName closeGripper))
-	    (=>(ExecutionManager.execute closeGripper @gripper @executionId))
-	    
-	    ELSEIF(?(EQUAL @actionName openGripper))
-	    (=>(ExecutionManager.execute openGripper @gripper @executionId))
-	    
-	    ELSEIF(?(EQUAL @actionName moveToPose))
-	    (=>(ExecutionManager.execute moveToPose @pose @arm @q0 @executionId))
-	    
-	    ELSEIF(?(EQUAL @actionName take))
-	    (=>(ExecutionManager.execute take @object NO_NAME @executionId))
-	    
-	    ELSEIF(?(EQUAL @actionName throw))
-	    (=>(ExecutionManager.execute throw @object @placement @executionId))
+	    (IF(?(EQUAL @actionName closeGripper))
+	       (=>(ExecutionManager.execute closeGripper @gripper @executionId))
+	       
+	       ELSEIF(?(EQUAL @actionName openGripper))
+	       (=>(ExecutionManager.execute openGripper @gripper @executionId))
+	       
+	       ELSEIF(?(EQUAL @actionName moveToPose))
+	       (=>(ExecutionManager.execute moveToPose @pose @arm @q0 @executionId))
+	       
+	       ELSEIF(?(EQUAL @actionName take))
+	       (=>(ExecutionManager.execute take @object NO_NAME @executionId))
+	       
+	       ELSEIF(?(EQUAL @actionName throw))
+	       (=>(ExecutionManager.execute throw @object @placement @executionId))
 
-	    ELSEIF(?(EQUAL @actionName place))
-	    (=>(ExecutionManager.execute place @object @placement @executionId))
-	    
-	    ELSEIF(?(EQUAL @actionName handover))
-	    (IF(?(EQUAL @agent2 PR2_ROBOT))
-	       (=>(ExecutionManager.execute handover GRAB @object @agent1 @executionId)) 
-		 ELSE 
-		 (=>(ExecutionManager.execute handover GIVE @object @agent2 @executionId))
-		 )
-	    ELSEIF(?(EQUAL @actionName undefined))  ;this kind of actions are not executed at the moment and the module returns just an ok
+	       ELSEIF(?(EQUAL @actionName place))
+	       (=>(ExecutionManager.execute place @object @placement @executionId))
+	       
+	       ELSEIF(?(EQUAL @actionName handover))
+	       (IF(?(EQUAL @agent2 PR2_ROBOT))
+		  (=>(ExecutionManager.execute handover GRAB @object @agent1 @executionId)) 
+		  ELSE 
+		  (=>(ExecutionManager.execute handover GIVE @object @agent2 @executionId))
+		  )
+	       ELSEIF(?(EQUAL @actionName undefined))  ;this kind of actions are not executed at the moment and the module returns just an ok
+	       (=>(ExecutionManager.report (VAL @executionId) OK))
+	       
+	       )				
+	    ELSE
 	    (=>(ExecutionManager.report (VAL @executionId) OK))
-	    
 	    )
-
 	 
 	 )
   )
@@ -334,12 +337,12 @@
 	     )
 
 
-	  ;; ;;open gripper if needed
-	  ;; (IF(?(Robot.gripperStatus (VAL @armForPick) CLOSE))
-	  ;;    (!(ArmActions.getFreeId @actionId))
-	  ;;    (=>(ArmActions.action openGripper @armForPick @actionId))
-	  ;;    (!(ExecutionManager.handleReport ArmActions @actionId @executionId FALSE FALSE NO_NAME))
-	  ;;    )
+	  ;;open gripper if needed
+	  (IF(?(Robot.gripperStatus (VAL @armForPick) CLOSE))
+	     (!(ArmActions.getFreeId @actionId))
+	     (=>(ArmActions.action openGripper @armForPick @actionId))
+	     (!(ExecutionManager.handleReport ArmActions @actionId @executionId FALSE FALSE NO_NAME))
+	     )
 
 
 	  ;; ;;plan and execute the trajectory
@@ -1041,7 +1044,7 @@ $distance , $info, $orientation, $speed, $inRange  the output observations"
 	 (!(ExecutionManager.handleReport Gtp @gtpId @executionId TRUE TRUE NO_NAME))
 
 	 (=>(ExecutionManager.report @executionId OK))
-	 (~>(Robot.hasObject (VAL @arm) (VAL @object)))a
+	 (~>(Robot.hasObject (VAL @arm) (VAL @object)))
   
 	  (!(Spark.getFreeId @sparkId))
 	  (=>(Spark.request setObjectInHand (VAL @object) (VAL @armForPick) FALSE (VAL @sparkId)))

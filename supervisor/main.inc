@@ -33,7 +33,7 @@ include "supervisor/Monitors.sym"
 include "supervisor/Robot.sym"
 include "supervisor/PathPlanner.sym"
 include "supervisor/BaseActions.sym"
-
+include "supervisor/GtpActions.sym"
 
 load db "supervisor/GlobalConstants.db"
 load db "supervisor/StartingKnowledge.db"
@@ -78,3 +78,4 @@ load opf "supervisor/Queue.opf"
 load opf "supervisor/PathPlanner.opf"
 load opf "supervisor/BaseActions.opf"
 load opf "supervisor/RobotMonitors.opf"
+load opf "supervisor/GtpActions.opf"

@@ -13,6 +13,9 @@
 	  (=>(Mhp.request initGtp @id))
 	  (^(Mhp.report (VAL @id) @report))
 	  (=>(GtpActions.freeId 0))
+	  (!(Mhp.getFreeId @id))
+	  (=>(Mhp.request fetchEnvironment @id))
+	  (!(GtpActions.handleReport Mhp @id @gtpId))
 	  ) 
    )
  (defop |getFreeId|
@@ -25,9 +28,9 @@
  (defop |executeTask|
    :invocation(GtpActions.executeTask @task @object @support @gtpId)
    :body (
-	  (!(Mhp.getFreeId @id))
-	  (=>(Mhp.request fetchEnvironment @id))
-	  (!(GtpActions.handleReport Mhp @id @gtpId))
+;	  (!(Mhp.getFreeId @id))
+;	  (=>(Mhp.request fetchEnvironment @id))
+;	  (!(GtpActions.handleReport Mhp @id @gtpId))
 
 	  (!(Mhp.getFreeId @id))
 	  (=>(Mhp.request planTaskGtp @task @object @support @id))
@@ -36,7 +39,7 @@
 	  (?(Mhp.previousTask @taskId @alternativeId))
 
 	  (!(Mhp.getFreeId @id))
-	  (=>(Mhp.request smootGtpTraj @taskId @alternativeId @id))
+	  (=>(Mhp.request smoothGtpTraj @taskId @alternativeId @id))
 	  (!(GtpActions.handleReport Mhp @id @gtpId))
 
 
@@ -53,25 +56,31 @@
 		   (!(= @traj (CAR @trajList)))
 		   (!(= @trajList (CDR @trajList)))
 		   
-		   (!(== (VAL @traj) (@subTrajId @dummy @subTrajName @robot .)))
-		   
-		   (!(Mhp.getFreeId @id))
-		   (=>(Mhp.request loadGtpTraskTraj @taskId @alternativeId @subTrajId @follow @id))
-		   (!(GtpActions.handleReport Mhp @id @gtpId))
+;		   (!(== (VAL @traj) (. @subTrajId @dummy @subTrajName @robot .)))
+		   ;;unification doesn't seem to work here =\ maybe because it was already unified somewhere?
 
-		   (IF(?(EQUAL @subTrajName grasp))
+		   (!(= @subTrajId (CAR @traj)))
+		   (!(= @dummy (CAR(CDR @traj))))
+		   (!(= @subTrajName (CAR(CDR(CDR @traj)))))
+		   (!(= @robot (CAR(CDR(CDR(CDR @traj))))))  
+
+		   (IF(?(EQUAL @subTrajName "grasp"))
 		      (!(ArmActions.getFreeId @id))
 		      (=>(ArmActions.action closeGripper RIGHT @id))
 		      (!(GtpActions.handleReport ArmActions @id @gtpId))
 		      
-		      ELSEIF(?(EQUAL @subTrajName release))
+		      ELSEIF(?(EQUAL @subTrajName "release"))
 		      (!(ArmActions.getFreeId @id))
 		      (=>(ArmActions.action openGripper RIGHT @id))
 		      (!(GtpActions.handleReport ArmActions @id @gtpId))
 
 		      ELSE
+		      (!(Mhp.getFreeId @id))
+		      (=>(Mhp.request loadGtpTaskTraj @taskId @alternativeId @subTrajId @follow @id))
+		      (!(GtpActions.handleReport Mhp @id @gtpId))
+
 		      (!(Softmotion.getFreeId @id))
-		      (=>(Softmotion.request moveArm 0 @id))
+		      (=>(Softmotion.request moveArm RARM @id))
 		      (!(GtpActions.handleReport Softmotion @id @gtpId))
 		      )
 		   (!(Mhp.getFreeId @id))
@@ -82,7 +91,7 @@
 		   (!(= @follow 1))
 		   )
 	     )
-
+	  (=>(GtpActions.report @gtpId OK))
 	  )
    )
 (defop |handleReport|

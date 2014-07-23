@@ -34,6 +34,7 @@
 	  (!(AgentActionMonitor.init))
 	  (!(Acapela.init))
 	  (!(DatabaseInterface.init))
+	  (!(GtpActions.init))
 
 	  (!(Spark.getFreeId @sparkId))
 	  (=>(Spark.request getJointAbsPose PR2_ROBOT Torso @sparkId))

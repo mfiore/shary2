@@ -72,14 +72,16 @@
 
 			    (WHILE(?(~(NULL @plan))) 
 				  ;get agent
+				  (!(Tester.breakpoint))
 				  (!(= @anAgent (CAR @plan)))
+				  (!(= @plan (CDR @plan)))
 				  (!(== (VAL @anAgent) (. @agentName @agentType @agentActions  .)))
 				  (IF(?(EQUAL @agentType HUMAN))
 				     (=>(PlanManager.manageHumanActions (VAL @agentName) (VAL @agentActions) ))
 				     
 				     ELSEIF(?(EQUAL @agentType ROBOT))
 				     (IF(?(EQUAL @agentName @robotName))
-					(=>(PlanManager.manageRobotActions (VAL @agentName) (VAL @agentActions)))
+					(=>(PlanManager.manageRobotActions (VAL @agentActions)))
 					
 					ELSE
 					(=>(PlanManager.manageOtherRobotActions (VAL @agentName) (VAL @agentActions) ))
@@ -346,12 +348,12 @@
 		)
 	  	     
 	  (=>(PlanManager.agentReport robot OK))		
-	  (IF(?(~(Robot.pose RIGHT @object @support MANIPULATION)))
-	     (!(ArmActions.getFreeId @actionId))
-	     (=>(ArmActions.action moveToPose MANIPULATION @actionId))
-	     (^(ArmActions.report (VAL @actionId) @report))
-	     (~>(ArmActions.report (VAL @actionId) @report))
-	     )
+ 	   (IF(?(~(Robot.pose RIGHT @object @support MANIPULATION)))
+	      (!(ArmActions.getFreeId @actionId))
+	      (=>(ArmActions.action moveToPose MANIPULATION @actionId))
+	      (^(ArmActions.report (VAL @actionId) @report))
+	      (~>(ArmActions.report (VAL @actionId) @report))
+	      )
 	  (~>(PlanManager.isManagingAgent robot))
 	  )
    

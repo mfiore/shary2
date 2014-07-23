@@ -1,4 +1,12 @@
 (
 	(PathPlanner.bridgeName PathPlannerOprs)
 	(PathPlanner.timeToWait 10)
+	(PathPlanner.coordinates SOFA 5 7 0 0 0 0 1)
+	(PathPlanner.coordinates MANIP 7 7 0 0 0 0 1)
+	(PathPlanner.coordinates COPTER 7 2 0 0 0 0 1)
+	(PathPlanner.coordinates GATE 10.5 2 0 0 0 0 1)
+	(PathPlanner.coordinates C1_C 1.5 2 0 0 0 0 1)
+	(PathPlanner.coordinates C1_B 1.5 8 0 0 0 0 1)
+	(PathPlanner.coordinates C1_A 1.5 15 0 0 0 0 1)
+
 )

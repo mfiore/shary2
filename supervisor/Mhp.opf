@@ -308,119 +308,120 @@
 	    (!(= @objectKey2 NO_NAME))
 	    )
 	 (?(Mhp.previousTask @previousTaskId @previousTaskAlternativeId))
+	 (!(= @hand right))
 	 
-	 (!(= @params     (STRUCT_TASK_INPUT 
-			   (type 
-			    (name  (TERM-STRING-CAT @task)))
-			   
-			   (agentKey1 
-			    (name  (TERM-STRING-CAT mainAgent))
-			    )
+	 (!(= @params    
+        (STRUCT_TASK_INPUT 
+           (type 
+              (name  (TERM-STRING-CAT @task)))
 
-			   (agentValue1 
-			    (name  (TERM-STRING-CAT PR2_ROBOT)))
+           (agentKey1 
+              (name  "mainAgent"))
 
-			   (agentKey2 
-			    (name  (TERM-STRING-CAT NO_NAME)))
+           (agentValue1 
+              (name  "PR2_ROBOT"))
 
-			   (agentValue2 
-			    (name  (TERM-STRING-CAT NO_NAME)))
+           (agentKey2 
+              (name  "NO_NAME"))
 
-			   (agentKey3 
-			    (name  (TERM-STRING-CAT NO_NAME)))
+           (agentValue2 
+              (name  "NO_NAME"))
 
-			   (agentValue3 
-			    (name  (TERM-STRING-CAT NO_NAME)))
+           (agentKey3 
+              (name  "NO_NAME"))
 
-			   (agentKey4 
-			    (name  (TERM-STRING-CAT NO_NAME)))
+           (agentValue3 
+              (name  "NO_NAME"))
 
-			   (agentValue4 
-			    (name  (TERM-STRING-CAT NO_NAME)))
+           (agentKey4 
+              (name  "NO_NAME"))
 
-			   (objectKey1 
-			    (name  (TERM-STRING-CAT mainObject)))
+           (agentValue4 
+              (name  "NO_NAME"))
 
-			   (objectValue1 
-			    (name  (TERM-STRING-CAT @object)))
+           (objectKey1 
+              (name  "mainObject"))
 
-			   (objectKey2 
-			    (name  (TERM-STRING-CAT @objectKey2)))
+           (objectValue1 
+              (name  (TERM-STRING-CAT @object)))
 
-			   (objectValue2 
-			    (name  (TERM-STRING-CAT @support)))
+           (objectKey2 
+              (name  (TERM-STRING-CAT @objectKey2)))
 
-			   (objectKey3 
-			    (name   (TERM-STRING-CAT NO_NAME)))
+           (objectValue2 
+              (name  (TERM-STRING-CAT @support)))
 
-			   (objectValue3 
-			    (name   (TERM-STRING-CAT NO_NAME)))
+           (objectKey3 
+              (name  "NO_NAME"))
 
-			   (objectKey4 
-			    (name   (TERM-STRING-CAT NO_NAME)))
+           (objectValue3 
+              (name  "NO_NAME"))
 
-			   (objectValue4 
-			    (name   (TERM-STRING-CAT NO_NAME)))
+           (objectKey4 
+              (name  "NO_NAME"))
 
-			   (dataKey1 
-			    (name   (TERM-STRING-CAT hand)))
+           (objectValue4 
+              (name  "NO_NAME"))
 
-			   (dataValue1 
-			    (name   (TERM-STRING-CAT @hand)))
+           (dataKey1 
+              (name  "hand"))
 
-			   (dataKey2 
-			    (name   (TERM-STRING-CAT NO_NAME)))
+           (dataValue1 
+              (name  "right"))
 
-			   (dataValue2 
-			    (name   (TERM-STRING-CAT NO_NAME)))
+           (dataKey2 
+              (name  "NO_NAME"))
 
-			   (dataKey3 
-			    (name   (TERM-STRING-CAT NO_NAME)))
+           (dataValue2 
+              (name  "NO_NAME"))
 
-			   (dataValue3 
-			    (name   (TERM-STRING-CAT NO_NAME)))
+           (dataKey3 
+              (name  "NO_NAME"))
 
-			   (dataKey4 
-			    (name   (TERM-STRING-CAT NO_NAME)))
+           (dataValue3 
+              (name  "NO_NAME"))
 
-			   (dataValue4 
-			    (name   (TERM-STRING-CAT NO_NAME)))
+           (dataKey4 
+              (name  "NO_NAME"))
 
-			   (pointKey1 
-			    (name   (TERM-STRING-CAT NO_NAME)))
+           (dataValue4 
+              (name  "NO_NAME"))
 
-			   (pointValue1 
-			    (x  0.0)
-			    (y  0.0)
-			    (z  0.0))
+           (pointKey1 
+              (name  "NO_NAME"))
 
-			   (pointKey2 
-			    (name   (TERM-STRING-CAT NO_NAME)))
+           (pointValue1 
+              (x  0.0)
+              (y  0.0)
+              (z  0.0))
 
-			   (pointValue2 
-			    (x  0.0)
-			    (y  0.0)
-			    (z  0.0))
+           (pointKey2 
+              (name  "NO_NAME"))
 
-			   (pointKey3 
-			    (name  (TERM-STRING-CAT NO_NAME))
+           (pointValue2 
+              (x  0.0)
+              (y  0.0)
+              (z  0.0))
 
-			   (pointValue3 
-			    (x  0.0)
-			    (y  0.0)
-			    (z  0.0))
+           (pointKey3 
+              (name  "NO_NAME"))
 
-			   (pointKey4 
-			    (name  (TERM-STRING-CAT NO_NAME))
+           (pointValue3 
+              (x  0.0)
+              (y  0.0)
+              (z  0.0))
 
-			   (pointValue4 
-			    (x  0.0)
-			    (y  0.0)
-			    (z  0.0))
+           (pointKey4 
+              (name  "NO_NAME"))
 
-			   (previousTaskId  @previousTaskId)
-			   (previousTaskAlternativeId  @previousTaskAlternativeId))
-			   ))))
+           (pointValue4 
+              (x  0.0)
+              (y  0.0)
+              (z  0.0))
+
+           (previousTaskId  @previousTaskId)
+           (previousTaskAlternativeId  @previousTaskAlternativeId))
+	))
 	 (!(GenomInterface.handleRequest MHP MHP_PLANTASKGTP (Mhp.stop (VAL @id)) (FALSE) (FALSE) 300 @params @report @result))
 	 (=>(Mhp.report (VAL @id) (VAL @report)))
 	 (IF(?(EQUAL @report "OK"))
@@ -463,93 +464,95 @@
 	 (!(GenomInterface.handleRequest MHP MHP_GETGTPTASKDETAILS (Mhp.stop (VAL @id)) (FALSE) (FALSE) 300 @params @report @result))
 	 (=>(Mhp.report @id @report))
 	 (IF(?(EQUAL @report "OK"))
-	    (!(== (VAL @result)     (STRUCT_TASK_DETAILS 
-			       (taskType 
-				(name  @name))
+	    (!(== (VAL @result)   
+		  (STRUCT_TASK_DETAILS 
+		   (taskType 
+		    (name  @name))
 
-			       (nbOfAlternatives  @nbOfAlternatives)
-			       (nbSubTrajs  @nSubTrajs)
-			       (subTrajs 
-				(subTrajId  @subTrajId1)
-				(dummy  @dummy1)
-				(subTrajName 
-				 (name  @subTrajName1))
+		   (nbOfAlternatives  @nbOfAlternatives)
+		   (nbSubTrajs  @nSubTrajs)
+		   (subTrajs 
+		    (subTrajId  @subTrajId1)
+		    (dummy  @dummy1)
+		    (subTrajName 
+		     (name  @subTrajName1))
 
-				(robot 
-				 (name  @robot1))
+		    (robot 
+		     (name  @robot1))
 
-				(subTrajId  @subTrajId2)
-				(dummy  @dummy2)
-				(subTrajName 
-				 (name  @subTrajName2))
+		    (subTrajId  @subTrajId2)
+		    (dummy  @dummy2)
+		    (subTrajName 
+		     (name  @subTrajName2))
 
-				(robot 
-				 (name  @robot2))
+		    (robot 
+		     (name  @robot2))
 
-				(subTrajId  @subTrajId3)
-				(dummy  @dummy3)
-				(subTrajName 
-				 (name  @subTrajName3))
+		    (subTrajId  @subTrajId3)
+		    (dummy  @dummy3)
+		    (subTrajName 
+		     (name  @subTrajName3))
 
-				(robot 
-				 (name  @robot3))
+		    (robot 
+		     (name  @robot3))
 
-				(subTrajId  @subTrajId4)
-				(dummy  @dummy4)
-				(subTrajName 
-				 (name  @subTrajName4))
+		    (subTrajId  @subTrajId4)
+		    (dummy  @dummy4)
+		    (subTrajName 
+		     (name  @subTrajName4))
 
-				(robot 
-				 (name  @robot4))
+		    (robot 
+		     (name  @robot4))
 
-				(subTrajId  @subTrajId5)
-				(dummy  @dummy5)
-				(subTrajName 
-				 (name  @subTrajName5))
+		    (subTrajId  @subTrajId5)
+		    (dummy  @dummy5)
+		    (subTrajName 
+		     (name  @subTrajName5))
 
-				(robot 
-				 (name  @robot5))
+		    (robot 
+		     (name  @robot5))
 
-				(subTrajId  @subTrajId6)
-				(dummy  @dummy6)
-				(subTrajName 
-				 (name  @subTrajName6))
+		    (subTrajId  @subTrajId6)
+		    (dummy  @dummy6)
+		    (subTrajName 
+		     (name  @subTrajName6))
 
-				(robot 
-				 (name  @robot6))
+		    (robot 
+		     (name  @robot6))
 
-				(subTrajId  @subTrajId7)
-				(dummy  @dummy7)
-				(subTrajName 
-				 (name  @subTrajName7))
+		    (subTrajId  @subTrajId7)
+		    (dummy  @dummy7)
+		    (subTrajName 
+		     (name  @subTrajName7))
 
-				(robot 
-				 (name  @robot7))
+		    (robot 
+		     (name  @robot7))
 
-				(subTrajId  @subTrajId8)
-				(dummy  @dummy8)
-				(subTrajName 
-				 (name  @subTrajName8))
+		    (subTrajId  @subTrajId8)
+		    (dummy  @dummy8)
+		    (subTrajName 
+		     (name  @subTrajName8))
 
-				(robot 
-				 (name  @robot8))
+		    (robot 
+		     (name  @robot8))
+		    
+		    (subTrajId  @subTrajId9)
+		    (dummy  @dummy9)
+		    (subTrajName 
+		     (name  @subTrajName9))
 
-				(subTrajId  @subTrajId9))
-				(dummy  @dummy9)
-				(subTrajName 
-				 (name  @subTrajName9))
+		    (robot 
+		     (name  @robot9))
 
-				(robot 
-				 (name  @robot9))
+		    (subTrajId  @subTrajId10)
+		    (dummy  @dummy10)
+		    (subTrajName 
+		     (name  @subTrajName10))
 
-				(subTrajId  @subTrajId10)
-				(dummy  @dummy10)
-				(subTrajName 
-				 (name  @subTrajName10))
-
-				(robot 
-				 (name  @robot10))
-				)
+		    (robot 
+		     (name  @robot10))
+		    )
+		   )
 		  )
 	      )
 	    (!(= @i 0))
@@ -567,10 +570,15 @@
 	    (?(Robot.name @robotName))
 	    (!(= @resultList (. .)))
 	    (WHILE(?(< @i @nSubTrajs))
+		  (!(= @i (+ @i 1)))
 		  (!(= @traj (CAR @trajList)))
 		  (!(= @trajList (CDR @trajList)))
-		  (!(== (VAL @traj) (@subTrajId @dummy @subTrajName @robot .)))
-		  (IF(?(EQUAL @robot @robotName))
+		  (!(= @subTrajId (CAR @traj)))
+		  (!(= @dummy (CAR(CDR @traj))))
+		  (!(= @subTrajName (CAR(CDR(CDR @traj)))))
+		  (!(= @robot (CAR(CDR(CDR(CDR @traj))))))
+;		  (!(== (VAL @traj) (. @subTrajId @dummy @subTrajName @robot .)))
+		  (IF(?(EQUAL @robot (TERM-STRING-CAT @robotName)))
 		     (!(= @resultList (CONS-TAIL (VAL @traj) @resultList)))
 		     )
 		  )

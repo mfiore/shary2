@@ -159,7 +159,7 @@
 	     )
 		   
 	     )
-	     (=>(PlannerInterface.result (. (VAL @robotActions) (VAL @humanActions) .)))  ;we have a result
+	     (=>(PlannerInterface.result (. (. PR2_ROBOT ROBOT (VAL @robotActions) .) (. HERAKLES_HUMAN1 HUMAN (VAL @humanActions) .) .)))  ;we have a result
 	     )
 	  )
    )
