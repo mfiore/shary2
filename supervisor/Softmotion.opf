@@ -16,6 +16,7 @@
 	  (!(SEM-CREATE Softmotion.semStop 1 SEM-FIFO))
 	  (!(SEM-CREATE Softmotion.sem 1 SEM-FIFO))
 	  (=>(Softmotion.freeId 0))
+
 	  )
    )
 
@@ -45,7 +46,7 @@
 	     )
 	  
 	  (=>(Softmotion.freeId (+ @id 1)))
-	  
+
 	  (!(= @parameters 
 	       (PR2SM_TRACK_STR 
 		(posterName 
@@ -108,6 +109,8 @@
 	   (!(SEM-P Softmotion.semHead))
 
 	   (=>(Softmotion.freeId (+ @id 1)))
+
+	   
 	   (!(= @parameters 
 		(PR2SM_QSTR 
 		 (robotPart  HEAD)
@@ -187,7 +190,8 @@
    :documentation "Stops the robot. This is not really safe i guess. The user should cancel all ongoing softmotion requestes or prepare for some failure reports"
    :body (
 	  (!(SEM-P Softmotion.semStop))
-	  
+
+
 	  (=>(Softmotion.freeId (+ @id 1)))
 	  
 	  (!(GenomInterface.handleRequest PR2SOFTMOTION PR2SOFTMOTION_STOP (Softmotion.stop (VAL @id)) (FALSE) (FALSE) 300  NIL @report @result))
@@ -195,6 +199,8 @@
 	  (=> (Robot.isMoving RIGHT_ARM FALSE))
 	  (=> (Robot.isMoving LEFT_ARM FALSE))
 	  (=>(Softmotion.report (VAL @id) (VAL @report)))
+
+	  
 
 	  (!(SEM-V Softmotion.semStop))
 	  )

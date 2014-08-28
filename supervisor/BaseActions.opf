@@ -31,23 +31,35 @@
 	 (?(BaseActions.bridgeName @name))
 	 (?(BaseActions.timeToWait @time))
 	 (!(SEND-MESSAGE @name (move @waypoints)))
-	 (^(|| (BaseActions.response (VAL @name) @response) (BaseActions.stop (VAL@id)) (ELAPSED-TIME (TIME) @time)))
-	 (IF(?(BaseActions.stop (VAL @id)))
-	    (!(BaseActions.stop))
-	    (=>(BaseActions.report @id "STOPPED"))
+	 (!(= @nextLocation (CAR @waypoints)))
+	 (!(= @waypoints (CDR @waypoints)))
+	 (!(= @completed FALSE))
+	 (WHILE(?(EQUAL @completed FALSE))
+	       (^(|| (BaseActions.response (VAL @name) @response) (BaseActions.update (VAL @name) @status) (BaseActions.stop (VAL@id)) (ELAPSED-TIME (TIME) @time)))
+	       (IF(?(BaseActions.stop (VAL @id)))
+		  (!(BaseActions.stop))
+		  (=>(BaseActions.report @id "STOPPED"))
 	    
-	    ELSEIF(?(BaseActions.response (VAL @name) OK))
-	    (=>(BaseActions.report @id "OK"))   
-	    ELSE
-	    (=>(BaseActions.report @id "FAILURE"))
-	    )
+		  ELSEIF(?(BaseActions.update (VAL @name) OK))
+		  (=>(Robot.location (VAL @nextLocation)))
+		  (!(= @nextLocation (CAR @waypoints)))
+		  (!(= @waypoints (CDR @waypoints)))
+		  
+		  ELSEIF(?(BaseActions.response (VAL @name) OK))
+		  (=>(BaseActions.report @id "OK"))   
+		  (!(= @completed TRUE))
+		  ELSE
+		  (=>(BaseActions.report @id "FAILURE"))
+		  (!(= @completed TRUE))
+		  )
+	       )
 	 (~>(BaseActions.response @name @response))
 	 (!(SEM-V BaseActions.sem))
 	 )
   )
 
 (defop |stop|
-  :invocation(!(BaseActions.action))
+  :invocation(BaseActions.action stop @id)
   :documentation "halts the robot movement"
   :body (
 	 (?(BaseActions.bridgeName @name))

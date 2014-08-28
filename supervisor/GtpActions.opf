@@ -25,15 +25,154 @@
 	  (=>(GtpActions.freeId (+ $id 1)))
 	  )
    )
- (defop |executeTask|
-   :invocation(GtpActions.executeTask @task @object @support @gtpId)
+
+ (defop |pick|
+   :invocation(GtpActions.action pick @object @hand @gtpId)
    :body (
-;	  (!(Mhp.getFreeId @id))
-;	  (=>(Mhp.request fetchEnvironment @id))
-;	  (!(GtpActions.handleReport Mhp @id @gtpId))
+	  (?(Robot.name @robotName))
+	  
+	  (!(Mhp.getFreeId @id))
+	  (=>(Mhp.request addGtpAgent mainAgent @robotName @id))
+	  (!(GtpActions.handleReport Mhp @id @gtpId))
 
 	  (!(Mhp.getFreeId @id))
-	  (=>(Mhp.request planTaskGtp @task @object @support @id))
+	  (=>(Mhp.request addGtpObject mainObject @object @id))
+	  (!(GtpActions.handleReport Mhp @id @gtpId))
+
+	  (!(Mhp.getFreeId @id))
+	  (=>(Mhp.request addGtpData hand @hand @id))
+	  (!(GtpActions.handleReport Mhp @id @gtpId))
+
+	  (!(GtpActions.executeTask pick @gtpId))
+
+	  
+	  )
+   )
+
+(defop |place|
+  :invocation(GtpActions.action place @mainObject @supportObject @hand @x @y @theta @constraintArea @noUse)
+  :body (
+	  (?(Robot.name @robotName))
+	  
+	  (!(Mhp.getFreeId @id))
+	  (=>(Mhp.request addGtpAgent mainAgent @robotName @id))
+	  (!(GtpActions.handleReport Mhp @id @gtpId))
+
+	  (!(Mhp.getFreeId @id))
+	  (=>(Mhp.request addGtpObject mainObject @mainObject @id))
+	  (!(GtpActions.handleReport Mhp @id @gtpId))
+
+	  (!(Mhp.getFreeId @id))
+	  (=>(Mhp.request addGtpObject supportObject @supportObject @id))
+	  (!(GtpActions.handleReport Mhp @id @gtpId))
+
+	  (!(Mhp.getFreeId @id))
+	  (=>(Mhp.request addGtpPoint target @x @y @theta))
+	  (!(GtpActions.handleReport Mhp @id @gtpId))
+
+	  (!(Mhp.getFreeId @id))
+	  (=>(Mhp.request addGtpData hand @hand @id))
+	  (!(GtpActions.handleReport Mhp @id @gtpId))
+
+	  (!(GtpActions.executeTask place @gtpId))
+	 )
+  )
+
+(defop |placeReachable|
+  :invocation(GtpActions.action placeReachable @targetAgent @mainObject @supportObject @hand)
+  :body (
+	  (?(Robot.name @robotName))
+	  
+	  (!(Mhp.getFreeId @id))
+	  (=>(Mhp.request addGtpAgent mainAgent @robotName @id))
+	  (!(GtpActions.handleReport Mhp @id @gtpId))
+
+	  (!(Mhp.getFreeId @id))
+	  (=>(Mhp.request addGtpAgent targetAgent @targetAgent @id))
+	  (!(GtpActions.handleReport Mhp @id @gtpId))
+
+	  (!(Mhp.getFreeId @id))
+	  (=>(Mhp.request addGtpObject mainObject @mainObject @id))
+	  (!(GtpActions.handleReport Mhp @id @gtpId))
+
+	  (!(Mhp.getFreeId @id))
+	  (=>(Mhp.request addGtpObject supportObject @supportObject @id))
+	  (!(GtpActions.handleReport Mhp @id @gtpId))
+
+	  (!(Mhp.getFreeId @id))
+	  (=>(Mhp.request addGtpData hand @hand @id))
+	  (!(GtpActions.handleReport Mhp @id @gtpId))
+
+	  (!(GtpActions.executeTask placeReachable @gtpId))
+
+	 )
+  )
+
+(defop |travelTo|
+  :invocation (GtpActions.action travelTo @object @point @gtpId)
+  :documentation "@points (. @x  @y @z .) "
+  :body (
+	  (?(Robot.name @robotName))
+	  
+
+	  (!(Mhp.getFreeId @id))
+	  (=>(Mhp.request addGtpAgent mainAgent @robotName @id))
+	  (!(GtpActions.handleReport Mhp @id @gtpId))
+
+
+
+	  (IF(?(~(EQUAL @object NO_NAME)))
+	       (!(Mhp.getFreeId @id))
+	       (=>(Mhp.request addGtpObject target @object @id))
+	       (!(GtpActions.handleReport Mhp @id @gtpId))
+	      
+	       ELSEIF(?(~(EQUAL @point NO_NAME)))
+	       (!(Mhp.getFreeId @id))
+	       (=>(Mhp.request addGtpPoint target @point @id))
+	       (!(GtpActions.handleReport Mhp @id @gtpId))
+
+	       ELSE
+	       (=>(GtpActions.report (VAL @gtpId) FAILURE))
+	       (!(FAILED))
+	     )
+	  
+	  (!(GtpActions.executeTask "goto" @gtpId))
+	 
+	 )
+  )
+
+(defop |moveTo|
+  :invocation(GtpActions.action moveTo @gtpId @configurationName @gtpId) 
+  :body (
+	  (?(Robot.name @robotName))
+	  
+
+	  (!(Mhp.getFreeId @id))
+	  (=>(Mhp.request addGtpAgent mainAgent @robotName @id))
+	  (!(GtpActions.handleReport Mhp @id @gtpId))
+
+
+
+	  (!(Mhp.getFreeId @id))
+	  (=>(Mhp.request addGtpData confName @configurationName @id))
+	  (!(GtpActions.handleReport Mhp @id @gtpId))
+	      
+	  (!(GtpActions.executeTask moveto @gtpId))
+	 
+	  )
+  )
+
+
+ (defop |executeTask|
+   :invocation(!(GtpActions.executeTask @task @gtpId))
+   :body (
+
+	  (!(Mhp.getFreeId @id))
+	  (=>(Mhp.request fetchEnvironment @id))
+	  (!(GtpActions.handleReport Mhp @id @gtpId))
+	  
+	  (!(Mhp.getFreeId @id))
+	  (=>(Mhp.request planGtpTask @task @id))
 	  (!(GtpActions.handleReport Mhp @id @gtpId))
 
 	  (?(Mhp.previousTask @taskId @alternativeId))
@@ -74,6 +213,18 @@
 		      (=>(ArmActions.action openGripper RIGHT @id))
 		      (!(GtpActions.handleReport ArmActions @id @gtpId))
 
+		      ELSEIF(?(EQUAL @subTrajName "navigate"))
+		      (!(Mhp.getFreeId @id))
+		      (=>(Mhp.request loadGtpTaskTrajForNav @taskId @alternativeId @subTrajId @follow @id))
+		      (!(GtpActions.handleReport Mhp @id @gtpId))
+		      (?(Mhp.result (VAL @id) @waypoints))
+		      (~>(Mhp.result (VAL @id) @waypoints))
+		      (!(= @finalWaypoints (LAST @waypoints)))
+		      
+		      (!(BaseActions.getFreeId @id))
+		      (=>(BaseAction.action move @finalWaypoint @id))
+		      (!(GtpActions.handleReport BaseActions @id @gtpId))
+		      
 		      ELSE
 		      (!(Mhp.getFreeId @id))
 		      (=>(Mhp.request loadGtpTaskTraj @taskId @alternativeId @subTrajId @follow @id))
@@ -91,9 +242,15 @@
 		   (!(= @follow 1))
 		   )
 	     )
+	  (!(Mhp.getFreeId @id))
+	  (=>(Mhp.request clearGtpInputs @id))
+	  (!(GtpActions.handleReport Mhp @id @gtpId))
+
 	  (=>(GtpActions.report @gtpId OK))
+
 	  )
    )
+
 (defop |handleReport|
      :invocation(!(GtpActions.handleReport @module @id @actionId))
      :documentation "Utility function to avoid some code duplication when waiting for the response of a genom module. This can't be used when we don't want to fail if the genom request fails"

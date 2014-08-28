@@ -19,6 +19,7 @@
 	  (=>(Spark.freeSphereId 7))
 	  (=>(Spark.freeSphereId 8))
 	  (=>(Spark.freeSphereId 9))
+	  (=>(Spark.previousWorldState -1))
 	  )
    )
  
@@ -43,6 +44,9 @@
 	  (!(SEM-V Spark.sem))
 	  )
    )
+
+
+
  (defop |GetJointAbsPose|
    :invocation (Spark.request getJointAbsPose @name @joint @id) 
    :documentation "Returns the coordinates of an spark object joint (Note, if @name refers to an actual object and not to a robot or human @joint is ignored)"
@@ -112,7 +116,8 @@
 	 (IF(?(EQUAL @activateSphere GEN_FALSE))
 	    (=>(Spark.freeSphereId @id))
 	    )
-	 (!(= @radius 10))
+	 (?(Spark.sphereParameters (VAL @objectName) @radius @multiplier))
+
 	 
 	 (!(= @param (STRUCT_SPARK_ACTION_MONITORING_SPHERE_INPUT_PARAMS 
 		      (monitorIndex  @sphereId)
@@ -129,8 +134,10 @@
 		       (y  @y)
 		       (z  @z))
 
+		      
+
            (sphereRadius  @radius)
-           (sphereRadiusMultiply  1.5)
+           (sphereRadiusMultiply  @multiplier)
            (sphereCenterTranslationMultiply  1.0)
            (filteringTimeThreshold  0.0)
            (sphereType  @type))	 
@@ -288,4 +295,160 @@
 	  
 	 )
   )
+
+(defop |UpdateGTPFacts|
+   :invocation (Spark.request updateGTPFacts @id) 
+   :documentation "Update the database with fact from GTP"
+   :body (
+	  
+	  (!(SEM-P Spark.sem))
+	  (=>(Spark.freeId (+ @id 1))) 
+
+	(?(Spark.previousWorldState @factId))
+	
+	(IF(?(EQUAL @factId -1))
+		(!(DatabaseInterface.cleanDb $result))
+		)
+		
+	  (!(= @param (INTEGER (VAL @factId)
+			
+	   )))
+	 
+	  (!(GenomInterface.handleRequest SPARK SPARK_GETUPDATEDGTPFACTS (Spark.stop (VAL @id)) (FALSE) (FALSE) 300 (VAL @param) @report @result))
+  
+	  (IF(?(EQUAL @report "OK"))
+	     (!(== (VAL @result) (SPARK_STRUCT_LIST_GTP_FACTS 
+           (nbFacts  @nbFacts)
+           (wsId  @wsId)
+	   @gtp_fact
+	   )))
+	     (!(= @facts (BUILD-LLISP-FROM-TERM-COMP @gtp_fact)))
+	  (!(= @facts (CDR @facts)))
+	(!(= @numFact 0))
+	(WHILE(?(~(EQUAL @numFact @nbFacts)))
+		(!(= @factTypeList (CAR @facts)))
+		(!(= @facts (CDR @facts)))
+		(!(= @factTypeLisp (BUILD-LLISP-FROM-TERM-COMP @factTypeList)))
+		(!(= @factTypeName (BUILD-LLISP-FROM-TERM-COMP (CAR (CDR @factTypeLisp)))))
+		(!(= @factType (CAR (CDR @factTypeName))))
+		
+		(!(= @factSubTypeList (CAR @facts)))
+		(!(= @facts (CDR @facts)))
+		(!(= @factSubTypeLisp (BUILD-LLISP-FROM-TERM-COMP @factSubTypeList)))
+		(!(= @factSubTypeName (BUILD-LLISP-FROM-TERM-COMP (CAR (CDR @factSubTypeLisp)))))
+		(!(= @factSubType (CAR (CDR @factSubTypeName))))
+
+		(!(= @mainEntityList (CAR @facts)))
+		(!(= @facts (CDR @facts)))
+		(!(= @mainEntityLisp (BUILD-LLISP-FROM-TERM-COMP @mainEntityList)))
+		(!(= @mainEntityName (BUILD-LLISP-FROM-TERM-COMP (CAR (CDR @mainEntityLisp)))))
+		(!(= @mainEntity (CAR (CDR @mainEntityName))))
+		
+		(!(= @targetEntityList (CAR @facts)))
+		(!(= @facts (CDR @facts)))
+		(!(= @targetEntityLisp (BUILD-LLISP-FROM-TERM-COMP @targetEntityList)))
+		(!(= @targetEntityName (BUILD-LLISP-FROM-TERM-COMP (CAR (CDR @targetEntityLisp)))))
+		(!(= @targetEntity (CAR (CDR @targetEntityName))))
+		
+		(!(= @isComputedList (CAR @facts)))
+		(!(= @facts (CDR @facts)))
+		(!(= @isComputedLisp (BUILD-LLISP-FROM-TERM-COMP @isComputedList)))
+		(!(= @isComputed (CAR (CDR @isComputedLisp))))
+
+		(!(= @boolValueList (CAR @facts)))
+		(!(= @facts (CDR @facts)))
+		(!(= @boolValueLisp (BUILD-LLISP-FROM-TERM-COMP @boolValueList)))
+		(!(= @boolValue (CAR (CDR @boolValueLisp))))
+
+		(!(= @valueTypeList (CAR @facts)))
+		(!(= @facts (CDR @facts)))
+		(!(= @valueTypeLisp (BUILD-LLISP-FROM-TERM-COMP @valueTypeList)))
+		(!(= @valueType (CAR (CDR @valueTypeLisp))))
+		
+		(!(= @dummyList (CAR @facts)))
+		(!(= @facts (CDR @facts)))
+
+		(!(= @specificValueList (CAR @facts)))
+		(!(= @facts (CDR @facts)))
+		(!(= @specificValueLisp (BUILD-LLISP-FROM-TERM-COMP @specificValueList)))
+		(!(= @specificValue (CAR (CDR @specificValueLisp))))
+
+		(IF(?(EQUAL @isComputed GEN_TRUE))
+			(IF(?(EQUAL @boolValue GEN_TRUE))
+				(IF(?(EQUAL @factType "IsReacheable"))
+				        (IF(?(Spark.objectGTP (VAL @mainEntity) @mainName))
+					   (IF(?(Spark.objectGTP (VAL @targetEntity) @targetName))
+					(!(DatabaseInterface.add (AGENT-STATEMENT PR2_ROBOT @targetName isReachableBy @mainName) $result))
+					))
+					ELSEIF(?(EQUAL @factType "IsVisible"))
+				        (IF(?(Spark.objectGTP (VAL @mainEntity) @mainName))
+					   (IF(?(Spark.objectGTP (VAL @targetEntity) @targetName))
+					   (!(DatabaseInterface.add (AGENT-STATEMENT PR2_ROBOT @targetName isVisibleBy @mainName) $result))
+					   ))
+					ELSEIF(?(EQUAL @factType "IsOn"))
+					    (IF(?(~(EQUAL @factSubType "IsAbove")))
+					       (!(PRINT @factSubType))
+				        (IF(?(Spark.objectGTP (VAL @mainEntity) @mainName))
+					   (IF(?(Spark.objectGTP (VAL @targetEntity) @targetName))
+					       (!(DatabaseInterface.add (AGENT-STATEMENT PR2_ROBOT @mainName isOn @targetName) $result))
+					       ))
+					       )
+					       ELSEIF(?(EQUAL @factType "IsNextTo"))
+				        (IF(?(Spark.objectGTP (VAL @mainEntity) @mainName))
+					   (IF(?(Spark.objectGTP (VAL @targetEntity) @targetName))
+					          (!(DatabaseInterface.add (AGENT-STATEMENT PR2_ROBOT @mainName isNextTo @targetName) $result))
+						  ))
+					       ELSEIF(?(EQUAL @factType "IsIn"))
+				        (IF(?(Spark.objectGTP (VAL @mainEntity) @mainName))
+					   (IF(?(Spark.objectGTP (VAL @targetEntity) @targetName))
+						   (!(DatabaseInterface.add (AGENT-STATEMENT PR2_ROBOT @mainName isIn @targetName) $result))
+						   ))
+					)
+				ELSE
+					(IF(?(EQUAL @factType "IsReacheable"))
+				        (IF(?(Spark.objectGTP (VAL @mainEntity) @mainName))
+					   (IF(?(Spark.objectGTP (VAL @targetEntity) @targetName))
+					(!(DatabaseInterface.remove (AGENT-STATEMENT PR2_ROBOT (VAL @targetName) isReachableBy (VAL @mainName)) $result))
+					))
+					ELSEIF(?(EQUAL @factType "IsVisible"))
+				        (IF(?(Spark.objectGTP (VAL @mainEntity) @mainName))
+					   (IF(?(Spark.objectGTP (VAL @targetEntity) @targetName))
+					   (!(DatabaseInterface.remove (AGENT-STATEMENT PR2_ROBOT (VAL @targetName) isVisibleBy (VAL @mainName)) $result))
+					   ))
+					ELSEIF(?(EQUAL @factType "IsOn"))
+					    (IF(?(~(EQUAL @factSubType "IsAbove")))
+					       (!(PRINT @factSubType))
+				        (IF(?(Spark.objectGTP (VAL @mainEntity) @mainName))
+					   (IF(?(Spark.objectGTP (VAL @targetEntity) @targetName))
+					       (!(DatabaseInterface.remove (AGENT-STATEMENT PR2_ROBOT (VAL @mainName) isOn (VAL @targetName)) $result))
+					       ))
+					       )
+					       ELSEIF(?(EQUAL @factType "IsNextTo"))
+				        (IF(?(Spark.objectGTP (VAL @mainEntity) @mainName))
+					   (IF(?(Spark.objectGTP (VAL @targetEntity) @targetName))
+					          (!(DatabaseInterface.remove (AGENT-STATEMENT PR2_ROBOT (VAL @mainName) isNextTo (VAL @targetName)) $result))
+						  ))
+					       ELSEIF(?(EQUAL @factType "IsIn"))
+				        (IF(?(Spark.objectGTP (VAL @mainEntity) @mainName))
+					   (IF(?(Spark.objectGTP (VAL @targetEntity) @targetName))
+						   (!(DatabaseInterface.remove (AGENT-STATEMENT PR2_ROBOT (VAL @mainName) isIn (VAL @targetName)) $result))
+						   ))
+					)
+				)
+			)
+		
+		(!(= @numFact (+ @numFact 1)))
+		)
+	        (=>(Spark.report (VAL @id) (VAL @report)))
+		(~>(Spark.previousWorldState @factId))
+		(=>(Spark.previousWorldState @wsId))
+
+	     )
+	  (!(SEM-V Spark.sem))
+
+	
+	  
+	  )
+   )
+
 )

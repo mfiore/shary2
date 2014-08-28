@@ -321,6 +321,31 @@ $unboundVariables= lisp-list containing the variables for which we want to find 
 ;; 	  )
 ;;    )
  
+(defop |cleanDb|
+	:invocation(Database.cleanDb @caller)
+	:documentation "clean GTP Facts in the database"
+	:body (
+		
+		(WHILE(?(AGENT-STATEMENT PR2_ROBOT @object1 isReachableBy @object2))
+			(~>(AGENT-STATEMENT PR2_ROBOT @object1 isReachableBy @object2))
+			)
+		(WHILE(?(AGENT-STATEMENT PR2_ROBOT @object1 isVisibleBy @object2))
+			(~>(AGENT-STATEMENT PR2_ROBOT @object1 isVisibleBy @object2))
+			)
+		(WHILE(?(AGENT-STATEMENT PR2_ROBOT @object1 isOn @object2))
+			(~>(AGENT-STATEMENT PR2_ROBOT @object1 isOn @object2))
+			)
+		(WHILE(?(AGENT-STATEMENT PR2_ROBOT @object1 isIn @object2))
+			(~>(AGENT-STATEMENT PR2_ROBOT @object1 isIn @object2))
+			)
+		(WHILE(?(AGENT-STATEMENT PR2_ROBOT @object1 isNextTo @object2))
+			(~>(AGENT-STATEMENT PR2_ROBOT @object1 isNextTo @object2))
+			)
+		
+		(!(SEND-MESSAGE @caller (Database.result (. OK .) )))
+		
+		)
+	) 
 
  
 

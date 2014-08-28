@@ -16,9 +16,32 @@
  (Spark.typeMonitorSphere GREY_TAPE SPARK_PICK_OBJECT)
  (Spark.typeMonitorSphere LOTR_TAPE SPARK_PICK_OBJECT)
  (Spark.typeMonitorSphere WALLE_TAPE SPARK_PICK_OBJECT)
+ (Spark.typeMonitorSphere RED_CUBE SPARK_PICK_OBJECT)
+ (Spark.typeMonitorSphere GREEN_CUBE SPARK_PICK_OBJECT)
+ (Spark.typeMonitorSphere PURPLE_CUBE SPARK_PICK_OBJECT)
+
  (Spark.typeMonitorSphere PINK_TRASHBIN SPARK_THROW_IN_CONTAINER)
+ (Spark.typeMonitorSphere PLACEMAT_RED SPARK_SIMPLE_ENTRY)
+ (Spark.typeMonitorSphere PLACEMAT_GREEN SPARK_SIMPLE_ENTRY)
+ (Spark.typeMonitorSphere PLACEMAT_BLUE SPARK_SIMPLE_ENTRY)
+
+ (Spark.sphereParameters PLACEMAT_RED 0.25 1.0)
+ (Spark.sphereParameters PLACEMAT_PURPLE 0.25 1.0)
+ (Spark.sphereParameters PLACEMAT_BLUE 0.25 1.0)
+ (Spark.sphereParameters PLACEMAT_GREEN 0.25 1.0 )
+ 
+ (Spark.sphereParameters GREY_TAPE 1.0 1.2)
+ (Spark.sphereParameters LOTR_TAPE 1.0 1.2)
+ (Spark.sphereParameters WALLE_TAPE 1.0 1.2)
+ (Spark.sphereParameters PINK_TRASHBIN 5 1.5)
+ 
+ (Spark.sphereParameters RED_CUBE 1.0 1.5)
+ (Spark.sphereParameters YELLOW_CUBE 1.0 1.5)
+ (Spark.sphereParameters GREEN_CUBE 1.0 1.5)
+ (Spark.sphereParameters BLUE_CUBE 1.0 1.5)
 
  (Spark.monitorParameter take OBJECT)
- (Spark.monitorParameter throw PLACEMENT)			
+ (Spark.monitorParameter throw PLACEMENT)
+ (Spark.monitorParameter place PLACEMENT)			
 )
 

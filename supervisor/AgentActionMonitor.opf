@@ -167,18 +167,39 @@
    )
  
  
-(defop |addThrowInference|
+(defop |AddPlaceThrowInference|
   :invocation(Agent.hasObject @agent @object)
   :documentation "when an agent takes an object we add throw inference to the trashbins. Should be generalized"
   :body (
 	 
 	 (!(DatabaseInterface.findList (AGENT-STATEMENT PR2_ROBOT PINK_TRASHBIN @predicate @value) (. @predicate @value .) @result)) ;used to see if the trashbin is there
+	 (!(= @list (. .)))
 	 (IF(?(~(NULL @result)))
 	    (IF(?(~(AgentActionMonitor.sphere (VAL @agent) PINK_TRASHBIN @sphereId)))  
-	       (!(AgentActionMonitor.activateMonitorSpheres (. PINK_TRASHBIN .) @agent))
+	       (!(= @list (CONS-TAIL PINK_TRASHBIN @list))) 
 	       )
-	    
 	    )
+	 (!(DatabaseInterface.findList (AGENT-STATEMENT PR2_ROBOT PLACEMAT_RED @predicate @value) (. @predicate @value .) @result)) ;used to see if the trashbin is there
+	 (IF(?(~(NULL @result)))
+	    (IF(?(~(AgentActionMonitor.sphere (VAL @agent) PLACEMAT_RED @sphereId)))  
+	       (!(= @list (CONS-TAIL PLACEMAT_RED @list)))
+	       )
+	    )
+	 (!(DatabaseInterface.findList (AGENT-STATEMENT PR2_ROBOT PLACEMAT_GREEN @predicate @value) (. @predicate @value .) @result)) ;used to see if the trashbin is there
+	 (IF(?(~(NULL @result)))
+	    (IF(?(~(AgentActionMonitor.sphere (VAL @agent) PLACEMAT_GREEN @sphereId)))  
+	       (!(= @list (CONS-TAIL PLACEMAT_GREEN @list)))
+
+	       )
+	    )
+	 (!(DatabaseInterface.findList (AGENT-STATEMENT PR2_ROBOT PLACEMAT_BLUE @predicate @value) (. @predicate @value .) @result)) ;used to see if the trashbin is there
+	 (IF(?(~(NULL @result)))
+	    (IF(?(~(AgentActionMonitor.sphere (VAL @agent) PLACEMAT_BLUE @sphereId)))  
+	       (!(= @list (CONS-TAIL PLACEMAT_BLUE @list)))
+	       )
+	    )
+	 (!(AgentActionMonitor.activateMonitorSpheres @list @agent))
+
 	 )
   )
   
@@ -247,7 +268,9 @@
   :documentation "adds inferences for all agents for objects already present in the scene. We duplicate code here but we save some time since if we looped on the calculateInferencesForAgent op we would have done again
  the requestes to the DB"
   :body (
-	 ;get all objects present on TABLE_4
+	 
+	 (!(= @list (. .)))
+					;get all objects present on TABLE_4
  	 (!(DatabaseInterface.findList (AGENT-STATEMENT PR2_ROBOT @object isOn TABLE_4) (. @object .) @result))  ;table should not be hardcoded
 	 (IF(?(NULL @result))
 	    (!(= @objects (. .)))
@@ -271,19 +294,20 @@
 	       (!(= @objectList @objects))
 	       (IF(?(Agent.hasObject (VAL @agent) @object))
 		  (IF(?(EQUAL @putThrowInference TRUE))
-		     (!(AgentActionMonitor.activateMonitorSpheres (. PINK_TRASHBIN .) @agent))
+		     (!(= @list (CONS-TAIL PINK_TRASHBIN @list)))
+
 		     )
 		  ELSE
 		  (WHILE(?(~(NULL @objectList)))
 			(!(= @object(CAR (CAR @objectList))))
 			(!(= @objectList (CDR @objectList)))
 			(IF(?(~(AgentActionMonitor.sphere (VAL @agent) (VAL @object) @sphereId)))
-			   (!(AgentActionMonitor.activateMonitorSpheres (. @object .) @agent))
+			   (!(= @list (CONS-TAIL @object @list)))
 			   )
 			)
 		  )
 	       
-	       
+	       (!(AgentActionMonitor.activateMonitorSpheres @list @agent))
 	       )
 	 
 	 )  
@@ -396,27 +420,38 @@
 		   (!(= @objectName (MAKE-ATOM @objectFactName)))	   
 		   ;;if this sphere is active
 		   (IF(?(EQUAL @isSphereActive 1))
-		      (IF(?(EQUAL @monitorGetOutResult 1)) ;if the target has entered the sphere
-			 
-			 (IF(?(EQUAL @sphereType SPARK_PICK_OBJECT))
+		      (IF(?(EQUAL @monitorGetOutResult 1)) ;if the target has exited the sphere
+				 (IF(?(EQUAL @sphereType SPARK_SIMPLE_ENTRY))
 
+			    (IF(?(Agent.hasObject (VAL @agentName) @heldObject))
+			       (!(AgentActionMonitor.checkActionMonitoring @agentName @sphereId))
+			       
+			       ;;recalculate monitor spheres
+			       (!(AgentActionMonitor.cleanAgentMonitorSpheres @agentName))
+			       
+
+			       (!(Spark.getFreeId @sparkId))
+			       (?(Spark.humanHand RIGHT @sparkHand))
+			       (=>(Spark.request setInferrenceForObject @heldObject 0 @agentName @sparkHand SPARK_HUMAN_HAND 1.0 @sparkId))
+			       (^(Spark.report (VAL @sparkId) @report))
+				  
+			       (!(Spark.getFreeId @sparkId))
+			       (=>(Spark.request placeObject @heldObject @x @y @z 0 0 0 @sparkId))
+			       (^(Spark.report (VAL @sparkId) @report))
+				  
+			       (~>(Agent.hasObject (VAL @agentName) (VAL @heldObject)))
+			       (!(DatabaseInterface.remove (AGENT-STATEMENT PR2_ROBOT @agentName hasInHand (VAL @heldObject)) @result))				  
+			       (!(AgentActionMonitor.calculateInferencesForAgent @agentName))
+			       (!(AgentActionMonitor.activateMonitorSpheres (. @heldObject .) HERAKLES_HUMAN1))
+			       ) 
+			    ELSEIF(?(EQUAL @sphereType SPARK_PICK_OBJECT))
+			    
 			    (IF(?(~(Agent.hasObject (VAL @agentName) @object)))
 			       ;;if we were monitoring this action then we say it was completed, else it was an unexpected action
-
-			       (IF(?(AgentActionMonitor.isMonitoringAgent (VAL @agentName) @monitorId))
-
-				  (IF(?(AgentActionMonitor.monitorAction (VAL @agentName) @actionId (VAL @sphereId)))
-
-				     (~>(AgentActionMonitor.monitorAction (VAL @agentName) (VAL @actionId) (VAL @sphereId)))
-				     (=>(AgentActionMonitor.actionCompleted (VAL @agentName) (VAL @actionId)))
-				     ELSE
-
-				     (=>(AgentActionMonitor.unexpectedAction (VAL @agentName)))
-				     )
-				  )
+			       (!(AgentActionMonitor.checkActionMonitoring @agentName @sphereId))
 			       
 			       ;;erase this monitor sphere
-			       (!(AgentActionMonitor.cleanMonitorSphere (VAL @sphereId)))
+			       (!(AgentActionMonitor.cleanAgentMonitorSpheres @agentName))
 
 			       ;;update spark inferences and knowledge
 			       (!(Spark.getFreeId @sparkId))
@@ -426,44 +461,39 @@
 			       (=>(Agent.hasObject @agentName @objectName))
 
 			       (!(DatabaseInterface.add (AGENT-STATEMENT PR2_ROBOT @agentName hasInHand (VAL @objectName)) @result))
+			       (!(AgentActionMonitor.calculateInferencesForAgent @agentName))
+
+			       
 			       )			 
 			    )
 			 )
 		      ;;same as for pick
-		      (IF(?(EQUAL @monitorEnterInResult 1))
+		      (IF(?(EQUAL @monitorEnterInResult 1))		
+			    
+
 			 (IF(?(EQUAL @sphereType SPARK_THROW_IN_CONTAINER))
-
 			    (IF(?(Agent.hasObject (VAL @agentName) @heldObject))
-
 			       (=>(AgentActionMonitor.blockObjectReappears @heldObject )) ;we block the item because we don't want pick inferences on it when it's in the trashbin
-			       (IF(?(AgentActionMonitor.isMonitoringAgent (VAL @agentName) @monitorId))
-				  (!(PRINT "isMonitoringAgent"))
-				  (IF(?(AgentActionMonitor.monitorAction (VAL @agentName) @actionId (VAL @sphereId)))
-				     (!(PRINT "isMonitoringAction"))
-				     (~>(AgentActionMonitor.monitorAction (VAL @agentName) (VAL @actionId) (VAL @sphereId)))
-				     (=>(AgentActionMonitor.actionCompleted (VAL @agentName) (VAL @actionId)))
-				     
-				     ELSE
-				     (!(PRINT "Unexpected Action"))
-				     (=>(AgentActionMonitor.unexpectedAction (VAL @agentName)))
-				     )
-				  )
-
+			       (!(AgentActionMonitor.checkActionMonitoring @agentName @sphereId))			       
+			       
 			       ;;erase this monitor sphere
-			       (!(AgentActionMonitor.cleanMonitorSphere (VAL @sphereId)))
+			       (!(AgentActionMonitor.cleanAgentMonitorSpheres @agentName))
 
-				  (!(Spark.getFreeId @sparkId))
-				  (?(Spark.humanHand RIGHT @sparkHand))
-				  (=>(Spark.request setInferrenceForObject @heldObject 0 @agentName @sparkHand SPARK_HUMAN_HAND 1.0 @sparkId))
-				  (^(Spark.report (VAL @sparkId) @report))
+			       
+
+			       (!(Spark.getFreeId @sparkId))
+			       (?(Spark.humanHand RIGHT @sparkHand))
+			       (=>(Spark.request setInferrenceForObject @heldObject 0 @agentName @sparkHand SPARK_HUMAN_HAND 1.0 @sparkId))
+			       (^(Spark.report (VAL @sparkId) @report))
 				  
-				  (!(Spark.getFreeId @sparkId))
-				  (=>(Spark.request setInferrenceForObject @heldObject 1 @objectName 0 SPARK_IS_IN 1.0 @sparkId))
-				  (^(Spark.report (VAL @sparkId) @report))
+			       (!(Spark.getFreeId @sparkId))
+			       (=>(Spark.request setInferrenceForObject @heldObject 1 @objectName 0 SPARK_IS_IN 1.0 @sparkId))
+			       (^(Spark.report (VAL @sparkId) @report))
 				  
-				  (~>(Agent.hasObject (VAL @agentName) (VAL @heldObject)))
-				  (!(DatabaseInterface.remove (AGENT-STATEMENT PR2_ROBOT @agentName hasInHand (VAL @heldObject)) @result))				  
-				  )
+			       (~>(Agent.hasObject (VAL @agentName) (VAL @heldObject)))
+			       (!(DatabaseInterface.remove (AGENT-STATEMENT PR2_ROBOT @agentName hasInHand (VAL @heldObject)) @result))				  
+			       (!(AgentActionMonitor.calculateInferencesForAgent @agentName))
+			       )
 			    )
 			 )
 		      )
@@ -474,8 +504,21 @@
 	  
 	  )  	  
    )
- )
 
+(defop |checkActionMonitoring|
+  :invocation (!(AgentActionMonitor.checkActionMonitoring @agentName @sphereId))
+  :body (
+	 (IF(?(AgentActionMonitor.isMonitoringAgent (VAL @agentName) @monitorId))
+	    (IF(?(AgentActionMonitor.monitorAction (VAL @agentName) @actionId (VAL @sphereId)))
+	       (~>(AgentActionMonitor.monitorAction (VAL @agentName) (VAL @actionId) (VAL @sphereId)))
+	       (=>(AgentActionMonitor.actionCompleted (VAL @agentName) (VAL @actionId)))
+	       ELSE
+	       (=>(AgentActionMonitor.unexpectedAction (VAL @agentName)))
+	       )
+	    )
 
+	 )
+  
 
-
+  )
+)

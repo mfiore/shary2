@@ -17,6 +17,7 @@
 	  (?(PlanManager.timeToRetry @timeToRetry))
 	  (?(Robot.name @robotName))
 
+	  (!(AgentActionMonitor.startMonitoringAgent HERAKLES_HUMAN1))
 	  (WHILE(?(PlanManager.shouldRun TRUE))
 		;;wait for a new goal or for a stop
 		(^(|| (PlanManager.newGoal TRUE) (PlanManager.shouldRun FALSE) (AgentActionMonitor.unexpectedAction (VAL @humanAgent))))
@@ -41,7 +42,7 @@
 					;if we are not in rest pose (because we are replanning) we move there
 			 (IF(?(~(Robot.pose RIGHT @object @support MANIPULATION)))
 			    (!(ArmActions.getFreeId @actionId))
-			    (=>(ArmActions.action moveToPose MANIPULATION @actionId))
+			    (=>(ArmActions.action moveToPose MANIPULATION 0 @actionId))
 			    (^(ArmActions.report (VAL @actionId) @report))
 			    (~>(ArmActions.report (VAL @actionId) @report))
 			    )
@@ -117,7 +118,7 @@
 
 				     )
 			       
-			       (!(= @planningFailures @maxPlanningFailures)) ;this is to avoid further replanning since we are stopped.
+;			       (!(= @planningFailures @maxPlanningFailures)) ;this is to avoid further replanning since we are stopped.
 
 			       ELSEIF(?(PlanManager.agentReport @anAgent FAILURE))  ;if one of the agents fail we stop the other agent and replan
 			       (WHILE(?(PlanManager.isManagingAgent @otherAgent))
@@ -177,7 +178,7 @@
 
 		 )
 	   (~>(PlanManager.isRunning TRUE))
-
+	  (!(AgentActionMonitor.stopMonitoringAgent HERAKLES_HUMAN1))
 	   )
     )
 
@@ -350,7 +351,7 @@
 	  (=>(PlanManager.agentReport robot OK))		
  	   (IF(?(~(Robot.pose RIGHT @object @support MANIPULATION)))
 	      (!(ArmActions.getFreeId @actionId))
-	      (=>(ArmActions.action moveToPose MANIPULATION @actionId))
+	      (=>(ArmActions.action moveToPose MANIPULATION 0 @actionId))
 	      (^(ArmActions.report (VAL @actionId) @report))
 	      (~>(ArmActions.report (VAL @actionId) @report))
 	      )

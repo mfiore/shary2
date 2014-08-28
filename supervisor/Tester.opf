@@ -6,17 +6,36 @@
 
 (
 
+ (defop |testGtpPlan|
+   :invocation(!(Tester.testGtpPlan))
+   :body (
+	  (!(Controller.initAll))
+	  
+	  (=>(Mhp.request initGtp 0))
+	  (^(Mhp.report 0 @any))
+	  (=>(Mhp.request fetchEnvironment 1))
+
+	  (^(Mhp.report 1 @any))
+	  (=>(Mhp.request addGtpAgent mainAgent PR2_ROBOT 2))
+	  (^(Mhp.report 2 @any))
+	  (=>(Mhp.request addGtpObject mainObject WALLE_TAPE 3))
+	  (^(Mhp.report 3 @any))
+	  (=>(Mhp.request addGtpData hand right 4))
+	  (^(Mhp.report 4 @any))
+	  (=>(Mhp.request planGtpTask pick 5))
+	  (^(Mhp.report 5 @any))
+	  )
+   )
 
  (defop |testGtpTake|
    :invocation(!(Tester.testGtpTake))
    :body (
 	  (!(Controller.initAll))
-	  (=>(GtpActions.executeTask pick LOTR_TAPE NO_NAME 0))
+	  (=>(GtpActions.action pick WALLE_TAPE "right" 0))
 	  (^(GtpActions.report 0 @report))
 	  (~>(GtpActions.report @id @report))
 	  
-	  (!(Tester.breakpoint))
-	  (=>(GtpActions.executeTask place LOTR_TAPE TABLE_4 1))
+	  (=>(GtpActions.action place WALLE_TAPE TABLE_4 "right" 1))
 	  (^(GtpActions.report 1 @report))
 	  (~>(GtpActions.report @id @report))
 	  )

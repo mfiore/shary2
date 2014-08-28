@@ -1,3 +1,4 @@
+
 ;; -*-Lisp-*-
 ;;author: Michelangelo Fiore
 ;;this module contains high-level actions like take an item, give, drop.
@@ -346,21 +347,21 @@
 
 
 	  ;; ;;plan and execute the trajectory
-	  ;; (!(ArmActions.getFreeId @actionId))
-	  ;; (=>(ArmActions.action moveToObject @armForPick @object @actionId))
+	  (!(ArmActions.getFreeId @actionId))
+	  (=>(ArmActions.action moveToObject @armForPick @object @actionId))
 
-	  ;; (!(ExecutionManager.handleReport ArmActions @actionId @executionId TRUE TRUE @object))
+	  (!(ExecutionManager.handleReport ArmActions @actionId @executionId TRUE TRUE @object))
 
 	  
 
 	  ;; ;;close the gripper
-	  ;; (!(ArmActions.getFreeId @actionId))
-	  ;; (=>(ArmActions.action closeGripper @armForPick @actionId))
-	  ;; (!(ExecutionManager.handleReport ArmActions @actionId @executionId FALSE FALSE NO_NAME))
+	  (!(ArmActions.getFreeId @actionId))
+	  (=>(ArmActions.action closeGripper @armForPick @actionId))
+	  (!(ExecutionManager.handleReport ArmActions @actionId @executionId FALSE FALSE NO_NAME))
 
-	  (!(GtpActions.getFreeId @gtpId))
-	  (=>(GtpActions.executeTask pick @object NO_NAME @gtpId))
-	  (!(ExecutionManager.handleReport Gtp @gtpId @executionId TRUE TRUE @object))
+	  ;; (!(GtpActions.getFreeId @gtpId))
+	  ;; (=>(GtpActions.executeTask pick @object NO_NAME "right" @gtpId))
+	  ;; (!(ExecutionManager.handleReport Gtp @gtpId @executionId TRUE TRUE @object))
 	  
 	  ;;updates knowledge of the robot
 	  (=> (Robot.hasObject (VAL @armForPick) (VAL @object))) ;if we arrive here with no FAILED than we've got the item (hopefully XD)
@@ -636,7 +637,7 @@
 		  )
 		  
 		  (!(ArmActions.getFreeId @actionId))
-		  (=>(ArmActions.action moveToPose MANIPULATION @actionId))
+		  (=>(ArmActions.action moveToPose MANIPULATION 0 @actionId))
 		  (!(ExecutionManager.handleReport ArmActions @actionId @executionId FALSE TRUE NO_NAME))
 		  (!(= @robotState armRest))
 		  (!(= @task notCompleted))
@@ -1012,7 +1013,7 @@ $distance , $info, $orientation, $speed, $inRange  the output observations"
    )
 
 (defop |place|
-  :invocation(ExecutionManager.execute place @object @support @executionId)
+  :invocation(ExecutionManager.execute place @object @support @placement @executionId)
   :documentation "Places an object on a support in a specific placement or a casual one if placement is NO_NAME. For now the casual version is not implemented"
   :body (
 	 (!(SEM-P ExecutionManager.sem))
@@ -1039,8 +1040,13 @@ $distance , $info, $orientation, $speed, $inRange  the output observations"
 	  ;; (=>(ArmActions.action openGripper @arm @actionId))
 	  ;; (!(ExecutionManager.handleReport ArmActions @actionId @executionId FALSE FALSE NO_NAME))
 
+	 (!(Spark.getFreeId @sparkId))
+	 (=>(Spark.request GetJointAbsPose @placement NO_NAME @sparkId))
+	 (!(ExecutionManager.handleReport Spark @sparkId @executionId FALSE FALSE NO_NAME))
+	 (?(Spark.result (VAL @sparkId) @x @y @z @yaw @pitch @roll))
+	 
 	 (!(GtpActions.getFreeId @id))
-	 (=>(Gtp.executeTask place @object @support @gtpId))
+	 (=>(GtpActions.action place @object @support RIGHT @x @y 0 NO_NAME NO_NAME @gtpId))
 	 (!(ExecutionManager.handleReport Gtp @gtpId @executionId TRUE TRUE NO_NAME))
 
 	 (=>(ExecutionManager.report @executionId OK))

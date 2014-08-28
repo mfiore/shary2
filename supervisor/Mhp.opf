@@ -297,132 +297,140 @@
 	 (=>(Mhp.report (VAL @id) (VAL @report)))
 	 )
   )
-(defop |planTaskGtp|
-  :invocation(Mhp.request planTaskGtp @task @object @support @id)
+(defop |planGtpTask|
+  :invocation(Mhp.request planGtpTask @task @id)
   :documentation ""
   :body (
-	 (IF(?(EQUAL @task place))
-	    (!(= @objectKey2 supportObject))
-	    
-	    ELSE
-	    (!(= @objectKey2 NO_NAME))
-	    )
+
 	 (?(Mhp.previousTask @previousTaskId @previousTaskAlternativeId))
-	 (!(= @hand right))
-	 
-	 (!(= @params    
-        (STRUCT_TASK_INPUT 
-           (type 
-              (name  (TERM-STRING-CAT @task)))
+ 
+	 (!(= @params 
+	      (STRUCT_TASK_INPUT 
+	       (type 
+		(name  (TERM-STRING-CAT @task)))
+	       
+	       (previousTaskId  @previousTaskId)
+	       (previousTaskAlternativeId  @previousTaskAlternativeId)
+	       (computeMotionPlan  GEN_TRUE)
+	       (dummy  GEN_TRUE))	      
+       ))
 
-           (agentKey1 
-              (name  "mainAgent"))
 
-           (agentValue1 
-              (name  "PR2_ROBOT"))
+	;;  (!(= @params    
+        ;; (STRUCT_TASK_INPUT 
+        ;;    (type 
+        ;;       (name  (TERM-STRING-CAT @task)))
 
-           (agentKey2 
-              (name  "NO_NAME"))
+        ;;    (agentKey1 
+        ;;       (name  "mainAgent"))
 
-           (agentValue2 
-              (name  "NO_NAME"))
+        ;;    (agentValue1 
+        ;;       (name  "PR2_ROBOT"))
 
-           (agentKey3 
-              (name  "NO_NAME"))
+        ;;    (agentKey2 
+        ;;       (name  "NO_NAME"))
 
-           (agentValue3 
-              (name  "NO_NAME"))
+        ;;    (agentValue2 
+        ;;       (name  "NO_NAME"))
 
-           (agentKey4 
-              (name  "NO_NAME"))
+        ;;    (agentKey3 
+        ;;       (name  "NO_NAME"))
 
-           (agentValue4 
-              (name  "NO_NAME"))
+        ;;    (agentValue3 
+        ;;       (name  "NO_NAME"))
 
-           (objectKey1 
-              (name  "mainObject"))
+        ;;    (agentKey4 
+        ;;       (name  "NO_NAME"))
 
-           (objectValue1 
-              (name  (TERM-STRING-CAT @object)))
+        ;;    (agentValue4 
+        ;;       (name  "NO_NAME"))
 
-           (objectKey2 
-              (name  (TERM-STRING-CAT @objectKey2)))
+        ;;    (objectKey1 
+        ;;       (name  "mainObject"))
 
-           (objectValue2 
-              (name  (TERM-STRING-CAT @support)))
+        ;;    (objectValue1 
+        ;;       (name  (TERM-STRING-CAT @object)))
 
-           (objectKey3 
-              (name  "NO_NAME"))
+        ;;    (objectKey2 
+        ;;       (name  (TERM-STRING-CAT @objectKey2)))
 
-           (objectValue3 
-              (name  "NO_NAME"))
+        ;;    (objectValue2 
+        ;;       (name  (TERM-STRING-CAT @support)))
 
-           (objectKey4 
-              (name  "NO_NAME"))
+        ;;    (objectKey3 
+        ;;       (name  "NO_NAME"))
 
-           (objectValue4 
-              (name  "NO_NAME"))
+        ;;    (objectValue3 
+        ;;       (name  "NO_NAME"))
 
-           (dataKey1 
-              (name  "hand"))
+        ;;    (objectKey4 
+        ;;       (name  "NO_NAME"))
 
-           (dataValue1 
-              (name  "right"))
+        ;;    (objectValue4 
+        ;;       (name  "NO_NAME"))
 
-           (dataKey2 
-              (name  "NO_NAME"))
+        ;;    (dataKey1 
+        ;;       (name  (TERM-STRING-CAT @dataKey1)))
 
-           (dataValue2 
-              (name  "NO_NAME"))
+        ;;    (dataValue1 
+        ;;       (name (TERM-STRING-CAT @hand)))
 
-           (dataKey3 
-              (name  "NO_NAME"))
+        ;;    (dataKey2 
+        ;;       (name  "NO_NAME"))
 
-           (dataValue3 
-              (name  "NO_NAME"))
+        ;;    (dataValue2 
+        ;;       (name  "NO_NAME"))
 
-           (dataKey4 
-              (name  "NO_NAME"))
+        ;;    (dataKey3 
+        ;;       (name  "NO_NAME"))
 
-           (dataValue4 
-              (name  "NO_NAME"))
+        ;;    (dataValue3 
+        ;;       (name  "NO_NAME"))
 
-           (pointKey1 
-              (name  "NO_NAME"))
+        ;;    (dataKey4 
+        ;;       (name  "NO_NAME"))
 
-           (pointValue1 
-              (x  0.0)
-              (y  0.0)
-              (z  0.0))
+        ;;    (dataValue4 
+        ;;       (name  "NO_NAME"))
 
-           (pointKey2 
-              (name  "NO_NAME"))
+        ;;    (pointKey1 
+        ;;       (name  "NO_NAME"))
 
-           (pointValue2 
-              (x  0.0)
-              (y  0.0)
-              (z  0.0))
+        ;;    (pointValue1 
+        ;;       (x  0.0)
+        ;;       (y  0.0)
+        ;;       (z  0.0))
 
-           (pointKey3 
-              (name  "NO_NAME"))
+        ;;    (pointKey2 
+        ;;       (name  "NO_NAME"))
 
-           (pointValue3 
-              (x  0.0)
-              (y  0.0)
-              (z  0.0))
+        ;;    (pointValue2 
+        ;;       (x  0.0)
+        ;;       (y  0.0)
+        ;;       (z  0.0))
 
-           (pointKey4 
-              (name  "NO_NAME"))
+        ;;    (pointKey3 
+        ;;       (name  "NO_NAME"))
 
-           (pointValue4 
-              (x  0.0)
-              (y  0.0)
-              (z  0.0))
+        ;;    (pointValue3 
+        ;;       (x  0.0)
+        ;;       (y  0.0)
+        ;;       (z  0.0))
 
-           (previousTaskId  @previousTaskId)
-           (previousTaskAlternativeId  @previousTaskAlternativeId))
-	))
-	 (!(GenomInterface.handleRequest MHP MHP_PLANTASKGTP (Mhp.stop (VAL @id)) (FALSE) (FALSE) 300 @params @report @result))
+        ;;    (pointKey4 
+        ;;       (name  "NO_NAME"))
+
+        ;;    (pointValue4 
+        ;;       (x  0.0)
+        ;;       (y  0.0)
+        ;;       (z  0.0))
+
+        ;;    (previousTaskId  @previousTaskId)
+        ;;    (previousTaskAlternativeId  @previousTaskAlternativeId)
+	;;    (computeMotionPlan  GEN_TRUE)
+        ;;    (dummy  GEN_TRUE)
+	;;    )))
+	 (!(GenomInterface.handleRequest MHP MHP_PLANGTPTASK (Mhp.stop (VAL @id)) (FALSE) (FALSE) 300 @params @report @result))
 	 (=>(Mhp.report (VAL @id) (VAL @report)))
 	 (IF(?(EQUAL @report "OK"))
 	    (!(== (VAL @result) (STRUCT_TASK_OUTPUT 
@@ -577,13 +585,181 @@
 		  (!(= @dummy (CAR(CDR @traj))))
 		  (!(= @subTrajName (CAR(CDR(CDR @traj)))))
 		  (!(= @robot (CAR(CDR(CDR(CDR @traj))))))
-;		  (!(== (VAL @traj) (. @subTrajId @dummy @subTrajName @robot .)))
+					;		  (!(== (VAL @traj) (. @subTrajId @dummy @subTrajName @robot .)))
 		  (IF(?(EQUAL @robot (TERM-STRING-CAT @robotName)))
 		     (!(= @resultList (CONS-TAIL (VAL @traj) @resultList)))
 		     )
 		  )
 	    (=>(Mhp.result @id @resultList))
 	    )
+	 )
+  )
+
+(defop |addGtpAgent|
+  :invocation(Mhp.request addGtpAgent @type @name @id)
+  :documentation ""
+  :body (
+	 
+	 (!(= @params (STRUCT_TASK_INPUT_STR 
+           (key 
+              (name  (TERM-STRING-CAT @type)))
+
+           (value 
+              (name  (TERM-STRING-CAT @name))))))
+
+	 (!(GenomInterface.handleRequest MHP MHP_ADDGTPAGENT (Mhp.stop (VAL @id)) (FALSE) (FALSE) 300 @params @report @result))
+	 (=>(Mhp.report (VAL @id) (VAL @report)))
+	 
+	 )
+  )
+
+
+(defop |addGtpObject|
+  :invocation(Mhp.request addGtpObject @type @name @id)
+  :documentation ""
+  :body (
+	 
+	 (!(= @params (STRUCT_TASK_INPUT_STR 
+           (key 
+              (name  (TERM-STRING-CAT @type)))
+
+           (value 
+              (name  (TERM-STRING-CAT @name))))))
+
+	 (!(GenomInterface.handleRequest MHP MHP_ADDGTPOBJECT (Mhp.stop (VAL @id)) (FALSE) (FALSE) 300 @params @report @result))
+	 (=>(Mhp.report (VAL @id) (VAL @report)))
+	 
+	 )
+  )
+
+(defop |addGtpData|
+  :invocation(Mhp.request addGtpData @type @name @id)
+  :documentation ""
+  :body (
+	 
+	 (!(= @params (STRUCT_TASK_INPUT_STR 
+           (key 
+              (name  (TERM-STRING-CAT @type)))
+
+           (value 
+              (name  (TERM-STRING-CAT @name))))))
+
+	 (!(GenomInterface.handleRequest MHP MHP_ADDGTPDATA (Mhp.stop (VAL @id)) (FALSE) (FALSE) 300 @params @report @result))
+	 (=>(Mhp.report (VAL @id) (VAL @report)))
+	 
+	 )
+  )
+
+(defop |addGtpPoint|
+  :invocation(Mhp.request addGtpPoint @type @x @y @z @id)
+  :documentation ""
+  :body (
+	 
+	 (!(= @params (STRUCT_TASK_INPUT_STR 
+           (key 
+              (name  (TERM-STRING-CAT @type)))
+
+	   (value 
+	    (x  @x)
+	    (y  @y)
+	    (z  @z))
+	   )))
+
+	 (!(GenomInterface.handleRequest MHP MHP_ADDGTPPOINT (Mhp.stop (VAL @id)) (FALSE) (FALSE) 300 @params @report @result))
+	 (=>(Mhp.report (VAL @id) (VAL @report)))
+	 
+	 )
+  )
+
+
+(defop |addGtpConstraintFact| 
+  :invocation(Mhp.request addGtpConstraintFact @type @subtype @main @target @value @valueType @specific)
+  :body (
+	 (!(= @params (STRUCT_GTP_FACT_MHP 
+           (factType 
+              (name  (TERM-STRING-CAT @type)))
+
+           (factSubType 
+              (name  (TERM-STRING-CAT @subtype)))
+
+           (mainEntity 
+              (name  (TERM-STRING-CAT @main)))
+
+           (targetEntity 
+              (name  (TERM-STRING-CAT @target)))
+
+           (isComputed  GEN_TRUE)
+           (boolValue  @value)
+           (valueType  @valueType)
+           (dummy  0)
+           (specificValue  @specific))))
+	 (!(GenomInterface.handleRequest MHP MHP_ADDGTPCONSTRAINTFACT (Mhp.stop (VAL @id)) (FALSE) (FALSE) 300 @params @report @result))
+	 (=>(Mhp.report (VAL @id) (VAL @report)))
+	 
+	 )
+  )
+(defop |addGtpConstraintResource|
+  :invocation(Mhp.request addGtpConstraintResource @type @name @id)
+  :documentation ""
+  :body (
+	 
+	 (!(= @params (STRUCT_TASK_INPUT_STR 
+           (key 
+              (name  (TERM-STRING-CAT @type)))
+
+           (value 
+              (name  (TERM-STRING-CAT @name))))))
+
+	 (!(GenomInterface.handleRequest MHP MHP_ADDGTPCONSTRAINTRESSOURCE (Mhp.stop (VAL @id)) (FALSE) (FALSE) 300 @params @report @result))
+	 (=>(Mhp.report (VAL @id) (VAL @report)))
+	 
+	 )
+  )
+
+(defop |clearGtpInputs|
+  :invocation(Mhp.request clearGtpInputs @id)
+  :body (
+	 (!(GenomInterface.handleRequest MHP MHP_CLEARGTPINPUTS (Mhp.stop (VAL @id)) (FALSE) (FALSE) 300 nil @report @result))
+	 (=>(Mhp.report (VAL @id) (VAL @report)))
+
+	 )
+  )
+
+(defop |addGTPConstraintRegion| 
+  :invocation(Mhp.request addGtpConstraintRegion @key @value @ax @ay @az @bx @by @bz @cx @cy @cz @dx @dy @dz @id)
+  :body (
+	 (!(= @params 
+	      (STRUCT_TASK_CONST_POINTS 
+	       (IdConst 
+		(key 
+		 (name  (TERM-STRING-CAT @key)))
+
+		(value 
+		 (name  (TERM-STRING-CAT @value)))
+		)		 	
+
+	       (A 
+		(x  @ax)
+		(y  @ay)
+		(z  @az))
+
+	       (B 
+		(x  @bx)
+		(y  @by)
+		(z  @bz))
+
+	       (C 
+		(x  @cx)
+		(y  @cy)
+		(z  @cz))
+
+	       (D 
+		(x  @dx)
+		(y  @dy)
+		(z  @dz))
+	       )))
+	 (!(GenomInterface.handleRequest MHP MHP_ADDGTPCONSTRAINTREGION (Mhp.stop (VAL @id)) (FALSE) (FALSE) 300 @params @report @result))
+	 (=>(Mhp.report (VAL @id) (VAL @report)))
 	 )
   )
 
@@ -599,6 +775,116 @@
 	      ))
 	 (!(GenomInterface.handleRequest MHP MHP_LOADGTPTASKTRAJ (Mhp.stop (VAL @id)) (FALSE) (FALSE) 300 @params @report @result))
 	 (=>(Mhp.report (VAL @id) (VAL @report)))
+	 )
+  )
+(defop |loadGtpTaskTrajForNav|
+  :invocation(Mhp.request loadGtpTaskTrajForNav @taskId @alternativeId @subTrajId @follow @id)
+  :documentation ""
+  :body (
+	 (!(= @params        (STRUCT_TRAJ_ID 
+			      (taskId  @taskId)
+			      (alternativeId  @alternativeId)
+			      (subTrajId  @subTrajId)
+			      (follow  @follow))
+	      ))
+	 (!(GenomInterface.handleRequest MHP MHP_LOADGTPTASKTRAJFORNAV (Mhp.stop (VAL @id)) (FALSE) (FALSE) 300 @params @report @result))
+	 (=>(Mhp.report (VAL @id) (VAL @report)))
+	 (IF(?(EQUAL @report "OK"))
+	    (!(== (VAL @result) (STRUCT_TRAJ_NAV_GTP 
+				 (nbPoints  @nbPoints)
+				 (dummy  @dummy)
+				 (points 
+				  (x  @x1)
+				  (y  @y1)
+				  (z  @z1)
+				  (x  @x2)
+				  (y  @y2)
+				  (z  @z2)
+				  (x  @x3)
+				  (y  @y3)
+				  (z  @z3)
+				  (x  @x4)
+				  (y  @y4)
+				  (z  @z4)
+				  (x  @x5)
+				  (y  @y5)
+				  (z  @z5)
+				  (x  @x6)
+				  (y  @y6)
+				  (z  @z6)
+				  (x  @x7)
+				  (y  @y7)
+				  (z  @z7)
+				  (x  @x8)
+				  (y  @y8)
+				  (z  @z8)
+				  (x  @x9)
+				  (y  @y9)
+				  (z  @z9)
+				  (x  @x10)
+				  (y  @y10)
+				  (z  @z10)
+				  (x  @x11)
+				  (y  @y11)
+				  (z  @z11)
+				  (x  @x12)
+				  (y  @y12)
+				  (z  @z12)
+				  (x  @x13)
+				  (y  @y13)
+				  (z  @z13)
+				  (x  @x14)
+				  (y  @y14)
+				  (z  @z14)
+				  (x  @x15)
+				  (y  @y15)
+				  (z  @z15)
+				  (x  @x16)
+				  (y  @y16)
+				  (z  @z16)
+				  (x  @x17)
+				  (y  @y17)
+				  (z  @z17)
+				  (x  @x18)
+				  (y  @y18)
+				  (z  @z18)
+				  (x  @x19)
+				  (y  @y19)
+				  (z  @z19)
+				  (x  @x20)
+				  (y  @y20)
+				  (z  @z20)))))
+	    (!(= @pointList (. (. x1 y1 z1 .)  
+			       (. x2 y2 z2 .)  
+			       (. x3 y3 z3 .)  
+			       (. x4 y4 z4 .)  
+			       (. x5 y5 z5 .)  
+			       (. x6 y6 z6 .)  
+			       (. x7 y7 z7 .)  
+			       (. x8 y8 z8 .)  
+			       (. x9 y9 z9 .)  
+			       (. x10 y10 z10 .)  
+			       (. x11 y11 z11 .)  
+			       (. x12 y12 z12 .)  
+			       (. x13 y13 z13 .)  
+			       (. x14 y14 z14 .)  
+			       (. x15 y15 z15 .)  
+			       (. x16 y16 z16 .)  
+			       (. x17 y17 z17 .)  
+			       (. x18 y18 z18 .)  
+			       (. x19 y19 z19 .)  
+			       (. x20 y20 z20 .)  
+			       .)))
+	    (!(= @i 0))
+	    (!(= @resultList (. .)))
+	    (WHILE(?(< @i @nbPoints))
+		  (!(= @x (CAR @pointList)))
+		  (!(= @y (CAR(CDR @pointList))))
+		  (!(= @z (CAR(CDR(CDR @pointList)))))
+		  (!(= @resultList (CONS-TAIL (. @x @y @z .) @resultList)))
+		  )
+	    (=>(Mhp.result @id @resultList))
+	    )
 	 )
   )
 

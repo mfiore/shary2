@@ -123,5 +123,18 @@ $unboundVariables= lisp-list containing the variables for which we want to find 
 
 	  )
    )	  
-   
+
+   (defop |cleanDb|
+  :invocation(!(DatabaseInterface.cleanDb $result))
+  :documentation "clean GTP Facts on the database"
+  :body (
+	 (!(SEM-P DatabaseInterface.sem))
+	 (? (ONTO_NAME $ONTO_NAME))
+	 (? (SUP_NAME $SUP_NAME))
+	 (!(SEND-MESSAGE $ONTO_NAME (Database.cleanDb $SUP_NAME)))
+	 (!(DatabaseInterface.getResult $result))
+	 (!(SEM-V DatabaseInterface.sem))
+	 )
+  )  
+ 
 )

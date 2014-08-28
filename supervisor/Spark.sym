@@ -1,3 +1,5 @@
+declare ff Spark.previousWorldState 0
+
 ;;general
 declare symbol Spark.sem
 declare ff Spark.freeId 0

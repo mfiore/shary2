@@ -52,7 +52,7 @@
 	       (!(= @currentNode (CAR @nodes)))
 	       (!(= @nodes (CDR @nodes)))
 	       (?(PathPlanner.coordinates (VAL @currentNode) @x @y @z @tx @ty @tz @tw))
-	       (!(= @tempCoordinates (CONS-TAIL (. @x @y @z @tx @ty @tz @tw.) @tempCoordinates)))
+	       (!(= @tempCoordinates (CONS-TAIL (. @x @y @z @tx @ty @tz @tw .) @tempCoordinates)))
 	       )
 	 (!(= $coordinates @tempCoordinates))
 	 

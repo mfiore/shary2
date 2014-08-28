@@ -53,6 +53,10 @@
                    @pose we want to set the robot to EXTENDED, REST, OTHER. 
                    "
    :body (
+	  (~>(Robot.pose (VAL @arm) @a @b @c))
+
+	  (=>(Robot.pose (VAL @arm) NO_NAME NO_NAME OTHER))
+
 	  (IF(?(Robot.simu FALSE))
 	     (IF(?(~(EQUAL @object NO_NAME)))
 		(!(= @result NULL))
@@ -432,16 +436,16 @@ actually know if this really changes something... pressure is pressur."
 		      )
 		   )
 		ELSEIF(?(ArmActions.stop (VAL @actionId)))
-		(~>(ArmActions.stop (VAL @actionId)))
+	;	(~>(ArmActions.stop (VAL @actionId)))
 		
 		(IF(?(EQUAL @module Softmotion))
 		   (IF(?(EQUAL @detectPression FALSE))
 		      ;;we stopx
 		      (=>(Softmotion.stop (VAL @id)))    
-		      (!(Softmotion.getFreeId @smId))
-		      (=>(Softmotion.request stop (VAL @smId)))
-		      (^(Softmotion.report (VAL @smId) @smReport))
-		      (~>(Softmotion.report (VAL @smId) (VAL @smReport)))
+;		      (!(Softmotion.getFreeId @smId))
+;		      (=>(Softmotion.request stop (VAL @smId)))
+;		      (^(Softmotion.report (VAL @smId) @smReport))
+;		      (~>(Softmotion.report (VAL @smId) (VAL @smReport)))
 		      (^(|| (@reportName (VAL @id) @report)))
 		      (~>(@reportName (VAL @id) @report))
 		      
@@ -458,7 +462,7 @@ actually know if this really changes something... pressure is pressur."
 		   (=>(Mhp.stop (VAL @id)))
 		   )
 		(=>(ArmActions.report @actionId STOPPED))
-		(!(FAILED))
+;		(!(FAILED))
 		)
 	     
 	     ELSEIF(?(ArmActions.stop (VAL @actionId)))
@@ -468,10 +472,10 @@ actually know if this really changes something... pressure is pressur."
 		(IF(?(EQUAL @detectPression FALSE))
 		   ;;we stopx
 		   (=>(Softmotion.stop (VAL @id)))    
-		   (!(Softmotion.getFreeId @smId))
-		   (=>(Softmotion.request stop (VAL @smId)))
-		   (^(Softmotion.report (VAL @smId) @smReport))
-		   (~>(Softmotion.report (VAL @smId) (VAL @smReport)))
+		   ;(!(Softmotion.getFreeId @smId))
+;		   (=>(Softmotion.request stop (VAL @smId)))
+;		   (^(Softmotion.report (VAL @smId) @smReport))
+;		   (~>(Softmotion.report (VAL @smId) (VAL @smReport)))
 		   (^(|| (@reportName (VAL @id) @report)))
 		   (~>(@reportName (VAL @id) @report))
 		   
@@ -487,8 +491,8 @@ actually know if this really changes something... pressure is pressur."
 		ELSEIF(?(EQUAL @module Mhp))
 		(=>(Mhp.stop (VAL @id)))
 		)
-	     (=>(ArmActions.report @actionId STOPPED))
-	     (!(FAILED))
+;	     (=>(ArmActions.report @actionId STOPPED))
+;	     (!(FAILED))
 		
 	     
 	     
