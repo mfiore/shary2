@@ -327,10 +327,16 @@
 	  (!(GenomInterface.handleRequest PR2SOFTMOTION PR2SOFTMOTION_GETPANTILTFROMXYZ (Softmotion.stop (VAL @id)) (FALSE) (FALSE) 300 @parameters @report @result))
 	  (=>(Softmotion.report (VAL @id) (VAL @report)))
 
-	  (!(== (VAL @result) (PR2SM_PanTilt 
-			     (pan  @pan)
-			     (tilt  @tilt))
-		))
+	  (IF(?(Robot.simu FALSE))
+	     (!(== (VAL @result) (PR2SM_PanTilt 
+				  (pan  @pan)
+				  (tilt  @tilt))
+		   ))
+	     
+	     ELSE
+	     (!(= @pan 0))
+	     (!(= @tilt 0))
+	  )
 	  (=>(Softmotion.result (VAL @id) (VAL @pan) (VAL @tilt)))
 
 	  (!(SEM-V Softmotion.semHead)) 

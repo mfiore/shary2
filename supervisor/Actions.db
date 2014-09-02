@@ -3,12 +3,21 @@
 (Action.parameter GREY_TAPE OBJECT)
 (Action.parameter LOTR_TAPE OBJECT)
 (Action.parameter WALLE_TAPE OBJECT)
+(Action.parameter RED_CUBE OBJECT)
+(Action.parameter RED_CUBE2 OBJECT)
+(Action.parameter BLUE_CUBE OBJECT)
+(Action.parameter BLUE_CUBE2 OBJECT)
+(Action.parameter GREEN_CUBE OBJECT)
+(Action.parameter GREEN_CUBE2 OBJECT)
+
 
 (Action.parameter TABLE_4   SUPPORT)
 (Action.parameter IKEA_SHELF_LIGHT  SUPPORT)
 (Action.parameter IKEA_SHELF_DARK  SUPPORT)
 
 (Action.parameter PINK_TRASHBIN PLACEMENT)
+(Action.parameter GREEN_TRASHBIN PLACEMENT)
+(Action.parameter BLUE_TRASHBIN PLACEMENT)
 (Action.parameter PLACEMAT_BLUE PLACEMENT)
 (Action.parameter PLACEMAT_GREEN PLACEMENT)
 (Action.parameter PLACEMAT_RED PLACEMENT)

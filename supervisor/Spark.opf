@@ -67,15 +67,20 @@
 	  (=>(Spark.report (VAL @id) (VAL @report)))
 
 	  (IF(?(EQUAL @report "OK"))
-	     (!(== (VAL @result)  (POM_EULER 
-			     (yaw  @yaw)
-			     (pitch  @pitch)
-			     (roll  @roll)
-			     (x  @x)
-			     (y  @y)
-			     (z  @z))
-		   ))
-	     (=>(Spark.result (VAL @id) (VAL @x) (VAL @y) (VAL @z) (VAL @yaw) (VAL @pitch) (VAL @roll)))
+	     (IF(?(Robot.simu FALSE))
+		(!(== (VAL @result)  (POM_EULER 
+				      (yaw  @yaw)
+				      (pitch  @pitch)
+				      (roll  @roll)
+				      (x  @x)
+				      (y  @y)
+				      (z  @z))
+		      ))
+		(=>(Spark.result (VAL @id) (VAL @x) (VAL @y) (VAL @z) (VAL @yaw) (VAL @pitch) (VAL @roll)))
+		
+		ELSE
+		(=>(Spark.result (VAL @id) 0 0 0 0 0 0)
+		)
 	     )
 	  (!(SEM-V Spark.sem))
 

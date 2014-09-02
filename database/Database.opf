@@ -261,65 +261,39 @@ $unboundVariables= lisp-list containing the variables for which we want to find 
 	 )
  
    )
+ (defop |DbCopy|
+  :invocation (DbCopy @senderId @dbCopyId @requestList)
+  :body (
 
-;;  (defop |DbCopyBMWithSenderId|
-;;    :invocation (DbCopyBM $senderId $DbCopyId $agent $DbCopyRequestsList)
-;;    :documentation "MATTHIEU'S CODE. Appereantly this procedure handles HATP requests in the ontology. This 
-;; fact is sent by the msgconnector-OPRS-bridge. Looks like the request is hardcoded there to be this way."
-;;    :body (
-	  
-	 
-;; 	  (!(= @statusTmp OK))
-;; 	  (!(= @DbCopyRequestsList $DbCopyRequestsList))
-;; 	  (!(= @DbCopyResultsList (. .)))
-	  
-;; 	  (!(= @iterOnDbCopyRequests 0))
-;; 	  ;;(! (SEM-P ORO-SIMULATOR-SEM))
-	  
-;; 	  (WHILE(?(~ (NULL @DbCopyRequestsList)))
-;; 		(!(= @curDbCopyRequest (CAR @DbCopyRequestsList)))		
-		
-;; 		(!(= @iterOnDbCopyRequests (+ @iterOnDbCopyRequests 1)))
-;; 		;;;;;;;;;;
-;; 		;;
-;; 		;;;;;;;;;;;;;
-;; 		(!(= @iterOnCurDbCopyRequest 0))
-;; 		(WHILE(?(~ (NULL @curDbCopyRequest)))
-;; 		      (IF(?(EQUAL @iterOnCurDbCopyRequest 0))
-;; 			 (!(= @subject (CAR @curDbCopyRequest)))
-;; 			 ELSE
-;; 			 (!(= @predicate (CAR @curDbCopyRequest)))
-;; 			 (!(= @resultList (ALL @someValue (AGENT-STATEMENT (VAL $agent) (VAL @subject) (VAL @predicate) @someValue ))))
-;; 			 (!(= @DbCopyResultsList (CONS-TAIL @resultList @DbCopyResultsList)))
-;; 			 )
-;; 		      (!(= @iterOnCurDbCopyRequest (+ @iterOnCurDbCopyRequest 1)))
-;; 		      (!(= @curDbCopyRequest (CDR @curDbCopyRequest)))
-;; 		      )
-		
-;; 		(IF(?(< @iterOnCurDbCopyRequest 2))
-;; 		   (!(PRINTF (FORMAT "To few values (les than two) for @iterOnDbCopyRequests th list in list of list %s\n"  $senderId $DbCopyId $agent $DbCopyRequestsList @iterOnDbCopyRequests $DbCopyRequestsList)))  	  
-;; 		   (!(= @statusTmp ERROR))
-;; 		   )
-		
-		
-;; 		(!(= @DbCopyRequestsList (CDR @DbCopyRequestsList)))
-;; 		)
+	 (!(= @resultList (. .)))
 
-	  
-;; 	  ;;(! (SEM-V ORO-SIMULATOR-SEM))
-	  
-;; 	  (IF(?(EQUAL @statusTmp OK))
-;; 	     (!(= $status ok))
-;; 	     ELSE
-;; 	     (!(= $status @statusTmp))
-;; 	     )
+	 (WHILE(?(~(NULL @requestList)))
+	       (!(= @request (CAR @requestList)))
+	       (!(= @requestList (CDR @requestList)))
+	       
+	       (!(= @subject (CAR @request)))
+	       (!(= @request (CDR @request)))
+	       (!(= @result (. .)))
+	       (WHILE(?(~(NULL @request)))
+		     (!(= @predicate (CAR @request)))
+		     (!(= @request (CDR @request)))
+		     (!(= @result (ALL @someValue (AGENT-STATEMENT PR2_ROBOT (VAL @subject) (VAL @predicate) @someValue))))
+		     (!(= @resultList (CONS-TAIL @result @resultList)))
+		   ;  (IF(?(AGENT-STATEMENT PR2_ROBOT (VAL @subject) (VAL @predicate) @value))
+		;	(!(= @result (CONS-TAIL @value @result)))
+		;	)
+		     
+		     )
 
-;; 	  (!(= $DbCopyResult (DbCopyRes $DbCopyId $status @DbCopyResultsList)))	  
-;; 	  (!(SEND-MESSAGE $senderId $DbCopyResult))
+	       )
+	 (!(= @message (DbCopyRes @dbCopyId ok @resultList)))
+	 (!(PRINT @message))
+	 (!(SEND-MESSAGE @senderId @message))
+	 ;DbCopyRes 0 ok ((. (. .) (. .)   .))
+	 )
+ 
+   )
 
-;; 	  (!(PRINTF (FORMAT "DbCopyBM  End : %s %s %s %s %s %s\n"  $senderId $DbCopyId $agent $DbCopyRequestsList $status $DbCopyResult)))  
-;; 	  )
-;;    )
  
 (defop |cleanDb|
 	:invocation(Database.cleanDb @caller)

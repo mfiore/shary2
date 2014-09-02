@@ -73,7 +73,7 @@
 
 			    (WHILE(?(~(NULL @plan))) 
 				  ;get agent
-				  (!(Tester.breakpoint))
+
 				  (!(= @anAgent (CAR @plan)))
 				  (!(= @plan (CDR @plan)))
 				  (!(== (VAL @anAgent) (. @agentName @agentType @agentActions  .)))
@@ -144,6 +144,7 @@
 					(!(= @planningFailures @maxPlanningFailures))
 
 					ELSEIF(?(AgentActionMonitor.unexpectedAction @agent))
+					(!(PRINT "Unexpected Action. Replanning"))
 					(IF(?(PlanManager.isManagingAgent (VAL @otherAgent)))
 					   (=>(PlanManager.stopAgent @otherAgent))
 					   (^(PlanManager.agentReport (VAL @otherAgent) @report))
@@ -249,11 +250,14 @@
 		      ELSEIF(?(Action.type (VAL @actionName) PLACEMENT))
 		      (!(== (VAL @actionParameters) (. @object @placement .)))
 		      ) 
-		   
+		   (!(PlanManager.getActionString @actionName @actionParameters " " 0 @oldObject @followsHandover @actionString))		   
 		   (IF(?(PlanManager.planningModality (VAL @agents) ROBOT))  ;if robot plans then he says the human he should execute the action
-		      (!(PlanManager.getActionString @actionName @actionParameters " " 0 @oldObject @followsHandover @actionString))
+
 		      (!(Acapela.say @actionString))
 		      )
+		   (!(PRINT "HUMAN: "))
+		   (!(PRINT @actionString))
+		   (!(PRINT @actionId))
 		   
 ;;if we haven't activated a monitor sphere activate it. Associate a monitor sphere id
 		   ;; with the id of the action to monitor  
@@ -306,6 +310,10 @@
 		
 		(WHILE(?(~(NULL @actionLinks))) 
 		      (!(= @currentLink (CAR @actionLinks)))
+		      (IF(?(~(PlanManager.actionReport (VAL @currentLink) @report)))
+			 (!(PRINT "Robot waits for action"))
+			 (!(PRINT @currentLink))
+			 )
 		      (^(|| (PlanManager.actionReport (VAL @currentLink) @report)
 			 (PlanManager.stopAgent robot)))
 
@@ -326,7 +334,8 @@
 		;verbalize action
 		(!(PlanManager.getActionString @actionName @actionParameters "I " 0 @oldObject @followsHandover @actionString))
 		(!(Acapela.say @actionString))
-
+		(!(PRINT "ROBOT: "))
+		(!(PRINT @actionString))
 		;execute action
 		(!(ExecutionManager.getFreeId @executionId))
 		(=>(ExecutionManager.executeAction @actionName @actionParameters @executionId))

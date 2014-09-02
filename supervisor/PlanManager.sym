@@ -3,7 +3,7 @@ declare ff PlanManager.isRunning 0
 declare cwp PlanManager.isManagingAgent
 declare ff PlanManager.agentReport 1
 declare cwp PlanManager.stopAgent
-declare ff PlanManage.actionReport 1
+declare ff PlanManager.actionReport 1
 declare cwp PlannerInterface.report 
 declare be PlanManager.managePlans
 declare cwp PlanManager.stop

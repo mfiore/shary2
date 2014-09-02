@@ -77,8 +77,8 @@
 			    )
 		      (!(= @actionParameters (. (VAL @object)  .)))
 		      ELSEIF(?(Action.type (VAL @actionName) PLACEMENT))
-		      (!(= @object NO_NAME))
-		      (!(= @placement NO_NAME))
+;		      (!(= @object NO_NAME))
+;		      (!(= @placement NO_NAME))
 
 
 		      (WHILE(?(~(NULL @parameters)))

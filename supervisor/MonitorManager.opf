@@ -35,6 +35,7 @@
 	  (IF(?(~(NULL @conditionList)))
 	     (=>(MonitorManager.isTestingConditions (VAL @testId)))
 	     (WHILE(?(& (~(MonitorManager.stopTestConditions (VAL @testId)))  (~ (VAL @monitorFact))))
+		   (^(ELAPSED-TIME (TIME) 1))
 		   (!(= @actualCondition (CAR @conditionList)))
 		   (!(= @conditionList (CDR @conditionList)))
 		   (IF(?(~(VAL @actualCondition)))
@@ -69,6 +70,7 @@
 	 (IF(?(~(NULL @conditionList)))
 	    (=>(MonitorManager.isTestingConditions (VAL @testId)))
 	  (WHILE(?(&  (~(MonitorManager.stopTestConditions (VAL @testId))) (~(VAL @monitorFact))))
+		(^(ELAPSED-TIME (TIME) 1))
 		(!(= @actualCondition (CAR @conditionList)))
 		(!(= @conditionList (CDR @conditionList)))
 		(IF(?(VAL @actualCondition))
@@ -234,11 +236,16 @@ be moved in another class"
 		   (WHILE(?(& (~(VAL @successConditionsTrue)) (~(VAL @failureConditionsTrue)) (MonitorManager.highestAvailablePriority  (VAL @priority)) (~(MonitorManager.cancelMonitoring (VAL @monitorId))) (MonitorManager.shouldRun TRUE) (EQUAL @executionReport "OK")))
 ;			 (^(ELAPSED-MTIME (TIME) 500))
 			 
+			 (IF(?(Robot.simu FALSE))
 			 
-			 (!(HeadActions.freeId @executionId))  ;we link execution to an ID. This is the last used ID + 1 (needs to be implemented
-			 (=>(HeadActions.action lookAt (VAL @target) (VAL @targetPart) (VAL @executionId)))
-			 (^(HeadActions.report (VAL @executionId) @executionReport))
-			 (~>(HeadActions.report (VAL @executionId) (VAL @executionReport)))
+			    (!(HeadActions.freeId @executionId))  ;we link execution to an ID. This is the last used ID + 1 (needs to be implemented
+			    (=>(HeadActions.action lookAt (VAL @target) (VAL @targetPart) (VAL @executionId)))
+			    (^(HeadActions.report (VAL @executionId) @executionReport))
+			    (~>(HeadActions.report (VAL @executionId) (VAL @executionReport)))
+
+			    ELSE
+			    (^(ELAPSED-TIME (TIME) 1))
+			    )
 			 )
 
 		   (~>(MonitorManager.isMonitoringTarget (VAL @monitorId)))

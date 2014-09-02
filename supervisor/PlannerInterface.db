@@ -7,6 +7,7 @@
 (PlannerInterface.action hatp PutObject put)		
 (PlannerInterface.action hatp PutObjectVisibleAndReachable putAccessible)
 (PlannerInterface.action hatp GiveObject handover)
+(PlannerInterface.action hatp PlaceObject place)
 (PlannerInterface.action hatp ForceInformation undefined)
 (PlannerInterface.action hatp GiveInformationAbout undefined)
 (PlannerInterface.action hatp AskForInformation undefined)

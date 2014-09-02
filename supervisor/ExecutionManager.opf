@@ -82,6 +82,7 @@
 	       
 	       )				
 	    ELSE
+	    (^(ELAPSED-TIME (TIME) 1))
 	    (=>(ExecutionManager.report (VAL @executionId) OK))
 	    )
 	 
