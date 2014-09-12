@@ -94,6 +94,8 @@
 	     (=>(ArmActions.report (VAL @actionId) "OK"))
 	     (~>(Robot.pose @a @b @c @d))
 	     (=>(Robot.pose (VAL @arm) (VAL @object) (VAL @realSupport) (VAL @pose)))
+	     (=>(Mhp.previousTask -1 -1))
+
 	     
 	     ELSE
 	     (=>(ArmActions.report (VAL @actionId) "OK"))

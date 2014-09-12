@@ -69,7 +69,7 @@
 	  (WHILE(?(< @sphereId 10))   ;from 0 to 10 (indexes of the monitor spheres in spark)
 		(!(Spark.getFreeId @sparkId))
 		;we use a fake item and agent
-		(=>(Spark.request updateSphereMonitor (VAL @sphereId) GEN_FALSE GREY_TAPE 0 HERAKLES_HUMAN1 0 0 0 SPARK_PICK_OBJECT (VAL @sparkId)))
+		(=>(Spark.request updateSphereMonitor (VAL @sphereId) GEN_FALSE NO_NAME 0 HERAKLES_HUMAN1 0 0 0 SPARK_PICK_OBJECT (VAL @sparkId)))
 		(^(Spark.report (VAL @sparkId) @report))
 		(~>(Spark.report (VAL @sparkId) @report))
 		(IF(?(AgentActionMonitor.sphere @agent @object (VAL @sphereId)))  ;we erase the spheres from the db
@@ -151,7 +151,8 @@
 		   (!(Spark.getFreeSphereId @sphereId))
 		   (?(Spark.humanHand RIGHT @sparkHand))
 		   ;;different objects have different affordances associated to them, which translate to different kinds of monitor spheres.
-		   (?(Spark.typeMonitorSphere (VAL @currentObject) @sphereType)) 
+		   (?(Object.type (VAL @currentObject) @class @type))
+		   (?(Spark.typeMonitorSphere (VAL @type) @sphereType))
 		   (=>(Spark.request updateSphereMonitor (VAL @sphereId) GEN_TRUE (VAL @currentObject) (VAL @sparkHand)
 				     (VAL @agent) (VAL @x) (VAL @y) (VAL @z) (VAL @sphereType) (VAL @sparkId)))
 		   (^(Spark.report (VAL @sparkId) @report))
@@ -213,13 +214,13 @@
 	       
 	       ;we separate objects in pickables and placements (and ignore bins for now)
 	       (WHILE(?(~(NULL @objects)))
-		     (!(= @anObject (CAR @objects)))
+		     (!(= @anObject (CAR(CAR @objects))))
 		     (!(= @objects (CDR @objects)))
 
-		     (IF(?(Object.type (VAL @anObject) PICKABLE))
+		     (IF(?(Object.type (VAL @anObject) @class PICKABLE))
 			(!(= @pickableList (CONS-TAIL @anObject @pickableList)))
 
-			ELSEIF(?(Object.type (VAL @anObject PLACEMENT)))
+			ELSEIF(?(Object.type (VAL @anObject) @class PLACEMENT))
 			(!(= @placementList (CONS-TAIL @anObject @placementList)))
 			)
 		     )
@@ -235,28 +236,28 @@
 		     (!(= @objectsToMonitor (. .))) ;;here we will place object for which we create monitor spheres
 		     (IF(?(~(Agent.hasObject (VAL @anAgent) @anyObject)))  ;;if the agent doesn't have the objects we scan the pickable list, else we scan the placement lists 
 
-			(WHILE(?(~(NULL(@pickables))))
+			(WHILE(?(~(NULL @pickables)))
 			      (!(= @anObject (CAR @pickables)))
 			      (!(= @pickables (CDR @pickables)))
 			      (IF(?(~(AgentActionMonitor.sphere (VAL @anAgent) (VAL @anObject) @sphereId))) ;;if the object is not monitored add it to the objectToMonitor list
-				 (!(= @objectsToMonitor (CONS-TAIL @object @objectsToMonitor)))
-				 )
-			      )
-			(IF(?(~(NULL @objectsToMonitor)))
-			   (!(AgentActionMonitor.activateMonitorSpheres @objectsToMonitor @agent)) ;;activate monitor spheres for the objects
-			   )
-
-			ELSE
-			(WHILE(?(~(NULL(@placements)))) ;;same as the previous loop
-			      (!(= @anObject (CAR @placements)))
-			      (!(= @placements (CDR @placements)))
-			      (IF(?(~(AgentActionMonitor.sphere (VAL @anAgent) (VAL @anObject) @sphereId)))
 				 (!(= @objectsToMonitor (CONS-TAIL @anObject @objectsToMonitor)))
 				 )
 			      )
 			(IF(?(~(NULL @objectsToMonitor)))
-			   (!(AgentActionMonitor.activateMonitorSpheres @objectsToMonitor @anAgent))
+			   (!(AgentActionMonitor.activateMonitorSpheres @objectsToMonitor @anAgent)) ;;activate monitor spheres for the objects
 			   )
+
+			;; ELSE
+			;; (WHILE(?(~(NULL @placements))) ;;same as the previous loop
+			;;       (!(= @anObject (CAR @placements)))
+			;;       (!(= @placements (CDR @placements)))
+			;;       (IF(?(~(AgentActionMonitor.sphere (VAL @anAgent) (VAL @anObject) @sphereId)))
+			;; 	 (!(= @objectsToMonitor (CONS-TAIL @anObject @objectsToMonitor)))
+			;; 	 )
+			;;       )
+			;; (IF(?(~(NULL @objectsToMonitor)))
+			;;    (!(AgentActionMonitor.activateMonitorSpheres @objectsToMonitor @anAgent))
+			;;    )
 			)
 		     )
 	       )
@@ -267,9 +268,10 @@
 	       (!(= @anAgent (CAR @agentList)))
 	       (!(= @agentList (CDR @agentList)))
 	       (!(= @bins @binList))
+	       (?(Object.placement @placements))
 	       (!(= @objectsToMonitor (. .)))
 	       (IF(?(Agent.hasObject (VAL @anAgent) @anyObject))
-		  (?(WHILE (~(NULL @bins)))
+		  (WHILE(?(~(NULL @bins)))
 		    (!(= @aBin (CAR @bins)))
 		    (!(= @bins (CDR @bins)))
 		    (IF(?(~(AgentActionMonitor.sphere (VAL @anAgent) (VAL @aBin) @sphere)))
@@ -277,8 +279,19 @@
 		       )
 		    )
 		  (IF(?(~(NULL @objectsToMonitor)))
-		     (!(AgentActionMonitor.activateSpheres @objectsToMonitor @anAgent))
+		     (!(AgentActionMonitor.activateMonitorSpheres @objectsToMonitor @anAgent))
 		     )
+		  (WHILE(?(~(NULL @placements))) ;;same as the previous loop
+			      (!(= @anObject (CAR @placements)))
+			      (!(= @placements (CDR @placements)))
+			      (IF(?(~(AgentActionMonitor.sphere (VAL @anAgent) (VAL @anObject) @sphereId)))
+				 (!(= @objectsToMonitor (CONS-TAIL @anObject @objectsToMonitor)))
+				 )
+			      )
+		  (IF(?(~(NULL @objectsToMonitor)))
+		     (!(AgentActionMonitor.activateMonitorSpheres @objectsToMonitor @anAgent))
+		     )
+			
 		  )
 	       )	 
 	 )
@@ -385,7 +398,7 @@
 				  
 				  (~>(Agent.hasObject (VAL @agentName) (VAL @heldObject)))
 				  (!(DatabaseInterface.remove (AGENT-STATEMENT PR2_ROBOT @agentName hasInHand (VAL @heldObject)) @result))				  
-				  (!(AgentActionMonitor.calculateInferencesForAgent @agentName))
+				  (!(AgentActionMonitor.calculateInferencesForAgents (. @agentName .)))
 				  (!(AgentActionMonitor.activateMonitorSpheres (. @heldObject .) HERAKLES_HUMAN1))
 				  ) 
 			       ELSEIF(?(EQUAL @sphereType SPARK_PICK_OBJECT))
@@ -405,7 +418,7 @@
 				  (=>(Agent.hasObject @agentName @objectName))
 
 				  (!(DatabaseInterface.add (AGENT-STATEMENT PR2_ROBOT @agentName hasInHand (VAL @objectName)) @result))
-				  (!(AgentActionMonitor.calculateInferencesForAgent @agentName))
+				  (!(AgentActionMonitor.calculateInferencesForAgents (. @agentName .)))
 
 				  
 				  )			 
@@ -436,7 +449,7 @@
 				  
 				  (~>(Agent.hasObject (VAL @agentName) (VAL @heldObject)))
 				  (!(DatabaseInterface.remove (AGENT-STATEMENT PR2_ROBOT @agentName hasInHand (VAL @heldObject)) @result))				  
-				  (!(AgentActionMonitor.calculateInferencesForAgent @agentName))
+				  (!(AgentActionMonitor.calculateInferencesForAgents (. @agentName .)))
 				  )
 			       )
 			    )

@@ -13,48 +13,19 @@
  (Spark.humanHead HeadX)
  (Spark.humanHand RIGHT 0)
 
- (Spark.typeMonitorSphere GREY_TAPE SPARK_PICK_OBJECT)
- (Spark.typeMonitorSphere LOTR_TAPE SPARK_PICK_OBJECT)
- (Spark.typeMonitorSphere WALLE_TAPE SPARK_PICK_OBJECT)
- (Spark.typeMonitorSphere RED_CUBE SPARK_PICK_OBJECT)
- (Spark.typeMonitorSphere RED_CUBE2 SPARK_PICK_OBJECT)
- (Spark.typeMonitorSphere GREEN_CUBE SPARK_PICK_OBJECT)
- (Spark.typeMonitorSphere GREEN_CUBE2 SPARK_PICK_OBJECT)
- (Spark.typeMonitorSphere BLUE_CUBE SPARK_PICK_OBJECT)
- (Spark.typeMonitorSphere BLUE_CUBE2 SPARK_PICK_OBJECT)
- (Spark.typeMonitorSphere PURPLE_CUBE SPARK_PICK_OBJECT)
+ (Spark.typeMonitorSphere PICKABLE SPARK_PICK_OBJECT)
+ (Spark.typeMonitorSphere BIN SPARK_THROW_IN_CONTAINER)
+ (Spark.typeMonitorSphere PLACEMENT SPARK_SIMPLE_ENTRY)
 
-
- (Spark.typeMonitorSphere PINK_TRASHBIN SPARK_THROW_IN_CONTAINER)
- (Spark.typeMonitorSphere GREEN_TRASHBIN SPARK_THROW_IN_CONTAINER)
- (Spark.typeMonitorSphere BLUE_TRASHBIN SPARK_THROW_IN_CONTAINER)
-
-
- (Spark.typeMonitorSphere PLACEMAT_RED SPARK_SIMPLE_ENTRY)
- (Spark.typeMonitorSphere PLACEMAT_GREEN SPARK_SIMPLE_ENTRY)
- (Spark.typeMonitorSphere PLACEMAT_BLUE SPARK_SIMPLE_ENTRY)
-
- (Spark.sphereParameters PLACEMAT_RED 0.25 1.0)
- (Spark.sphereParameters PLACEMAT_PURPLE 0.25 1.0)
- (Spark.sphereParameters PLACEMAT_BLUE 0.25 1.0)
- (Spark.sphereParameters PLACEMAT_GREEN 0.25 1.0 )
  
- (Spark.sphereParameters GREY_TAPE 1.0 1.2)
- (Spark.sphereParameters LOTR_TAPE 1.0 1.2)
- (Spark.sphereParameters WALLE_TAPE 1.0 1.2)
- (Spark.sphereParameters PINK_TRASHBIN 5 1.5)
- (Spark.sphereParameters GREEN_TRASHBIN 5 1.5) 
- (Spark.sphereParameters BLUE_TRASHBIN 5 1.5)
 
+ (Spark.sphereParameters PLACEMAT 0.25 1.0)
 
+ (Spark.sphereParameters TAPE 1.0 1.2)
 
- (Spark.sphereParameters RED_CUBE 1.0 1.5)
- (Spark.sphereParameters RED_CUBE2 1.0 1.5)
- (Spark.sphereParameters YELLOW_CUBE 1.0 1.5)
- (Spark.sphereParameters GREEN_CUBE 1.0 1.5)
- (Spark.sphereParameters GREEN_CUBE2 1.0 1.5)
- (Spark.sphereParameters BLUE_CUBE 1.0 1.5)
- (Spark.sphereParameters BLUE_CUBE2 1.0 1.5)
+ (Spark.sphereParameters TRASHBIN 1 1.0)
+
+ (Spark.sphereParameters CUBE 1.0 1.5)
 
  (Spark.monitorParameter take OBJECT)
  (Spark.monitorParameter throw PLACEMENT)

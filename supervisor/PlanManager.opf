@@ -69,6 +69,11 @@
 			    ELSEIF(?(EQUAL @report OK))			    
 			    (^(PlannerInterface.result @plan))
 			    (~>(PlannerInterface.result (VAL @plan)))
+			    
+			    (IF(?(&(PlanManager.planningModality ROBOT) (PlanManager.shouldTellPlan TRUE)))  ;if the robot is leader for an agent it will verbalize the plan
+			       (!(PlanManager.tellPlan @plan))
+			       (!(Acapela.say "Let's start!"))
+			       )		
 
 
 			    (WHILE(?(~(NULL @plan))) 
@@ -90,10 +95,6 @@
 				     
 				     )
 				  )
-			    (IF(?(PlanManager.planningModality @agent ROBOT))  ;if the robot is leader for an agent it will verbalize the plan
-			       (!(PlanManager.tellPlan @plan))
-			       (!(Acapela.say "Let's start!"))
-			       )		
 	    
 			    
 			    ;;we wait for the report of an agent, for something unexpected to happen or for a stop request.
@@ -524,8 +525,24 @@
    :invocation(!(PlanManager.tellPlan @plan))
    :documentation "Verbalizes a plan using acapela"
    :body (
+	  (!(= @robotActions (. .)))
+	  (!(= @humansActions (. .)))
+	  (WHILE(?(~(NULL @plan))) 
+					;get agent
+		(!(= @anAgent (CAR @plan)))
+		(!(= @plan (CDR @plan)))
+		(!(== (VAL @anAgent) (. @agentName @agentType @agentActions  .)))
+		(IF(?(EQUAL @agentType HUMAN))
+		   (!(= @humanActions @agentActions))
+		   
+		   ELSEIF(?(EQUAL @agentType ROBOT))
+		   (!(= @robotActions @agentActions))
+		   )
+		)
+	  
 
-	  (!(== (VAL @plan) (. @robotActions @humanActions .)))     
+
+
 	  
 	  (!(Acapela.say "Okay... this is the plan"))
 	  (!(= @first TRUE))

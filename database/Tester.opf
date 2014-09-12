@@ -1,0 +1,38 @@
+(
+
+ (defop |testFactPoster|
+   :invocation(!(Tester.testFactPoster))
+   :body (
+	  (!(Attention.init))
+	  (!(Attention.posterLoop))
+	  )
+   )
+
+ (defop |setDemo|
+   :invocation(!(Tester.setDemo))
+   :body (
+	  (!(Attention.init))
+	  
+	  ;; (!(Database.addPredicates (. GREEN_CUBE RED_CUBE BLUE_CUBE GREEN_CUBE2 RED_CUBE2 BLUE_CUBE2 .) (. isOn .) (. TABLE_4 .)))
+	  ;; (!(Database.addPredicates (. TABLE_4 .) (. supports .) (. GREEN_CUBE RED_CUBE BLUE_CUBE GREEN_CUBE2 RED_CUBE2 BLUE_CUBE2 .)))
+	  ;; (!(Database.addPredicates (. GREEN_CUBE RED_CUBE BLUE_CUBE GREEN_CUBE2 RED_CUBE2 BLUE_CUBE2 .) (. isOnExchangeZone .) (. false .)))
+	   (!(Database.addPredicates (. BLUE_TRASHBIN BLUE_CUBE RED_CUBE2 GREEN_CUBE .) (. isReachableBy .) (. PR2_ROBOT .)))
+	   (!(Database.addPredicates (. GREEN_TRASHBIN GREEN_CUBE2 RED_CUBE BLUE_CUBE2 .) (. isReachableBy .) (. HERAKLES_HUMAN1 .)))
+
+	  (!(Database.addPredicates (. TABLE_4 .) (. whoCanPick .) (. HERAKLES_HUMAN1 PR2_ROBOT .)))
+	  (!(Database.addPredicates (. TABLE_4 .) (. whoCanPlace .) (. HERAKLES_HUMAN1 PR2_ROBOT .)))
+
+	  (!(Database.addPredicates (. PLACEMAT_GREEN .) (. whoCanPick .) (.  PR2_ROBOT .)))
+	  (!(Database.addPredicates (. PLACEMAT_GREEN .) (. whoCanPlace .) (. HERAKLES_HUMAN1 .)))
+
+	  (!(Database.addPredicates (. PLACEMAT_BLUE .) (. whoCanPick .) (. HERAKLES_HUMAN1  .)))
+	  (!(Database.addPredicates (. PLACEMAT_BLUE .) (. whoCanPlace .) (.  PR2_ROBOT .)))	  
+
+	  (!(Attention.posterLoop))
+
+	  )
+   )
+	
+		
+	
+)

@@ -32,34 +32,74 @@ easy if we want to keep the rules list small. For know I will do a series of IF 
 The result is returned into $newFact. If it's not bounded than no rules have been applied"
    :body   (
     (!(= @newFactListTemp (. .)))    
-    (IF(!(== (VAL @fact) (AGENT-STATEMENT @agentModel @subject @predicate @value)))
-
-       (IF(?(dbRuleType @typeSubject (VAL @subject)))
-	  (IF(?(dbRuleType @typeValue (VAL @value)))
-	     (!(= @i 0))
-
-	     (WHILE(?(dbRule (VAL @typeSubject) (VAL @predicate) (VAL @typeValue) @newTypeSubject @newPredicate @newTypeValue (VAL @i)))
-		   (IF(?(~(EQUAL @newTypeSubject @typeSubject)))
-		      (!(= @newFactSubject @value))
-		      (!(= @newFactValue @subject))
-		      
-		      ELSE
-		      (!(= @newFactSubject @subject))
-		      (!(= @newFactValue @value))
-		      )
-		   (!(= @newFact (AGENT-STATEMENT @agentModel @newFactSubject @newPredicate @newFactValue)))
-		   (!(= @newFactListTemp (CONS-TAIL (VAL @newFact) @newFactListTemp)))
-		   (!(= @i (+ @i 1)))
-		   )
-	     )
-	  )
+    (IF(!(== (VAL @fact) (AGENT-STATEMENT @agentModel @subject @predicate @value)))     
        
+       (?(Object.type (VAL @subject) @st @subjectClass))
+       (IF(?(Object.type (VAL @value) @vt @valueClass))
+	  (?(Object.type (VAL @value) @vt @valueClass))
+	  
+	  ELSE
+	  (!(= @valueClass @value))
+	  
+	  )
+       (!(= @i 0))
+       (WHILE(?(DbRule.rule (VAL @subjectClass) (VAL @predicate) (VAL @valueClass) @newSubjectClass @newPredicate @newValueClass (VAL @i)))
+	     (IF(?(EQUAL @newSubjectClass @subjectClass))
+		(!(= @newFactSubject @subject))
+		
+		ELSE
+		(!(= @newFactSubject @value))
+		)
+	     (IF(?(EQUAL @newValueClass @subjectClass))
+		(!(= @newFactValue @subject))
+		ELSEIF(?(EQUAL @newValueClass @valueClass))
+		(!(= @newFactValue @value))
+		ELSE
+		(!(= @newFactValue @newValueClass))
+		)
+	     (!(= @newFactListTemp (CONS-TAIL (AGENT-STATEMENT @agentModel @newFactSubject @newPredicate @newFactValue) @newFactListTemp)))
+	     
+	     (!(= @i (+ @i 1)))
+	     )
+
+       (!(= @change FALSE))
+       (IF(?(DbRule.type (VAL @subject) @subjectClass))
+	  (?(DbRule.type (VAL @subject) @subjectClass))
+	  (!(= @change TRUE))
+	  )
+	  
+       (IF(?(DbRule.type (VAL @value) @valueClass))
+	  (!(= @change TRUE))
+	  (?(DbRule.type (VAL @value) @valueClass))
+	     
+	  )
+       (IF(?(EQUAL @change TRUE))
+	  (!(= @i 0))
+	  (WHILE(?(DbRule.rule (VAL @subjectClass) (VAL @predicate) (VAL @valueClass) @newSubjectClass @newPredicate @newValueClass (VAL @i)))
+		(IF(?(EQUAL @newSubjectClass @subjectClass))
+		   (!(= @newFactSubject @subject))
+		   
+		   ELSE
+		   (!(= @newFactSubject @value))
+		   )
+		(IF(?(EQUAL @newValueClass @subjectClass))
+		   (!(= @newFactValue @subject))
+		   ELSEIF(?(EQUAL @newValueClass @valueClass))
+		   (!(= @newFactValue @value))
+		   ELSE
+		   (!(= @newFactValue @newValueClass))
+		   )
+		(!(= @newFactListTemp (CONS-TAIL (AGENT-STATEMENT @agentModel @newFactSubject @newPredicate @newFactValue) @newFactListTemp)))
+		
+		(!(= @i (+ @i 1)))
+		)
+	  )
        )
-    (!(= $newFactList @newFactListTemp))
+       (!(= $newFactList @newFactListTemp))
+       )
+
     )
-
-   )
-
+   
  (defop |update|
    :invocation (Database.update @fact @caller)
    :body (
@@ -321,7 +361,34 @@ $unboundVariables= lisp-list containing the variables for which we want to find 
 		)
 	) 
 
+(defop |addPredicates|
+  :invocation (!(Database.addPredicates @subjectList @predicateList @valueList))
+  :body (
+	 (WHILE(?(~(NULL @subjectList)))
+	       (!(= @subject (CAR @subjectList)))
+	       (!(= @subjectList (CDR @subjectList)))
+	       
+	       (!(= @predicates @predicateList))
+	       (WHILE(?(~(NULL @predicates)))
+		     (!(= @predicate (CAR @predicates)))
+		     (!(= @predicates (CDR @predicates)))
+		     
+		     (!(= @values @valueList))
+		            
+		     (WHILE(?(~(NULL @values)))
+			   (!(= @value (CAR @values)))
+			   (!(= @values (CDR @values)))
+			   
+			   (!(Database.add (AGENT-STATEMENT PR2_ROBOT @subject @predicate @value)))
+			   )
+		     )
+	       )
+	 
+	 )
+  )
+
  
 
 
  )
+

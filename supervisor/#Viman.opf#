@@ -1,0 +1,57 @@
+;; -*-Lisp-*-
+;;author: Michelangelo Fiore
+;;this module contains utilities procedures to manage Viman.
+ 
+(
+
+ (defop |init|
+   :invocation (!(Viman.init))
+   :documentation "Inits the module"
+   :body (
+	  (=>(Viman.freeId 0))
+	  (!(SEM-CREATE Viman.sem 1 SEM-FIFO))
+	  )
+   )
+
+ (defop |Viman.getFreeId|
+   :invocation(!(Viman.getFreeId $id))
+   :documentation "gets a new id for requestes"
+   :body (
+	  (!(SEM-P Viman.sem))
+	  (?(Viman.freeId $id))
+
+	  (=>(Viman.freeId (+ $id 1)))
+	  (!(SEM-V Viman.sem))
+	  )
+   )
+ (defop |activateTracking|
+   :invocation (Viman.request activateTracking @id)
+   :documentation "activates tracking for viman"
+   :body (
+	  (!(SEM-P Viman.sem))
+	  
+	  (=>(Viman.freeId (+ @id 1)))
+	  
+	  (!(GenomInterface.handleRequest VIMAN VIMAN_ACTIVATETRACKING (Viman.stop (VAL @id)) (FALSE) (Viman.isTracking TRUE) 300 NIL @report @result)) 
+	  
+	  (=>(Viman.report (VAL @id) (VAL @report)))
+
+	  (!(SEM-V Viman.sem))
+	  )
+   )
+
+ (defop |stopTracking|
+   :invocation (Viman.request stopTracking @id)
+   :documentation "stops tracking for viman"
+   :body (
+	  (!(SEM-P Viman.sem))
+
+	  (=>(Viman.freeId (+ @id 1)))	  
+	  (!(GenomInterface.handleRequest VIMAN VIMAN_STOP (Viman.stop (VAL @id)) (FALSE) (Viman.isTracking FALSE) 300 NIL @report @result)) 
+	  (=>(Viman.report (VAL @id) (VAL @report)))
+
+	  (!(SEM-V Viman.sem))
+	  )
+   )
+
+)

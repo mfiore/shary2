@@ -27,15 +27,25 @@
 	  )
    )
 
+
  (defop |testGtpTake|
    :invocation(!(Tester.testGtpTake))
    :body (
 	  (!(Controller.initAll))
-	  (=>(GtpActions.action pick WALLE_TAPE "right" 0))
+	  (=>(GtpActions.action pick RED_CUBE "right" 0))
 	  (^(GtpActions.report 0 @report))
 	  (~>(GtpActions.report @id @report))
 	  
-	  (=>(GtpActions.action place WALLE_TAPE TABLE_4 "right" 1))
+	  (=>(GtpActions.action place RED_CUBE TABLE_4 "right" FALSE (. .) "force_place" (. 6.8 6.7 0.72 7.8 6.7 0.72 6.8 6.1 0.72 7.8 6.1 0.72 .) 1))
+	  (^(GtpActions.report 1 @report))
+	  (~>(GtpActions.report @id @report))
+	  )
+   )
+ 
+ (defop |testGtpPlace|
+   :invocation(!(Tester.testGtpPlace))
+   :body (
+	  (=>(GtpActions.action place WALLE_TAPE PLACEMAT_GREEN "right" FALSE (. .) "force_place" (. 7.0 6.9 0.72 8.0 6.9 0.72 7.0 5.9 0.72 8.0 5.9 0.72 .) 1))
 	  (^(GtpActions.report 1 @report))
 	  (~>(GtpActions.report @id @report))
 	  )
@@ -255,13 +265,6 @@
 	 (=>(PlanManager.managePlans))
 	 )
   )
- (defop |testFactPoster|
-   :invocation(!(Tester.testFactPoster))
-   :body (
-	  (!(Attention.init))
-	  (!(Attention.posterLoop))
-	  )
-   )
  
  ;; (defop |testPlan| 
  ;;   :invocation(!(Tester.testPlan))
@@ -615,18 +618,34 @@
    :invocation (!(Tester.testUnification))
    :documentation ""
    :body (
-	  (!(= @var (action a parameters b) ))
-	  (!(= @var2 (. a b c d .)))
-	  (!(== (VAL @var2) (. @primo @secondo @terzo @quarto .)))
-	  (!(PRINT @primo))
-	  (!(PRINT @terzo))
-	  (! (== (VAL @var) (action @actionName parameters @parameters)))
-;	     (! (== @action (ACTION-NAME @action-name) (ACTOR @action-actor) (START-TIME @start-time) (END-TIME @end-time) (PARAMETERS @actionParameters)))
-;	  (IF(! (== $ACTION (ACTION (ACTION-ID $ACTION-ID) (ACTION-NAME $ACTION-NAME) (ACTOR $ACTOR) (START-TIME $START-TIME) (END-TIME $END-TIME) (PARAMETERS $ActionParams))))
-;	    )
-	  (!(PRINT @var))
-	  (!(PRINT @actionName))
-	  (!(PRINT @parameters))
+;	  (!(= @var (action a parameters b) ))
+	  ;; (!(= @var2 (. a b c d .)))	
+	  ;; (!(== (VAL @var2) (. @primo @secondo @terzo @quarto .)))
+	  ;; (!(PRINT @primo))
+	  ;; (!(PRINT @terzo))
+;; 	  (! (== (VAL @var) (action @actionName parameters @parameters)))
+;; 	     (! (== @action (ACTION-NAME @action-name) (ACTOR @action-actor) (START-TIME @start-time) (END-TIME @end-time) (PARAMETERS @actionParameters)))
+;; ;	  (IF(! (== $ACTION (ACTION (ACTION-ID $ACTION-ID) (ACTION-NAME $ACTION-NAME) (ACTOR $ACTOR) (START-TIME $START-TIME) (END-TIME $END-TIME) (PARAMETERS $ActionParams))))
+;; ;	    )
+;; 	  (!(PRINT @var))
+;; 	  (!(PRINT @actionName))
+;; 	  (!(PRINT @parameters))
+
+
+	  (!(= @x 3))
+	  (!(= @y 3))
+	  (!(= @z 3))
+
+	 (!(= @ax (- @x 0.2)))
+	 (!(= @ay (+ @y 0.2)))
+	 (!(= @bx (+ @x 0.2)))
+	 (!(= @by (+ @y 0.2)))
+	 (!(= @cx (- @x 0.2)))
+	 (!(= @cy (- @y 0.2)))
+	 (!(= @dx (+ @x 0.2)))
+	 (!(= @dy (- @y 0.2)))
+
+	 (!(= @list (. @ax @by @z @cx @cy @z @dx @dy @z .)))
 	  )
    )
 
@@ -658,17 +677,17 @@
   :body (
 	 (!(Controller.initAll))
 	 (?(Spark.freeId @sparkId))
-	 (=>(Spark.request setGraspedObject LOTR_TAPE 0 0 (VAL @sparkId)))
-	 (!(ExecutionManager.handleReport Spark.report @sparkId @executionId))
+	 (=>(Spark.request setGraspedObject BLUE_CUBE2 0 0 (VAL @sparkId)))
+;	 (!(ExecutionManager.handleReport Spark.report @sparkId @executionId))
 
 	 (?(Spark.freeId @sparkId))
-	 (=>(Spark.request setInferrenceForObject LOTR_TAPE 0 PR2_ROBOT 0 SPARK_PRECISE_ROBOT_HAND 1.0 (VAL @sparkId)))  
-	 (!(ExecutionManager.handleReport Spark.report @sparkId @executionId))
+	 (=>(Spark.request setInferrenceForObject BLUE_CUBE2 0 PR2_ROBOT 0 SPARK_PRECISE_ROBOT_HAND 1.0 (VAL @sparkId)))  
+;	 (!(ExecutionManager.handleReport Spark.report @sparkId @executionId))
 	 
-	 (=>(ExecutionManager.execute takeSandra LOTR_TAPE NO_NAME 10))
+	 (=>(ExecutionManager.execute take BLUE_CUBE2 RIGHT 10))
 	 (^(ExecutionManager.report 10 @report))
-	 (IF(?(EQUAL @report "OK"))
-	 	(=>(ExecutionManager.execute placeSandra LOTR_TAPE TABLE_4 PLACEMAT_RED 20))
+	 (IF(?(EQUAL @report OK))
+	 	(=>(ExecutionManager.execute place BLUE_CUBE2 TABLE_4 PLACEMAT_GREEN 20))
 		)
 	 )
   )

@@ -1,22 +1,6 @@
 (
 	(MySelf PR2_ROBOT)
 	
-	(dbRuleType Table TABLE_4)
-	(dbRuleType Table IKEA_SHELF_LIGHT_2)
-	(dbRuleType Table IKEA_SHELF_DARK)
-	(dbRuleType Table META_TABLE)
-	(dbRuleType GameArtifact PINK_TRASHBIN)
-	(dbRuleType GameArtifact ACCESSKIT)
-	(dbRuleType GameArtifact WALLE_TAPE)
-	(dbRuleType GameArtifact LOTR_TAPE)
-	(dbRuleType GameArtifact GREY_TAPE)
-									
-	;(dbRule GameArtifact isOn Table GameArtifact isOnTable Table 0)
-;	(dbRule GameArtifact isOn Table Table placeOfGameArtifact GameArtifact 1)
-;	(dbRule GameArtifact isNextTo Box GameArtifact isNextToBox Box 0)
-
-;	;(DbRule isOnTable GameArtifact empty placeOfGameArtifact empty true) 
-;	;(DbRule isOn empty SimpleTable isOn META_TABLE false)
 
 	(Database.supervisorName OPRS_SUP)
 	(AsyncParseSparkFactOperationsPosterLoop 500)

@@ -7,4 +7,6 @@ load db "database/Database.db"
 
 include "database/Attention.sym"
 load opf "database/Attention.opf"
-load opf "supervisor/Tester.opf"
+load opf "database/Tester.opf"
+load db "supervisor/Object.db"
+load db "database/HatpRules.db"

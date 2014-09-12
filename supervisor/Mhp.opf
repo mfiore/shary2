@@ -601,7 +601,7 @@
 	       (=>(Mhp.result @id @resultList))
 
 	       ELSE
-	       (=>(Mhp.result 0 (. action .)))
+	       (=>(Mhp.result @id (. action .)))
 	       )
 	    )
 	 )

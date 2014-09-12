@@ -143,7 +143,14 @@
 	       (IF(?(EQUAL @type SPARK_ADD_FACT))
 		  (!(PRINT "ADD FACT"))
 		  (!(PRINT @predicate))
+		  
+		  (IF(?(EQUAL @predicate isIn))
+		     (IF(?(EQUAL @value TABLE_4))
+			(!(= @predicate isOn))
+			)
+		     )
 		  (!(Database.add (AGENT-STATEMENT (VAL @agentModel) (VAL @subject) (VAL @predicate) (VAL @value))))	
+
 		  (IF(?(EQUAL @predicate isOn))
 		     (!(SEND-MESSAGE OPRS_SUP (Monitor.objectAppears (VAL @subject))))
 		     )
@@ -172,7 +179,14 @@
 		     ;; (!(Database.remove (AGENT-STATEMENT HERAKLES_HUMAN1 (VAL @subject) isReachable false)))
 		     )
 		  (!(PRINT @predicate))
+		  (IF(?(EQUAL @predicate isIn))
+		     (IF(?(EQUAL @value TABLE_4))
+			(!(= @predicate isOn))
+			)
+		     )
+
 		  (!(Database.update (AGENT-STATEMENT (VAL @agentModel) (VAL @subject) (VAL @predicate) (VAL @value))))
+		  
 		  (IF(?(EQUAL @predicate isPresent))
 		     (IF(?(EQUAL @value true))
 		  	(!(SEND-MESSAGE OPRS_SUP (Monitor.agentAppears (VAL @subject))))
@@ -188,6 +202,7 @@
 		  (!(Database.remove (AGENT-STATEMENT (VAL @agentModel) (VAL @subject) (VAL @predicate) (VAL @value))))
 					;(^(Database.report @report))
 					;(~>(Database.report @report))
+
 		  )
 	       (!(= @i (+ @i 1)))
 	       

@@ -69,7 +69,7 @@
 	       (=>(ExecutionManager.execute throw @object @placement @executionId))
 
 	       ELSEIF(?(EQUAL @actionName place))
-	       (=>(ExecutionManager.execute place @object @placement @executionId))
+	       (=>(ExecutionManager.execute place @object TABLE_4 @placement @executionId))
 	       
 	       ELSEIF(?(EQUAL @actionName handover))
 	       (IF(?(EQUAL @agent2 PR2_ROBOT))
@@ -78,7 +78,7 @@
 		  (=>(ExecutionManager.execute handover GIVE @object @agent2 @executionId))
 		  )
 	       ELSEIF(?(EQUAL @actionName undefined))  ;this kind of actions are not executed at the moment and the module returns just an ok
-	       (=>(ExecutionManager.report (VAL @executionId) OK))
+	       (=>(ExecutionManager.report (VAL @executionId) "OK"))
 	       
 	       )				
 	    ELSE
@@ -348,36 +348,25 @@
 
 
 	  ;; ;;plan and execute the trajectory
-	  (!(ArmActions.getFreeId @actionId))
-	  (=>(ArmActions.action moveToObject @armForPick @object @actionId))
+;	  (!(ArmActions.getFreeId @actionId))
+;	  (=>(ArmActions.action moveToObject @armForPick @object @actionId))
 
-	  (!(ExecutionManager.handleReport ArmActions @actionId @executionId TRUE TRUE @object))
+;	  (!(ExecutionManager.handleReport ArmActions @actionId @executionId TRUE TRUE @object))
 
 	  
 
 	  ;; ;;close the gripper
-	  (!(ArmActions.getFreeId @actionId))
-	  (=>(ArmActions.action closeGripper @armForPick @actionId))
-	  (!(ExecutionManager.handleReport ArmActions @actionId @executionId FALSE FALSE NO_NAME))
+;	  (!(ArmActions.getFreeId @actionId))
+;	  (=>(ArmActions.action closeGripper @armForPick @actionId))
+;	  (!(ExecutionManager.handleReport ArmActions @actionId @executionId FALSE FALSE NO_NAME))
 
-	  ;; (!(GtpActions.getFreeId @gtpId))
-	  ;; (=>(GtpActions.executeTask pick @object NO_NAME "right" @gtpId))
-	  ;; (!(ExecutionManager.handleReport Gtp @gtpId @executionId TRUE TRUE @object))
+	  (!(GtpActions.getFreeId @gtpId))
+	   (=>(GtpActions.action pick @object @armForPick @gtpId))
+	   (!(ExecutionManager.handleReport GtpActions @gtpId @executionId TRUE TRUE @object))
 	  
-	  ;;updates knowledge of the robot
-	  (=> (Robot.hasObject (VAL @armForPick) (VAL @object))) ;if we arrive here with no FAILED than we've got the item (hopefully XD)
+	   (=>(ExecutionManager.report (VAL @executionId) OK))
+	   (~>(ExecutionManager.isExecutingAction (VAL @executionId)))
 
-	  (=>(ExecutionManager.report (VAL @executionId) OK))
-	  (~>(ExecutionManager.isExecutingAction (VAL @executionId)))
-
-	  (!(Spark.getFreeId @sparkId))
-	  (=>(Spark.request setObjectInHand PR2_ROBOT (VAL @object) (VAL @armForPick) TRUE (VAL @sparkId)))
-	  (!(ExecutionManager.handleReport Spark @sparkId @executionId FALSE FALSE NO_NAME))
-
-	  (!(DatabaseInterface.add (AGENT-STATEMENT PR2_ROBOT PR2_ROBOT hasInHand (VAL @object)) @result))
-
-	  (!(AgentActionMonitor.cleanObjectMonitorSpheres (VAL @object)))
-	  (~>(ExecutionManager.isExecutingAction (VAL @executionId)))
 	  (!(SEM-V ExecutionManager.sem))
 	  )
    
@@ -976,10 +965,14 @@ $distance , $info, $orientation, $speed, $inRange  the output observations"
 	  (!(= @zf (+ @zp 0.60)))
 	 
 
-	  ;move the arm over the placement
-	  (!(ArmActions.getFreeId @actionId))
-	  (=>(ArmActions.action moveToX @arm @xp @yp @zf @actionId))
-	  (!(ExecutionManager.handleReport ArmActions @actionId @executionId TRUE TRUE (VAL @placement)))
+	  ;;HACK! We hardcode the position of the throw to the left of the robot. That's because mhp sucks balls(i hope one of the mhp guys reads this)
+	  
+	  (!(Softmotion.getFreeId @smId))
+	  (=>(Softmotion.request moveArmWithoutMhp -1.2 0 0 0 0 0 0  @smId))
+	  (!(ExecutionManager.handleReport Softmotion @smId @executionId FALSE FALSE @placement))
+
+
+
 	  
 	  
 	  ;;execute the throw
@@ -992,7 +985,7 @@ $distance , $info, $orientation, $speed, $inRange  the output observations"
 	  (~>(Robot.hasObjectForThrow (VAL @arm) (VAL @object)))
 
 	  (!(Spark.getFreeId @sparkId))
-	  (=>(Spark.request setObjectInHand PR2_ROBOT (VAL @object) (VAL @armForPick) FALSE (VAL @sparkId)))
+	  (=>(Spark.request setObjectInHand PR2_ROBOT (VAL @object) (VAL @arm) FALSE (VAL @sparkId)))
 	  (!(ExecutionManager.handleReport Spark @sparkId @executionId FALSE FALSE NO_NAME))
 
 
@@ -1006,6 +999,8 @@ $distance , $info, $orientation, $speed, $inRange  the output observations"
 	  (!(ExecutionManager.handleReport Spark @sparkId @executionId FALSE FALSE NO_NAME))
 	  (!(DatabaseInterface.remove (AGENT-STATEMENT PR2_ROBOT PR2_ROBOT hasInHand (VAL @object)) @result))
 
+
+	  
 	  (!(SEM-V ExecutionManager.sem))
 	  
 	  (~>(ExecutionManager.isExecutingAction (VAL @executionId)))
@@ -1030,32 +1025,23 @@ $distance , $info, $orientation, $speed, $inRange  the output observations"
 	 (=>(ExecutionManager.isExecutingAction (VAL @executionId)))
 
 
-	  ;; 				;move the arm over the placement
-	  ;; (!(ArmActions.getFreeId @actionId))
-	  ;; (=>(ArmActions.action moveToPlaceObject @arm @object @support @placement @actionId))
-	  ;; (!(ExecutionManager.handleReport ArmActions @actionId @executionId TRUE TRUE NO_NAME))
+	  ;;set the parameters for ehe monitor manager
+	  (!(= @failureConditions (. (. .)   (. (ExecutionManager.report (VAL @executionId) FAILURE) (ExecutionManager.report (VAL @executionId) STOPPED) .) .) )) 	 ; item not there 
+	  (!(= @successConditions (. (. (ExecutionManager.report (VAL @executionId) OK) .)  (. .) .) ))     ; when the execution starts the robot is free to monitor something else
 	  
-	  
-	  ;; ;;open the gripper
-	  ;; (!(ArmActions.getFreeId @actionId))
-	  ;; (=>(ArmActions.action openGripper @arm @actionId))
-	  ;; (!(ExecutionManager.handleReport ArmActions @actionId @executionId FALSE FALSE NO_NAME))
 
-	 (!(Spark.getFreeId @sparkId))
-	 (=>(Spark.request GetJointAbsPose @placement NO_NAME @sparkId))
-	 (!(ExecutionManager.handleReport Spark @sparkId @executionId FALSE FALSE NO_NAME))
-	 (?(Spark.result (VAL @sparkId) @x @y @z @yaw @pitch @roll))
-	 
+	  (!(MonitorManager.getFreeId @monitorId))
+					;start the monitoring
+	  (!(MonitorManager.monitorTarget (VAL @placement) "NO_NAME" (VAL @successConditions) (VAL @failureConditions) HIGH (VAL @monitorId)))	   
+	  (^(MonitorManager.isMonitoringTarget (VAL @monitorId)))
+
+
+
 	 (!(GtpActions.getFreeId @id))
-	 (=>(GtpActions.action place @object @support RIGHT @x @y 0 NO_NAME NO_NAME @gtpId))
-	 (!(ExecutionManager.handleReport Gtp @gtpId @executionId TRUE TRUE NO_NAME))
+	 (=>(GtpActions.action place @object @support @placement (. .) @arm @id ))
+	 (!(ExecutionManager.handleReport GtpActions @gtpId @executionId TRUE TRUE NO_NAME))
 
 	 (=>(ExecutionManager.report @executionId OK))
-	 (~>(Robot.hasObject (VAL @arm) (VAL @object)))
-  
-	  (!(Spark.getFreeId @sparkId))
-	  (=>(Spark.request setObjectInHand (VAL @object) (VAL @armForPick) FALSE (VAL @sparkId)))
-	  (!(ExecutionManager.handleReport Spark @sparkId @executionId FALSE FALSE NO_NAME))
 
 	  (~>(ExecutionManager.isExecutingAction (VAL @executionId)))
 		  

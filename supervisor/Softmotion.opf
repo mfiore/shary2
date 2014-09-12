@@ -8,12 +8,6 @@
    :invocation(!(Softmotion.init))
    :documentation "Initializes the module"
    :body (
-	  (!(SEM-CREATE Softmotion.semRArm 1 SEM-FIFO))
-	  (!(SEM-CREATE Softmotion.semLArm 1 SEM-FIFO))
-	  (!(SEM-CREATE Softmotion.semRGripper 1 SEM-FIFO))
-	  (!(SEM-CREATE Softmotion.semLGripper 1 SEM-FIFO))
-	  (!(SEM-CREATE Softmotion.semHead 1 SEM-FIFO))
-	  (!(SEM-CREATE Softmotion.semStop 1 SEM-FIFO))
 	  (!(SEM-CREATE Softmotion.sem 1 SEM-FIFO))
 	  (=>(Softmotion.freeId 0))
 
@@ -37,11 +31,11 @@
    :body (
 	  (?(Softmotion.arm @arm (VAL @armId)))
 	  (IF(?(EQUAL @arm RIGHT))
-	     (!(SEM-P Softmotion.semRArm))
+	     (!(SEM-P Softmotion.sem))
 	     (!(= @armJoint RIGHT_ARM))
 	     
 	     ELSE
-	     (!(SEM-P Softmotion.semLArm))
+	     (!(SEM-P Softmotion.sem))
 	     (!(= @armJoint LEFT_ARM))
 	     )
 	  
@@ -59,9 +53,9 @@
 	  (=>(Softmotion.freeId (+ @id 1)))
 	 
 	  (IF(?(EQUAL @arm RIGHT))
-	     (!(SEM-V Softmotion.semRArm))
+	     (!(SEM-V Softmotion.sem))
 	     ELSE
-	     (!(SEM-V Softmotion.semLArm))
+	     (!(SEM-V Softmotion.sem))
 	     ) 
 	  (!(Mhp.cleanTrajectories))
 	  )
@@ -73,10 +67,10 @@
    :body (
 	  (?(Softmotion.arm @arm (VAL @armId)))
 	  (IF(?(EQUAL @arm RIGHT))
-	     (!(SEM-P Softmotion.semRArm))
+	     (!(SEM-P Softmotion.sem))
 	     
 	     ELSE
-	     (!(SEM-P Softmotion.semLArm))
+	     (!(SEM-P Softmotion.sem))
 	     )
 	  
 	  (=>(Softmotion.freeId (+ @id 1)))
@@ -93,20 +87,71 @@
 	  (=>(Softmotion.freeId (+ @id 1)))
 	 
 	  (IF(?(EQUAL @arm RIGHT))
-	     (!(SEM-V Softmotion.semRArm))
+	     (!(SEM-V Softmotion.sem))
 	     ELSE
-	     (!(SEM-V Softmotion.semLArm))
+	     (!(SEM-V Softmotion.sem))
 	     ) 
 	  )
    
    )
 
+(defop |moveArmWithoutMhp|
+  :invocation(Softmotion.request moveArmWithoutMhp @q0 @q1 @q2 @q3 @q4 @q5 @q6 @id)
+  :documentation
+  :body (
+	 (!(SEM-P Softmotion.sem))
+	 (=>(Softmotion.freeId (+ @id 1)))
+
+	   
+	   (!(= @parameters 
+		(PR2SM_QSTR 
+		 (robotPart  RARM)
+		 (relatif  0)
+		 (base_tx  0.0)
+		 (base_ty  0.0)
+		 (base_tz  0.0)
+		 (base_rx  0.0)
+		 (base_ry  0.0)
+		 (base_rz  0.0)
+		 (torso  0.0)
+		 (head_pan  0.0)
+		 (head_tilt  0.0)
+		 (laser_tilt  0.0)
+		 (r_shoulder_pan  @q0)
+		 (r_shoulder_lift  @q1)
+		 (r_upper_arm_roll  @q2)
+		 (r_elbow_flex  @q3)
+		 (r_forearm_roll  @q4)
+		 (r_wrist_flex  @q5)
+		 (r_writ_roll  @q6)
+		 (r_gripper  0.0)
+		 (r_gripper_false  0.0)
+		 (l_shoulder_pan  0.0)
+		 (l_shoulder_lift  0.0)
+		 (l_upper_arm_roll  0.0)
+		 (l_elbow_flex  0.0)
+		 (l_forearm_roll  0.0)
+		 (l_wrist_flex  0.0)
+		 (l_wrist_roll  0.0)
+		 (l_gripper  0.0)
+		 (l_gripper_false  0.0))
+		))
+	   
+	   
+
+	   (!(GenomInterface.handleRequest PR2SOFTMOTION PR2SOFTMOTION_GOTOQ (Softmotion.stop (VAL @id)) (Robot.isMoving HEAD TRUE) (Robot.isMoving HEAD FALSE) 300 (VAL @parameters) @report @result))
+	   (=>(Softmotion.report (VAL @id) (VAL @report)))
+
+	   (=>(Mhp.previousTask -1 -1))
+	   (!(SEM-V Softmotion.sem))
+	 )
+  )
  (defop |moveHead|
    :invocation(Softmotion.request moveHead @pan @tilt @id)
    :documentation "Moves the head of the robot"
    :body  (
 	   
-	   (!(SEM-P Softmotion.semHead))
+	   (!(SEM-P Softmotion.sem))
 
 	   (=>(Softmotion.freeId (+ @id 1)))
 
@@ -149,7 +194,7 @@
 
 	   (!(GenomInterface.handleRequest PR2SOFTMOTION PR2SOFTMOTION_GOTOQ (Softmotion.stop (VAL @id)) (Robot.isMoving HEAD TRUE) (Robot.isMoving HEAD FALSE) 300 (VAL @parameters) @report @result))
 	   (=>(Softmotion.report (VAL @id) (VAL @report)))
-	   (!(SEM-V Softmotion.semHead))
+	   (!(SEM-V Softmotion.sem))
 
 	   )
    )
@@ -158,14 +203,14 @@
   :invocation (Softmotion.request halt @id)
   :documentation "Halts the execution, waiting for a resume"
   :body (
-	  (!(SEM-P Softmotion.semStop))
+
 	  
 	  (=>(Softmotion.freeId (+ @id 1)))
 	  
 	  (!(GenomInterface.handleRequest PR2SOFTMOTION PR2SOFTMOTION_HALT (Softmotion.stop (VAL @id)) (FALSE) (FALSE) 300  NIL @report @result))
 	  (=>(Softmotion.report (VAL @id) (VAL @report)))
 
-	  (!(SEM-V Softmotion.semStop))
+
 	  )
   )
   
@@ -174,14 +219,14 @@
   :invocation (Softmotion.request resume @id)
   :documentation "Halts the execution, waiting for a resume"
   :body (
-	  (!(SEM-P Softmotion.semStop))
+
 	  
 	  (=>(Softmotion.freeId (+ @id 1)))
 	  
 	  (!(GenomInterface.handleRequest PR2SOFTMOTION PR2SOFTMOTION_RESUME (Softmotion.stop (VAL @id)) (FALSE) (FALSE) 300  NIL @report @result))
 	  (=>(Softmotion.report (VAL @id) (VAL @report)))
 
-	  (!(SEM-V Softmotion.semStop))
+
 	  )
   )
 
@@ -189,7 +234,7 @@
    :invocation (Softmotion.request stop @id)
    :documentation "Stops the robot. This is not really safe i guess. The user should cancel all ongoing softmotion requestes or prepare for some failure reports"
    :body (
-	  (!(SEM-P Softmotion.semStop))
+
 
 
 	  (=>(Softmotion.freeId (+ @id 1)))
@@ -202,7 +247,7 @@
 
 	  
 
-	  (!(SEM-V Softmotion.semStop))
+
 	  )
    )
 
@@ -216,10 +261,10 @@
 	  
 	  (=>(Softmotion.freeId (+ @id 1)))
 	  (IF(?(||(EQUAL @state ROPEN) (EQUAL @state RCLOSE) (EQUAL @state RCANCEL) (EQUAL @state RGRAB) (EQUAL @state RRELEASE)))
-	     (!(SEM-P Softmotion.semRGripper))
+	     (!(SEM-P Softmotion.sem))
 	     
 	     ELSE
-	     (!(SEM-P Softmotion.semLGripper))
+	     (!(SEM-P Softmotion.sem))
 	     )
 	  
 	  (!(= @irAddFact (FALSE)))
@@ -286,6 +331,7 @@
 	  
 	  (IF (?(Robot.simu FALSE)) ;;the gripper doesn't seem to work in simulation
 	      (!(= @parameters (PR2SM_gripperGrabRelease (VAL @state))))	     
+
 	      (!(GenomInterface.handleRequest PR2SOFTMOTION PR2SOFTMOTION_GRIPPERGRABRELEASE (Softmotion.stop (VAL @id)) (VAL @irAddFact) (VAL @stopFact) (VAL @waitTime) @parameters @report @result)) 
 	      (=>(Softmotion.report (VAL @id) (VAL @report)))
 	      
@@ -300,10 +346,10 @@
 	      )
 
 	  (IF(?(||(EQUAL @state ROPEN) (EQUAL @state RGRAB) (EQUAL @state RCLOSE) (EQUAL @state RCANCEL) (EQUAL @state RRELEASE)))
-	     (!(SEM-V Softmotion.semRGripper))
+	     (!(SEM-V Softmotion.sem))
 	     
 	     ELSE
-	     (!(SEM-V Softmotion.semLGripper))
+	     (!(SEM-V Softmotion.sem))
 	     )
 
 	  )
@@ -314,7 +360,7 @@
    :invocation(Softmotion.request getPanTiltFromXYZ @x @y @z @id)
    :documentation "get the pan and tilt to move the head to look at a point x y z"
    :body (
-	  (!(SEM-P Softmotion.semHead)) 
+	  (!(SEM-P Softmotion.sem)) 
 	  
 	  (=>(Softmotion.freeId (+ @id 1)))
 	  (!(= @parameters (PR2SM_xyzHead 
@@ -339,7 +385,7 @@
 	  )
 	  (=>(Softmotion.result (VAL @id) (VAL @pan) (VAL @tilt)))
 
-	  (!(SEM-V Softmotion.semHead)) 
+	  (!(SEM-V Softmotion.sem)) 
 	  )
 
  

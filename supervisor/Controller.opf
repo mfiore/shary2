@@ -34,7 +34,7 @@
 	  (!(AgentActionMonitor.init))
 	  (!(Acapela.init))
 	  (!(DatabaseInterface.init))
-;	  (!(GtpActions.init))
+	  (!(GtpActions.init))
 
 	  (!(Spark.getFreeId @sparkId))
 	  (=>(Spark.request getJointAbsPose PR2_ROBOT Torso @sparkId))
@@ -52,7 +52,7 @@
 	  (!(DatabaseInterface.addMonitor (AGENT-STATEMENT PR2_ROBOT HERAKLES_HUMAN1 agentPresent FALSE) (Monitor.agentDisappears HERAKLES_HUMAN1) @result))  
 	  (!(DatabaseInterface.addMonitor (AGENT-STATEMENT PR2_ROBOT HERAKLES_HUMAN1 handCloseToRightGripper TRUE) (Monitor.handPositionDanger TRUE) @result) )	  
 	  (!(DatabaseInterface.addMonitor (AGENT-STATEMENT PR2_ROBOT HERAKLES_HUMAN1 handCloseToRightGripper FALSE) (Monitor.handPositionDanger FALSE) @result))	  
-	  (!(AgentActionMonitor.calculateInferencesForAgent HERAKLES_HUMAN1))
+;	  (!(AgentActionMonitor.calculateInferencesForAgents (. HERAKLES_HUMAN1 .)))
 	  )
    )
 )

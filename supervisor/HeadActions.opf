@@ -41,6 +41,7 @@
 	   (!(HeadActions.handleReport Softmotion.report (VAL @smId) (VAL @actionId)))
 	   (^(Softmotion.result (VAL @smId) @pan @tilt))
 	   (~>(Softmotion.result (VAL @smId) (VAL @pan) (VAL @tilt)))
+	   (!(= @tilt (+ @tilt 0.2)))
 
 	   ;if the head is not already close to the target move it (we want to avoid very small continuous movement of the head)
 	   (IF(?(Robot.head PAN @robotPan))

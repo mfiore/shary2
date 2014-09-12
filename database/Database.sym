@@ -7,6 +7,7 @@ declare be Database.removeMonitor
 declare be Database.update
 declare be Database.setReachabilityFalse
 declare be DbCopyBM
+declare be DbCopy
 
 declare ff Database.lastAgent 0
 declare cwp AGENT-STATEMENT 
