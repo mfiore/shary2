@@ -324,25 +324,27 @@
 	     )
 
 
-	  ;; ;;plan and execute the trajectory
-;	  (!(ArmActions.getFreeId @actionId))
-;	  (=>(ArmActions.action moveToObject @armForPick @object @actionId))
 
-;	  (!(ExecutionManager.handleReport ArmActions @actionId @executionId TRUE TRUE @object))
-
-	  
-
-	  ;; ;;close the gripper
-;	  (!(ArmActions.getFreeId @actionId))
-;	  (=>(ArmActions.action closeGripper @armForPick @actionId))
-;	  (!(ExecutionManager.handleReport ArmActions @actionId @executionId FALSE FALSE NO_NAME))
-
+	  (IF(?(Module.isActive gtp TRUE)) 
 	  (!(GtpActions.getFreeId @gtpId))
 	   (=>(GtpActions.action pick @object @armForPick @gtpId))
 	   (!(ExecutionManager.handleReport GtpActions @gtpId @executionId TRUE TRUE (. (. (AGENT-STATEMENT PR2_ROBOT (VAL @object) isReachableBy PR2_ROBOT false) (AGENT-STATEMENT PR2_ROBOT (VAL @object) isReachable false) .) (. (AGENT-STATEMENT PR2_ROBOT (VAL @object) isReachableBy PR2_ROBOT true) (AGENT-STATEMENT PR2_ROBOT (VAL @object) isReachable true) .) .)))
 	  
-	   (=>(ExecutionManager.report (VAL @executionId) OK))
-	   (~>(ExecutionManager.isExecutingAction (VAL @executionId)))
+	   ELSE
+	   ;;plan and execute the trajectory
+	   (!(ArmActions.getFreeId @actionId))
+	   (=>(ArmActions.action moveToObject @armForPick @object @actionId))
+
+	   (!(ExecutionManager.handleReport ArmActions @actionId @executionId TRUE TRUE @object)) 
+
+	   ;;close the gripper
+	   (!(ArmActions.getFreeId @actionId))
+	   (=>(ArmActions.action closeGripper @armForPick @actionId))
+	   (!(ExecutionManager.handleReport ArmActions @actionId @executionId FALSE FALSE NO_NAME))
+
+	   )
+	  (=>(ExecutionManager.report (VAL @executionId) OK))
+	  (~>(ExecutionManager.isExecutingAction (VAL @executionId)))
 
 	  (!(SEM-V ExecutionManager.sem))
 	  )

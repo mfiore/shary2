@@ -12,7 +12,7 @@
 
 ;ACAPELA_OPTIONS
 (Acapela.server "maxc2")
-(Acapela.isActive TRUE)       ;;if false the robot won't speak
+(Robot.shouldSpeak TRUE)
 
 
 ;;PLANNER OPTIONS
@@ -22,3 +22,5 @@
 
 ;;OTHER OPTIONS
 (Robot.simu FALSE)  ;;true if in simulation (DOH!)
+
+

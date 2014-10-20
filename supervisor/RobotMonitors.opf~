@@ -1,5 +1,0 @@
-;; -*-Lisp-*-
-;;author: Michelangelo Fiore
-;;this module contains high-level actions like take an item, give, drop.
-(
-)

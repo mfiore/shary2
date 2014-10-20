@@ -1,4 +1,0 @@
-(
-	(PathPlanner.bridgeName PathPlannerBridge)
-	(PathPlanner.timeToWait 10)
-)

@@ -1,0 +1,4 @@
+(
+ (Robot.name SPENCER_ROBOT)
+ (Module.isActive navigation TRUE)
+)
