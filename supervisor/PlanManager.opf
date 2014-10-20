@@ -246,6 +246,7 @@
 			    )
 			 )
 		   (!(== (VAL @actionToExecute) (. @actionName @actionParameters .)))
+		   ;;depending on the action type the action will have different parameters. If we add new classes of actions we should have an edit here.
 		   (IF(?(Action.type (VAL @actionName) MANIPULATION))
 		      (!(== (VAL @actionParameters) (. @object .)))
 		      ELSEIF(?(Action.type (VAL @actionName) PLACEMENT))
@@ -263,7 +264,8 @@
 ;;if we haven't activated a monitor sphere activate it. Associate a monitor sphere id
 		   ;; with the id of the action to monitor  
 		   (?(Spark.monitorParameter (VAL @actionName) @parameterType))
-		   (IF(?(EQUAL (VAL @parameterType) OBJECT))
+		   ;;If we add new classes of actions we should add them here.
+		   (IF(?(EQUAL (VAL @parameterType) PICKABLE))
 		      (!(= @target @object))
 		      ELSEIF(?(EQUAL (VAL @parameterType) PLACEMENT))
 		      (!(= @target @placement))

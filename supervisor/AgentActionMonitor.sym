@@ -1,20 +1,14 @@
 declare op_predicate AgentActionMonitor.init  ;inits the module
+
+
 declare op_predicate AgentActionMonitor.startMonitoringAgent ;starts monitoring an agent
 declare op_predicate AgentActionMonitor.stopMonitoringAgent  ;stops monitoring an agent
 declare op_predicate AgentActionMonitor.cleanMonitorSpheres  ;erases every activated monitor sphere
 declare op_predicate AgentActionMonitor.cleanAgentMonitorSpheres  ;clean monitor spheres associated to a certain agent
-declare op_predicate AgentActionMonitor.cleanObjectMonitorSpheres ;clean monitor spheres associated to a certain object
 declare op_predicate AgentActionMonitor.cleanMonitorSphere      ;clean a single monitor sphere
 declare op_predicate AgentActionMonitor.activateMonitorSpheres   ;;activates monitor spheres for a certain agent for a list of objects
-declare op_predicate AgentActionMonitor.calculateInferencesForAgent  ;calculates inferences for an agent, depending on items present on the scene and items eventually held by the agent.
-declare op_predicate AgentActionMonitor.calculateInferences
+declare op_predicate AgentActionMonitor.calculateInferencesForAgents  ;calculates inferences for an agent, depending on items present on the scene and items eventually held by the agent.
 declare op_predicate AgentActionMonitor.readMonitorSpheresPoster
-
-
-
-
-
-
 
 
 

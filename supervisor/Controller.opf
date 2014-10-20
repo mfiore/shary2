@@ -35,7 +35,8 @@
 	  (!(Acapela.init))
 	  (!(DatabaseInterface.init))
 	  (!(GtpActions.init))
-
+	  
+	  ;;get the robot position and put a starting world state.
 	  (!(Spark.getFreeId @sparkId))
 	  (=>(Spark.request getJointAbsPose PR2_ROBOT Torso @sparkId))
 	  (^(Spark.report (VAL @sparkId) @report))
@@ -45,6 +46,7 @@
 	  (=>(Robot.position TORSO @x @y @z @yaw @pitch @roll))
 	  
 	  
+	  ;;ask the database to monitor specific facts
 ;	  (!(DatabaseInterface.addMonitor (AGENT-STATEMENT PR2_ROBOT HERAKLES_HUMAN1 distance DANGER) (Monitor.positionDanger TRUE) @result))
 ;	  (!(DatabaseInterface.addMonitor (AGENT-STATEMENT PR2_ROBOT HERAKLES_HUMAN1 distance CLOSE) (Monitor.positionDanger FALSE) @result))
 ;	  (!(DatabaseInterface.addMonitor (AGENT-STATEMENT PR2_ROBOT HERAKLES_HUMAN1 distance FAR) (Monitor.positionDanger FALSE) @result))	  

@@ -1,8 +1,20 @@
 (
+;;Object.class (. LIST .) is used when creating monitor spheres. 
+
 (Object.bin (. GREEN_TRASHBIN BLUE_TRASHBIN .))
 (Object.pickable (. RED_CUBE RED_CUBE2 GREEN_CUBE GREEN_CUBE2 BLUE_CUBE BLUE_CUBE2 .))
 (Object.placement (. PLACEMAT_RED PLACEMAT_GREEN PLACEMAT_BLUE .))
 (Object.table (. TABLE_4 .))
+
+;;Object.type NAME TYPE CLASS 
+;NAME is the name of the object
+;TYPE explains which kind of object it is (ex. TAPE, CUBE, PLACEMAT, TABLE, HUMAN)
+;CLASS is a second grouping of objects related to their functions (ex. PICKABLE, PLACEMAT)
+;this is then used for actions and monitor spheres. Ex. cubes have a certaing size for monitor spheres. The action take can be done on PICKABLE objects etc.
+
+;; When we add a new CLASS we should edit the PlanManager.manageHumanActions OP (the code in that functions explains the point where the user should edit) (if this class of objects could be relevant to monitor human actions) and add the Spark.typeMonitorSphere predicate in the Spark.db file.
+
+;;When we create a new TYPE we should add the Spark.sphereParameter predicate in Spark.db
 
 (Object.type GREEN_TRASHBIN TRASHBIN BIN)
 (Object.type BLUE_TRASHBIN TRASHBIN BIN)
@@ -19,8 +31,6 @@
 (Object.type PLACEMAT_RED PLACEMAT PLACEMENT)
 (Object.type PLACEMAT_GREEN PLACEMAT PLACEMENT)
 (Object.type PLACEMAT_BLUE PLACEMAT PLACEMENT)
-
-
  
 (Object.type TABLE_4 TABLE SUPPORT)
  

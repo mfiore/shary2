@@ -1,6 +1,10 @@
 (
-(Acapela.server "maxc2")
-(Acapela.isActive TRUE)
+;;Acapela.translation 
+;;(Acapela.translation OBJECT_NAME "OBJECT_TRANSLATION")
+;; OBJECT_NAME is the name of your object (ex. GREY_TAPE) and
+;;OBJECT_TRANSLATION how the robot should pronounce it (ex. grey tape). The " " must surround OBJECT_TRANSLATION
+
+
 (Acapela.translation WALLE_TAPE "walle tape")
 (Acapela.translation LOTR_TAPE "lord of the rings tape")
 (Acapela.translation GREY_TAPE "grey tape")
@@ -14,7 +18,7 @@
 (Acapela.translation BLUE_CUBE2 "blue cube 2")
 (Acapela.translation GREEN_CUBE "green cube")
 (Acapela.translation GREEN_CUBE2 "green cube 2")
-(Acapela.translation PLACEMAT_RED "placemat red")
+(Acapela.translation PLACEMAT_RED "placemat red")x
 (Acapela.translation PLACEMAT_BLUE "placemat blue")
 (Acapela.translation PLACEMAT_GREEN "placemat green")
 

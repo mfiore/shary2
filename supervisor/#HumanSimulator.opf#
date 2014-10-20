@@ -1,0 +1,40 @@
+;; -*-Lisp-*-
+;;author: Michelangelo Fiore
+;;this module contains high-level actions like take an item, give, drop.
+
+(
+ (defop |simulateAction|
+   :invocation(!(HumanSimulator.simulateAction @human @action @object @support @placement @actionId))
+   :body (
+	  (IF(?(AgentActionMonitor.monitorAction (VAL @human) (VAL @actionId) @sphereId))
+	     (!(PRINT "Human completes action"))
+	     (=>(AgentActionMonitor.actionCompleted (VAL @human) (VAL @actionId)))
+	     (IF(?(EQUAL @action place))
+			
+		(~>(Agent.hasObject (VAL @agentName) (VAL @heldObject)))
+		(!(DatabaseInterface.remove (AGENT-STATEMENT PR2_ROBOT @agentName hasInHand (VAL @heldObject)) @result))				  
+		(!(DatabaseInterface.add (AGENT-STATEMENT PR2_ROBOT @object isOn @placement) @result))
+		
+
+		ELSEIF(?(EQUAL @action take))
+
+		(=>(Agent.hasObject (VAL @agentName) (VAL @heldObject)))
+		(!(DatabaseInterface.add (AGENT-STATEMENT PR2_ROBOT @agentName hasInHand (VAL @heldObject)) @result))
+		(!(DatabaseInterface.remove (AGENT-STATEMENT PR2_ROBOT @object isOn @placement) @result))
+		
+		ELSEIF(?EQUAL @action throw)
+
+		(~>(Agent.hasObject (VAL @agentName) (VAL @heldObject)))
+		(!(DatabaseInterface.remove (AGENT-STATEMENT PR2_ROBOT @agentName hasInHand (VAL @heldObject)) @result))
+		(!(DatabaseInterface.add (AGENT-STATEMENT PR2_ROBOT @object isIn @placement) @result))
+		
+		)
+	     ELSE
+	     
+	     (=>(AgentActionMonitor.unexpectedAction (VAL @agentName)))
+	     )   
+   )
+ )
+)
+
+

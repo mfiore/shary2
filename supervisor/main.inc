@@ -14,7 +14,6 @@ include "supervisor/Mhp.sym"
 include "supervisor/GenomInterface.sym"
 include "supervisor/Softmotion.sym"
 include "supervisor/Viman.sym"
-include "supervisor/StartingKnowledge.sym"
 include "supervisor/Planner.sym"
 include "supervisor/ExecutionManager.sym"
 include "supervisor/Spark.sym"
@@ -35,8 +34,7 @@ include "supervisor/PathPlanner.sym"
 include "supervisor/BaseActions.sym"
 include "supervisor/GtpActions.sym"
 
-load db "supervisor/GlobalConstants.db"
-load db "supervisor/StartingKnowledge.db"
+
 load db "supervisor/Spark.db"
 load db "supervisor/Mhp.db"
 load db "supervisor/Softmotion.db"
@@ -52,7 +50,7 @@ load db "supervisor/Robot.db"
 load db "supervisor/PathPlanner.db"
 load db "supervisor/BaseActions.db"
 load db "supervisor/Object.db"
-
+load db "supervisor/Config.db"
 
 
 load opf "supervisor/MonitorManager.opf"

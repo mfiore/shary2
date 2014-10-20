@@ -5,6 +5,5 @@
 (Robot.isMoving HEAD FALSE)
 (Robot.gripperStatus RIGHT CLOSE)
 (Robot.gripperStatus LEFT CLOSE)
-(Robot.simu FALSE)
 (Robot.pose RIGHT NO_NAME NO_NAME REST)
 )

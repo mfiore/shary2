@@ -255,8 +255,21 @@
 	  )
    )
 
+
 (defop |testPlan|
-  :invocation(!(Tester.testPlan))
+  :invocation(!(Tester.testPlan @goal @parameters))
+  :body (
+	 (!(Controller.initAll))
+					; (=>(PlanManager.goal Clean (. TABLE_4 .)))
+	 (=>(PlanManager.goal @goal @parameters))
+	 (=>(PlanManager.newGoal TRUE))
+	 (=>(PlanManager.managePlans))
+	 )
+  )
+
+
+(defop |testPlanClean|
+  :invocation(!(Tester.testPlanClean))
   :body (
 	 (!(Controller.initAll))
 					; (=>(PlanManager.goal Clean (. TABLE_4 .)))

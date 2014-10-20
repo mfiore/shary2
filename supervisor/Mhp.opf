@@ -13,7 +13,7 @@
    :body (
 	  (!(SEM-CREATE Mhp.sem 1 SEM-FIFO))
 	  (=>(Mhp.freeId 0))
-	  (=>(Mhp.previousTask -1 -1))
+	  (=>(Mhp.previousTask -2 -2))
 	  )
    )
  

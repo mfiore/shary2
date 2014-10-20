@@ -9,7 +9,7 @@ declare ff ExecutionManager.status 1
 
 
 declare ff ExecutionManager.freeId 0  ;id for requestes
-declare cwp ExecutionManager.report   ;report of an action, OK, FAILED, STOPPED.
+declare cwp ExecutionManager.report   ;report of an action, OK, FAILED, STOPPED
 declare cwp ExecutionManager.stop     ;stops an execution
 declare cwp ExecutionManager.halt     ;pauses an executio n
 declare be ExecutionManager.execute   ;execute @actionName plus different parameters

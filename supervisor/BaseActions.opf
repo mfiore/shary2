@@ -30,21 +30,26 @@
 	 (!(SEM-P BaseActions.sem))
 	 (?(BaseActions.bridgeName @name))
 	 (?(BaseActions.timeToWait @time))
-	 (!(SEND-MESSAGE @name (move @waypoints)))
+	 (!(SEND-MESSAGE @name (move @waypoints)))  ;;contact the ros module to start the navigation
 	 (!(= @nextLocation (CAR @waypoints)))
 	 (!(= @waypoints (CDR @waypoints)))
 	 (!(= @completed FALSE))
-	 (WHILE(?(EQUAL @completed FALSE))
-	       (^(|| (BaseActions.response (VAL @name) @response) (BaseActions.update (VAL @name) @status) (BaseActions.stop (VAL@id)) (ELAPSED-TIME (TIME) @time)))
+	 (WHILE(?(EQUAL @completed FALSE)) ;;we loop until we complete the navigation or we fail
+	       ;;we wait for the final response of the module, for an update, for a stop command or if too much time passes withouth receiving updates
+	       (^(|| (BaseActions.response (VAL @name) @response) (BaseActions.update (VAL @name) @status) (BaseActions.stop (VAL@id)) (ELAPSED-TIME (TIME) @time)))  
+
+	       ;;if stopped we... stop! surprise! 
 	       (IF(?(BaseActions.stop (VAL @id)))
 		  (!(BaseActions.stop))
 		  (=>(BaseActions.report @id "STOPPED"))
-	    
+		  
+		  ;;if we receive an update we update the robot location to the next waypoint 
 		  ELSEIF(?(BaseActions.update (VAL @name) OK))
 		  (=>(Robot.location (VAL @nextLocation)))
 		  (!(= @nextLocation (CAR @waypoints)))
 		  (!(= @waypoints (CDR @waypoints)))
 		  
+		  ;;if we have a response we issue a report and quit
 		  ELSEIF(?(BaseActions.response (VAL @name) OK))
 		  (=>(BaseActions.report @id "OK"))   
 		  (!(= @completed TRUE))
@@ -65,7 +70,7 @@
 	 (?(BaseActions.bridgeName @name))
 	 (?(BaseActions.timeToWait @time))
 	 (!(SEND-MESSAGE @name (stop)))
-	 (^(||(BaseActions.response (VAL @name @response) (ELAPSED-TIME (TIME) @time))))
+	 (^(||(BaseActions.response (VAL @name @response) (ELAPSED-TIME (TIME) @time))))  ;;could lead to inconsistency if we issue a message and we reach elapsed time. But I guess if we reach elapsed time after sending a stop and the robot is still moving then it could be wise to ignore the code and run to the security switch =)
 	 (~>(BaseActions.response @name @response))
 	 (=>(BaseActions.report @id "OK"))
 	 )

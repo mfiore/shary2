@@ -13,415 +13,387 @@
 	  (!(Mhp.getFreeId @id))
 	  (=>(Mhp.request fetchEnvironment @id))
 	  (!(GtpActions.handleReport Mhp @id @gtpId))
-	  ) 
-   )
- (defop |getFreeId|
-   :invocation(!(GtpActions.getFreeId $id))
+
+	   ) 
+    )
+  (defop |getFreeId|
+    :invocation(!(GtpActions.getFreeId $id))
+    :body (
+	   (?(GtpActions.freeId $id))
+	   (=>(GtpActions.freeId (+ $id 1)))
+	   )
+    )
+
+  (defop |pick|
+    :invocation(GtpActions.action pick @object @arm @gtpId)
+    :documentation "picks @object with @arm (RIGHT or LEFT)"
+    :body (
+	   (?(Robot.name @robotName))
+
+	   (IF(?(EQUAL @arm RIGHT))
+	      (!(= @hand "right"))
+
+	      ELSE
+	      (!(= @hand "left"))
+	      )
+
+	   ;;add the parameters
+	   (!(Mhp.getFreeId @id))
+	   (=>(Mhp.request addGtpAgent mainAgent @robotName @id))
+	   (!(GtpActions.handleReport Mhp @id @gtpId))
+
+	   (!(Mhp.getFreeId @id))
+	   (=>(Mhp.request addGtpObject mainObject @object @id))
+	   (!(GtpActions.handleReport Mhp @id @gtpId))
+
+	   (!(Mhp.getFreeId @id))
+	   (=>(Mhp.request addGtpData hand @hand @id))
+	   (!(GtpActions.handleReport Mhp @id @gtpId))
+
+	   ;;execute the task
+	   (!(GtpActions.executeTask pick @arm @object NO_NAME @gtpId))
+
+
+	   )
+    )
+
+ (defop |place|
+   :invocation(GtpActions.action place @mainObject @supportObject @placement @target @arm  @gtpId)
+   :documentation "places an object on a support
+ @mainObject object name
+ @supportObject name of the support or NO_NAME (the robot will chose a support on its own)
+ @placement name of the placement on @supportObject or NO_NAME (will choose a position on all the support)
+ @target (. x y theta .) or (. .) . If set will place the object on the point
+ @arm RIGHT or LEFT"
    :body (
-	  (?(GtpActions.freeId $id))
-	  (=>(GtpActions.freeId (+ $id 1)))
+	   (?(Robot.name @robotName))
+	   (IF(?(EQUAL @arm RIGHT))
+	      (!(= @hand "right"))
+
+	      ELSE
+	      (!(= @hand "left"))
+	      )
+
+	   ;;set the options
+	   (!(Mhp.getFreeId @id))
+	   (=>(Mhp.request addGtpAgent mainAgent @robotName @id))
+	   (!(GtpActions.handleReport Mhp @id @gtpId))
+
+	   (!(Mhp.getFreeId @id))
+	   (=>(Mhp.request addGtpObject mainObject @mainObject @id))
+	   (!(GtpActions.handleReport Mhp @id @gtpId))
+
+	   (!(Mhp.getFreeId @id))
+	   (=>(Mhp.request addGtpObject supportObject @supportObject @id))
+	   (!(GtpActions.handleReport Mhp @id @gtpId))
+
+	   (IF(?(~(NULL @target)))  ;if target is not NULL the robot will place the item in x t theta
+	      (!(= (VAL @target) (. @x @y @theta .)))
+	      (!(Mhp.getFreeId @id))
+	      (=>(Mhp.request addGtpPoint target @x @y @theta))
+	      (!(GtpActions.handleReport Mhp @id @gtpId))
+	      )
+
+	   (!(Mhp.getFreeId @id))
+	   (=>(Mhp.request addGtpData hand @hand @id))
+	   (!(GtpActions.handleReport Mhp @id @gtpId))
+
+	   (IF(?(~(EQUAL @placement NO_NAME))) ;if set the robot will place the object in a rectangle centered on the centre of the placement
+	      (!(Spark.getFreeId @sparkId)) 
+	      (=>(Spark.request getJointAbsPose @placement NO_NAME @sparkId))
+	      (!(ExecutionManager.handleReport Spark @sparkId @executionId FALSE FALSE NO_NAME))
+	      (?(Spark.result (VAL @sparkId) @x @y @z @yaw @pitch @roll))
+
+	      (!(= @ax (- @x 0.2)))
+	      (!(= @ay (+ @y 0.2)))
+	      (!(= @az @z))
+	      (!(= @bx (+ @x 0.2)))
+	      (!(= @by (+ @y 0.2)))
+	      (!(= @bz @z))
+	      (!(= @cx (- @x 0.2)))
+	      (!(= @cy (- @y 0.2)))
+	      (!(= @cz @z))
+	      (!(= @dx (+ @x 0.2)))
+	      (!(= @dy (- @y 0.2)))
+	      (!(= @dz @z))
+
+	      (!(Mhp.getFreeId @id))
+	      (=>(Mhp.request addGtpConstraintRegion "force_place" "Rectangle" @ax @ay @az @bx @by @bz @cx @cy @cz @dx @dy @dz @id))
+	      (!(GtpActions.handleReport Mhp @id @gtpId))
+
+	      )
+	   ;;executes the task
+	   (!(GtpActions.executeTask place @arm @mainObject @placement @gtpId))
 	  )
    )
 
- (defop |pick|
-   :invocation(GtpActions.action pick @object @arm @gtpId)
+ (defop |placeReachable|
+   :invocation(GtpActions.action placeReachable @targetAgent @mainObject @supportObject @hand @gtpId)
+   :documentation "Places the object rechable for a target agent on a support 
+ NOT SET"
    :body (
-	  (?(Robot.name @robotName))
-	  
-	  (IF(?(EQUAL @arm RIGHT))
-	     (!(= @hand "right"))
-	     
-	     ELSE
-	     (!(= @hand "left"))
-	     )
-	  
-	  (!(Mhp.getFreeId @id))
-	  (=>(Mhp.request addGtpAgent mainAgent @robotName @id))
-	  (!(GtpActions.handleReport Mhp @id @gtpId))
+	   (?(Robot.name @robotName))
 
-	  (!(Mhp.getFreeId @id))
-	  (=>(Mhp.request addGtpObject mainObject @object @id))
-	  (!(GtpActions.handleReport Mhp @id @gtpId))
+	   ;;set parameters
+	   (!(Mhp.getFreeId @id))
+	   (=>(Mhp.request addGtpAgent mainAgent @robotName @id))
+	   (!(GtpActions.handleReport Mhp @id @gtpId))
 
-	  (!(Mhp.getFreeId @id))
-	  (=>(Mhp.request addGtpData hand @hand @id))
-	  (!(GtpActions.handleReport Mhp @id @gtpId))
+	   (!(Mhp.getFreeId @id))
+	   (=>(Mhp.request addGtpAgent targetAgent @targetAgent @id))
+	   (!(GtpActions.handleReport Mhp @id @gtpId))
 
-	  (!(GtpActions.executeTask pick @arm @object NO_NAME @gtpId))
+	   (!(Mhp.getFreeId @id))
+	   (=>(Mhp.request addGtpObject mainObject @mainObject @id))
+	   (!(GtpActions.handleReport Mhp @id @gtpId))
 
-	  
+	   (!(Mhp.getFreeId @id))
+	   (=>(Mhp.request addGtpObject supportObject @supportObject @id))
+	   (!(GtpActions.handleReport Mhp @id @gtpId))
+
+	   (!(Mhp.getFreeId @id))
+	   (=>(Mhp.request addGtpData hand @hand @id))
+	   (!(GtpActions.handleReport Mhp @id @gtpId))
+
+
+	   ;;executes the task
+	   (!(GtpActions.executeTask placeReachable @arm @mainObject NO_NAME @gtpId))
+
 	  )
    )
 
-(defop |place|
-  :invocation(GtpActions.action place @mainObject @supportObject @placement @target @arm  @gtpId)
-  :body (
-	  (?(Robot.name @robotName))
-	  (IF(?(EQUAL @arm RIGHT))
-	     (!(= @hand "right"))
-	     
-	     ELSE
-	     (!(= @hand "left"))
-	     )
-	  
-	  
-	  (!(Mhp.getFreeId @id))
-	  (=>(Mhp.request addGtpAgent mainAgent @robotName @id))
-	  (!(GtpActions.handleReport Mhp @id @gtpId))
-
-	  (!(Mhp.getFreeId @id))
-	  (=>(Mhp.request addGtpObject mainObject @mainObject @id))
-	  (!(GtpActions.handleReport Mhp @id @gtpId))
-
-	  (!(Mhp.getFreeId @id))
-	  (=>(Mhp.request addGtpObject supportObject @supportObject @id))
-	  (!(GtpActions.handleReport Mhp @id @gtpId))
-
-	  (IF(?(~(NULL @target)))
-	     (!(= (VAL @target) (. @x @y @theta .)))
-	     (!(Mhp.getFreeId @id))
-	     (=>(Mhp.request addGtpPoint target @x @y @theta))
-	     (!(GtpActions.handleReport Mhp @id @gtpId))
-	     )
-
-	  (!(Mhp.getFreeId @id))
- 	  (=>(Mhp.request addGtpData hand @hand @id))
-	  (!(GtpActions.handleReport Mhp @id @gtpId))
-
-	  (IF(?(~(EQUAL @null PLACEMENT)))
-	     (!(Spark.getFreeId @sparkId))
-	     (=>(Spark.request getJointAbsPose @placement NO_NAME @sparkId))
-	     (!(ExecutionManager.handleReport Spark @sparkId @executionId FALSE FALSE NO_NAME))
-	     (?(Spark.result (VAL @sparkId) @x @y @z @yaw @pitch @roll))
-	 
-	     (!(= @ax (- @x 0.2)))
-	     (!(= @ay (+ @y 0.2)))
-	     (!(= @az @z))
-	     (!(= @bx (+ @x 0.2)))
-	     (!(= @by (+ @y 0.2)))
-	     (!(= @bz @z))
-	     (!(= @cx (- @x 0.2)))
-	     (!(= @cy (- @y 0.2)))
-	     (!(= @cz @z))
-	     (!(= @dx (+ @x 0.2)))
-	     (!(= @dy (- @y 0.2)))
-	     (!(= @dz @z))
-	  	     	   
-	     (!(Mhp.getFreeId @id))
-	     (=>(Mhp.request addGtpConstraintRegion "force_place" "Rectangle" @ax @ay @az @bx @by @bz @cx @cy @cz @dx @dy @dz @id))
-	     (!(GtpActions.handleReport Mhp @id @gtpId))
-	  
-	     )
-	  (!(GtpActions.executeTask place @arm @mainObject @placement @gtpId))
-	 )
-  )
-
-(defop |placeReachable|
-  :invocation(GtpActions.action placeReachable @targetAgent @mainObject @supportObject @hand)
-  :body (
-	  (?(Robot.name @robotName))
-	  
-	  (!(Mhp.getFreeId @id))
-	  (=>(Mhp.request addGtpAgent mainAgent @robotName @id))
-	  (!(GtpActions.handleReport Mhp @id @gtpId))
-
-	  (!(Mhp.getFreeId @id))
-	  (=>(Mhp.request addGtpAgent targetAgent @targetAgent @id))
-	  (!(GtpActions.handleReport Mhp @id @gtpId))
-
-	  (!(Mhp.getFreeId @id))
-	  (=>(Mhp.request addGtpObject mainObject @mainObject @id))
-	  (!(GtpActions.handleReport Mhp @id @gtpId))
-
-	  (!(Mhp.getFreeId @id))
-	  (=>(Mhp.request addGtpObject supportObject @supportObject @id))
-	  (!(GtpActions.handleReport Mhp @id @gtpId))
-
-	  (!(Mhp.getFreeId @id))
-	  (=>(Mhp.request addGtpData hand @hand @id))
-	  (!(GtpActions.handleReport Mhp @id @gtpId))
-
-	  (!(GtpActions.executeTask placeReachable @gtpId))
-
-	 )
-  )
-
-(defop |travelTo|
-  :invocation (GtpActions.action travelTo @object @point @gtpId)
-  :documentation "@points (. @x  @y @z .) "
-  :body (
-	  (?(Robot.name @robotName))
-	  
-
-	  (!(Mhp.getFreeId @id))
-	  (=>(Mhp.request addGtpAgent mainAgent @robotName @id))
-	  (!(GtpActions.handleReport Mhp @id @gtpId))
-
-
-
-	  (IF(?(~(EQUAL @object NO_NAME)))
-	       (!(Mhp.getFreeId @id))
-	       (=>(Mhp.request addGtpObject target @object @id))
-	       (!(GtpActions.handleReport Mhp @id @gtpId))
-	      
-	       ELSEIF(?(~(EQUAL @point NO_NAME)))
-	       (!(Mhp.getFreeId @id))
-	       (=>(Mhp.request addGtpPoint target @point @id))
-	       (!(GtpActions.handleReport Mhp @id @gtpId))
-
-	       ELSE
-	       (=>(GtpActions.report (VAL @gtpId) FAILURE))
-	       (!(FAILED))
-	     )
-	  
-	  (!(GtpActions.executeTask "goto" @gtpId))
-	 
-	 )
-  )
-
-(defop |moveTo|
-  :invocation(GtpActions.action moveTo @gtpId @configurationName @gtpId) 
-  :body (
-	  (?(Robot.name @robotName))
-	  
-
-	  (!(Mhp.getFreeId @id))
-	  (=>(Mhp.request addGtpAgent mainAgent @robotName @id))
-	  (!(GtpActions.handleReport Mhp @id @gtpId))
-
-
-
-	  (!(Mhp.getFreeId @id))
-	  (=>(Mhp.request addGtpData confName @configurationName @id))
-	  (!(GtpActions.handleReport Mhp @id @gtpId))
-	      
-	  (!(GtpActions.executeTask moveto @gtpId))
-	 
-	  )
-  )
-
-
- (defop |executeTask|
-   :invocation(!(GtpActions.executeTask @task @arm @object @support @gtpId))
+ (defop |travelTo|
+   :invocation (GtpActions.action travelTo @object @point @gtpId)
+   :documentation "travels to an @object (objectName or NO_NAME) or to a point ( (. @x  @y @z .) or (. .))  NOT TESTED"
    :body (
 
-	  (!(Mhp.getFreeId @id))
-	  (=>(Mhp.request fetchEnvironment @id))
-	  (!(GtpActions.handleReport Mhp @id @gtpId))
-	  
-	  (!(Mhp.getFreeId @id))
-	  (=>(Mhp.request planGtpTask @task @id))
-	  (!(GtpActions.handleReport Mhp @id @gtpId))
+	   (?(Robot.name @robotName))
 
-	  (?(Mhp.previousTask @taskId @alternativeId))
+	   (!(Mhp.getFreeId @id))
+	   (=>(Mhp.request addGtpAgent mainAgent @robotName @id))
+	   (!(GtpActions.handleReport Mhp @id @gtpId))
 
-	  (!(Mhp.getFreeId @id))
-	  (=>(Mhp.request smoothGtpTraj @taskId @alternativeId @id))
-	  (!(GtpActions.handleReport Mhp @id @gtpId))
+	   (IF(?(~(EQUAL @object NO_NAME)))
+		(!(Mhp.getFreeId @id))
+		(=>(Mhp.request addGtpObject target @object @id))
+		(!(GtpActions.handleReport Mhp @id @gtpId))
 
+		ELSEIF(?(~(NULL @point)))
+		(!(Mhp.getFreeId @id))
+		(=>(Mhp.request addGtpPoint target @point @id))
+		(!(GtpActions.handleReport Mhp @id @gtpId))
 
-	  (!(Mhp.getFreeId @id))
-	  (=>(Mhp.request getGtpTaskDetails @taskId @alternativeId @id))
-	  (^(Mhp.report (VAL @id) @report))
-	  (~>(Mhp.report (VAL @id) (VAL @report)))
-	  
-	  (!(= @follow 0))
-	  (IF(?(EQUAL @report "OK"))
-	     (^(Mhp.result (VAL @id) @trajList))
-	     (~>(Mhp.result (VAL @id) (VAL @trajList)))
-	     (WHILE(?(~(NULL @trajList)))
-		   (!(= @traj (CAR @trajList)))
-		   (!(= @trajList (CDR @trajList)))
-		   
-;		   (!(== (VAL @traj) (. @subTrajId @dummy @subTrajName @robot .)))
-		   ;;unification doesn't seem to work here =\ maybe because it was already unified somewhere?
-
-		   (!(= @subTrajId (CAR @traj)))
-		   (!(= @dummy (CAR(CDR @traj))))
-		   (!(= @subTrajName (CAR(CDR(CDR @traj)))))
-		   (!(= @robot (CAR(CDR(CDR(CDR @traj))))))  
-
-		   (IF(?(EQUAL @subTrajName "grasp"))
-		      (!(ArmActions.getFreeId @id))
-		      (=>(ArmActions.action closeGripper (VAL @arm) @id))
-		      (!(GtpActions.handleReport ArmActions @id @gtpId))
-		      
-		      (IF(?(EQUAL @task pick))
-			 (=> (Robot.hasObject (VAL @arm) (VAL @object))) ;if we arrive here with no FAILED than we've got the item (hopefully XD)
-			 (!(Spark.getFreeId @sparkId))
-			 (=>(Spark.request setObjectInHand PR2_ROBOT (VAL @object) (VAL @arm) TRUE (VAL @sparkId)))
-			 (!(ExecutionManager.handleReport Spark @sparkId @executionId FALSE FALSE NO_NAME))
-		      
-			 (!(DatabaseInterface.add (AGENT-STATEMENT PR2_ROBOT PR2_ROBOT hasInHand (VAL @object)) @result))
-
-			 (!(AgentActionMonitor.cleanObjectMonitorSpheres (VAL @object)))		      
-			 )
-		      
-		      ELSEIF(?(EQUAL @subTrajName "release"))
-		      (IF(?(EQUAL @task place))
-			 (~>(Robot.hasObject (VAL @arm) (VAL @object)))
-  			 (!(Spark.getFreeId @sparkId))
-			 (=>(Spark.request setObjectInHand PR2_ROBOT (VAL @object) (VAL @arm) FALSE (VAL @sparkId)))
-			 (!(ExecutionManager.handleReport Spark @sparkId @executionId FALSE FALSE NO_NAME))
-			 
-			 (!(DatabaseInterface.remove (AGENT-STATEMENT PR2_ROBOT hasInHand (VAL @object)) @result))
-
-			 (!(Spark.getFreeId @sparkId))
-			 (?(Spark.robotFinger (VAL @arm) @sparkHand))
-			 (=>(Spark.request getJointAbsPose PR2_ROBOT @sparkHand @sparkId))
-			 (!(ExecutionManager.handleReport Spark @sparkId @executionId FALSE FALSE NO_NAME))
-			 (^(Spark.result (VAL @sparkId) @rx @ry @rz @rtx @rty @rtz))
-
-			 (!(Spark.getFreeId @sparkId))
-			 (=>(Spark.request getJointAbsPose @support NO_NAME @sparkId))
-			 (!(ExecutionManager.handleReport Spark @sparkId @executionId FALSE FALSE NO_NAME))
-			 (^(Spark.result (VAL @sparkId) @tx @ty @tz @ttx @tty @ttz))
-			 
-			 
-			 
-			 )
-		      (!(ArmActions.getFreeId @id))
-		      (=>(ArmActions.action openGripper RIGHT @id))
-		      (!(GtpActions.handleReport ArmActions @id @gtpId))
-
-		      (!(Spark.getFreeId @sparkId))
-		      (=>(Spark.request placeObject @object @rx @ry @tz 0 0 0 @sparkId))
-		      (!(ExecutionManager.handleReport Spark @sparkId @executionId FALSE FALSE NO_NAME))
-
-		      ELSEIF(?(EQUAL @subTrajName "navigate"))
-		      (!(Mhp.getFreeId @id))
-		      (=>(Mhp.request loadGtpTaskTrajForNav @taskId @alternativeId @subTrajId @follow @id))
-		      (!(GtpActions.handleReport Mhp @id @gtpId))
-		      (?(Mhp.result (VAL @id) @waypoints))
-		      (~>(Mhp.result (VAL @id) @waypoints))
-		      (!(= @finalWaypoints (LAST @waypoints)))
-		      
-		      (!(BaseActions.getFreeId @id))
-		      (=>(BaseAction.action move @finalWaypoint @id))
-		      (!(GtpActions.handleReport BaseActions @id @gtpId))
-		      
-		      ELSE
-		      (!(Mhp.getFreeId @id))
-		      (=>(Mhp.request loadGtpTaskTraj @taskId @alternativeId @subTrajId @follow @id))
-		      (!(GtpActions.handleReport Mhp @id @gtpId))
-
-		      (?(Softmotion.arm (VAL @arm) @smArm))
-		      (!(Softmotion.getFreeId @id))
-		      (=>(Softmotion.request moveArm @smArm @id))
-		      (!(GtpActions.handleReport Softmotion @id @gtpId))
-		      )
-		   (!(Mhp.getFreeId @id))
-		   (=>(Mhp.request fetchEnvironment @id))
-		   (!(GtpActions.handleReport Mhp @id @gtpId))
-	  
-
-		   (!(= @follow 1))
-		   )
-	     )
-	  (!(Mhp.getFreeId @id))
-	  (=>(Mhp.request clearGtpInputs @id))
-	  (!(GtpActions.handleReport Mhp @id @gtpId))
-
-	  (=>(GtpActions.report @gtpId "OK"))
-
-	  )
-   )
-
-(defop |handleReport|
-     :invocation(!(GtpActions.handleReport @module @id @actionId))
-     :documentation "Utility function to avoid some code duplication when waiting for the response of a genom module. This can't be used when we don't want to fail if the genom request fails"
-     :body (
-	  (!(= @reportName (TERM-STRING-CAT (VAL @module) ".report")))
-	  (!(= @reportName (MAKE-ATOM @reportName)))
-
-	  ;wait for a report or until we are paused or until we are stopped
-	  (^(|| (@reportName (VAL @id) @report) (GtpActions.halt (VAL @actionId)) (GtpActions.stop (VAL @actionId))))
-		
-	  ;if we are paused we give a halt request if we were doing a softmotion request or simply wait for a resume
-	  (IF(?(GtpActions.halt (VAL @actionId)))
-	     (~>(GtpActions.halt (VAL @actionId)))
-	     (IF(?(EQUAL @module Softmotion))
-		   (!(Softmotion.getFreeId @smId))
-		   (=>(Softmotion.request halt (VAL @smId)))
-		   (^(Softmotion.report (VAL @smId) @smReport))
-		   (~>(Softmotion.report (VAL @smId) (VAL @smReport)))
-		   (^(@reportName (VAL @id) @report))
-		   (~>(@reportName (VAL @id) (VAL @report)))
-
-		   ELSEIF(?(EQUAL @module ArmActions))
-		   (=>(ArmActions.halt (VAL @id)))
-		   )
-	     ;we wait for a stop or for a resume
-	     (^(|| (GtpActions.stop (VAL @actionId)) (GtpActions.resume (VAL @actionId))))
-	     (IF(?(GtpActions.resume (VAL @actionId)))   ;we ask to resume and recall this function to wait for the report
-		(~>(GtpActions.resume (VAL @actionId)))
-		(IF(?(EQUAL @module Softmotion))
-		   (!(Softmotion.getFreeId @smId))
-		   (=>(Softmotion.request resume @smId))
-		   (^(Softmotion.report (VAL @smId) @smReport))
-		   (~>(Softmotion.report (VAL @smId) (VAL @smReport)))
-		   (^(ELAPSED-TIME (TIME) 3))
-
-		   ELSEIF(?(EQUAL @module ArmActions))
-		   (=>(ArmActions.resume (VAL @id)))
-		   )
-		ELSEIF(?(GtpActions.stop (VAL @actionId)))
-		(~>(GtpActions.stop (VAL @actionId)))
-		
-		(IF(?(EQUAL @module Softmotion))
-		   (=>(Softmotion.stop (VAL @id)))    
-		      (!(Softmotion.getFreeId @smId))
-		      (=>(Softmotion.request stop (VAL @smId)))
-		      (^(Softmotion.report (VAL @smId) @smReport))
-		      (~>(Softmotion.report (VAL @smId) (VAL @smReport)))
-		      (^(|| (@reportName (VAL @id) @report)))
-		      (~>(@reportName (VAL @id) @report))
-		      
-		      
-		      ELSEIF(?(EQUAL @module ArmActions))
-		      (=>(ArmActions.stop @id))
-		      
-		      ELSEIF(?(EQUAL @module Mhp))
-		      (=>(Mhp.stop (VAL @id)))
-		      )
-		(=>(GtpActions.report @actionId STOPPED))
+		ELSE
+		(=>(GtpActions.report (VAL @gtpId) FAILURE))
 		(!(FAILED))
-		)
-	     
-	     
-	     ELSEIF(?(GtpActions.stop (VAL @actionId)))
-	     (~>(GtpActions.stop (VAL @actionId)))
-	     
- 	     (IF(?(EQUAL @module Softmotion))
-		(=>(Softmotion.stop (VAL @id)))    
-		(!(Softmotion.getFreeId @smId))
-		(=>(Softmotion.request stop (VAL @smId)))
-		(^(Softmotion.report (VAL @smId) @smReport))
-		(~>(Softmotion.report (VAL @smId) (VAL @smReport)))
-		(^(|| (@reportName (VAL @id) @report)))
-		(~>(@reportName (VAL @id) @report))
-		
-		ELSEIF(?(EQUAL @module ArmActions))
-		(=>(ArmActions.stop @id))
-	       	
-		ELSEIF(?(EQUAL @module Mhp))
-		(=>(Mhp.stop (VAL @id)))
-		)
-	     (=>(GtpActions.report @actionId STOPPED))
-	     (!(FAILED))
-	     
-	     
-	     ELSE	 ;we got a report. If it's a good report we continue if not we report a fail and exit.
-	     (~>( @reportName (VAL @id) (VAL @report)))
-	     (IF(?(~(EQUAL @report "OK")))
-		(!(PRINT @report))
-		(=> (GtpActions.report (VAL @actionId) @report))
-		(!(FAILED))
-		)
-	     )
-	  )
-     )
+	      )
 
- 
+	   ;;executes the task
+	   (!(GtpActions.executeTask goto NO_NAME NO_NAME NO_NAME @gtpId))
+
+
+	  )
+   )
+
+ (defop |moveTo|
+   :invocation(GtpActions.action moveTo @gtpId @configurationName @gtpId) 
+   :documentation "moves into @configurationName"
+   :body (
+	   (?(Robot.name @robotName))
+
+	   ;;set parameters
+	   (!(Mhp.getFreeId @id))
+	   (=>(Mhp.request addGtpAgent mainAgent @robotName @id))
+	   (!(GtpActions.handleReport Mhp @id @gtpId))
+
+	   (!(Mhp.getFreeId @id))
+	   (=>(Mhp.request addGtpData confName @configurationName @id))
+	   (!(GtpActions.handleReport Mhp @id @gtpId))
+
+	   ;;execute task
+	   (!(GtpActions.executeTask moveto NO_NAME NO_NAME NO_NAME  @gtpId))
+
+	   )
+   )
+
+
+  (defop |executeTask|
+    :invocation(!(GtpActions.executeTask @task @arm @object @support @gtpId))
+    :documentation "Executes a task
+ @task task name
+ @arm RIGHT or LEFT
+ @object name of the object in the action or NO_NAME (used to update the world state for pick\place\give
+ @support name of the support in the action or NO_NAME (used to update the world state for pick\place
+ "
+    :body (
+
+	   ;;prepare and plan
+	   (!(Mhp.getFreeId @id))
+	   (=>(Mhp.request fetchEnvironment @id))
+	   (!(GtpActions.handleReport Mhp @id @gtpId))
+
+	   (!(Mhp.getFreeId @id))
+	   (=>(Mhp.request planGtpTask @task @id))
+	   (!(GtpActions.handleReport Mhp @id @gtpId))
+
+	   (?(Mhp.previousTask @taskId @alternativeId))
+
+	   (!(Mhp.getFreeId @id))
+	   (=>(Mhp.request smoothGtpTraj @taskId @alternativeId @id))
+	   (!(GtpActions.handleReport Mhp @id @gtpId))
+
+	   ;;get the trajectories of the task
+	   (!(Mhp.getFreeId @id))
+	   (=>(Mhp.request getGtpTaskDetails @taskId @alternativeId @id))
+	   (^(Mhp.report (VAL @id) @report))
+	   (~>(Mhp.report (VAL @id) (VAL @report)))
+
+	   (!(= @follow 0))
+	   (IF(?(EQUAL @report "OK"))
+	      (^(Mhp.result (VAL @id) @trajList))
+	      (~>(Mhp.result (VAL @id) (VAL @trajList)))
+	      (WHILE(?(~(NULL @trajList)))
+		    ;;this is rather ugly but unification wasn't working for some reason ^__^
+		    (!(= @traj (CAR @trajList)))
+		    (!(= @trajList (CDR @trajList)))
+
+		    (!(= @subTrajId (CAR @traj)))
+		    (!(= @dummy (CAR(CDR @traj))))
+		    (!(= @subTrajName (CAR(CDR(CDR @traj)))))
+		    (!(= @robot (CAR(CDR(CDR(CDR @traj))))))  
+
+		    (IF(?(EQUAL @subTrajName "grasp"))  ;;if we need to grasp we close the gripper and update the world state
+		       (!(ArmActions.getFreeId @id))
+		       (=>(ArmActions.action closeGripper (VAL @arm) @id))
+		       (!(GtpActions.handleReport ArmActions @id @gtpId))
+
+		       (IF(?(EQUAL @task pick))
+			  (=> (Robot.hasObject (VAL @arm) (VAL @object))) ;if we arrive here with no FAILED than we've got the item (hopefully XD)
+			  (!(Spark.getFreeId @sparkId))
+			  (=>(Spark.request setObjectInHand PR2_ROBOT (VAL @object) (VAL @arm) TRUE (VAL @sparkId)))
+			  (!(ExecutionManager.handleReport Spark @sparkId @executionId FALSE FALSE NO_NAME))
+
+			  (!(DatabaseInterface.add (AGENT-STATEMENT PR2_ROBOT PR2_ROBOT hasInHand (VAL @object)) @result))
+
+			  (!(AgentActionMonitor.cleanObjectMonitorSpheres (VAL @object)))		      
+			  )
+
+		       ELSEIF(?(EQUAL @subTrajName "release")) ;if we need to release we open the gripper and if it's a place we update the world status putting the item near the robot hand on the table
+		       (IF(?(EQUAL @task place))
+			  (~>(Robot.hasObject (VAL @arm) (VAL @object)))
+			  (!(Spark.getFreeId @sparkId))
+			  (=>(Spark.request setObjectInHand PR2_ROBOT (VAL @object) (VAL @arm) FALSE (VAL @sparkId)))
+			  (!(ExecutionManager.handleReport Spark @sparkId @executionId FALSE FALSE NO_NAME))
+
+			  (!(DatabaseInterface.remove (AGENT-STATEMENT PR2_ROBOT hasInHand (VAL @object)) @result))
+
+			  ;;we take the coordinates of the support (for the z) and of the robot hand (for the x and y)
+			  (!(Spark.getFreeId @sparkId))
+			  (?(Spark.robotFinger (VAL @arm) @sparkHand))
+			  (=>(Spark.request getJointAbsPose PR2_ROBOT @sparkHand @sparkId))
+			  (!(ExecutionManager.handleReport Spark @sparkId @executionId FALSE FALSE NO_NAME))
+			  (^(Spark.result (VAL @sparkId) @rx @ry @rz @rtx @rty @rtz))
+
+			  (!(Spark.getFreeId @sparkId))
+			  (=>(Spark.request getJointAbsPose @support NO_NAME @sparkId))
+			  (!(ExecutionManager.handleReport Spark @sparkId @executionId FALSE FALSE NO_NAME))
+			  (^(Spark.result (VAL @sparkId) @tx @ty @tz @ttx @tty @ttz))
+
+
+
+			  )
+		       (!(ArmActions.getFreeId @id))
+		       (=>(ArmActions.action openGripper RIGHT @id))
+		       (!(GtpActions.handleReport ArmActions @id @gtpId))
+
+		       (!(Spark.getFreeId @sparkId))
+		       (=>(Spark.request placeObject @object @rx @ry @tz 0 0 0 @sparkId))
+		       (!(ExecutionManager.handleReport Spark @sparkId @executionId FALSE FALSE NO_NAME))
+
+		       ELSEIF(?(EQUAL @subTrajName "navigate")) ;if we need to navigate we invoke the base action module
+		       (!(Mhp.getFreeId @id))
+		       (=>(Mhp.request loadGtpTaskTrajForNav @taskId @alternativeId @subTrajId @follow @id))
+		       (!(GtpActions.handleReport Mhp @id @gtpId))
+		       (?(Mhp.result (VAL @id) @waypoints))
+		       (~>(Mhp.result (VAL @id) @waypoints))
+		       (!(= @finalWaypoints (LAST @waypoints)))
+
+		       (!(BaseActions.getFreeId @id))
+		       (=>(BaseAction.action move @finalWaypoint @id))
+		       (!(GtpActions.handleReport BaseActions @id @gtpId))
+
+		       ELSE   ;;else we just load the trajectory and run it with softmotion
+		       (!(Mhp.getFreeId @id))
+		       (=>(Mhp.request loadGtpTaskTraj @taskId @alternativeId @subTrajId @follow @id))
+		       (!(GtpActions.handleReport Mhp @id @gtpId))
+
+		       (?(Softmotion.arm (VAL @arm) @smArm))
+		       (!(Softmotion.getFreeId @id))
+		       (=>(Softmotion.request moveArm @smArm @id))
+		       (!(GtpActions.handleReport Softmotion @id @gtpId))
+		       )
+		    ;;we update the environment and go on
+		    (!(Mhp.getFreeId @id))
+		    (=>(Mhp.request fetchEnvironment @id))
+		    (!(GtpActions.handleReport Mhp @id @gtpId))
+
+
+		    (!(= @follow 1))
+		    )
+	      )
+	   (!(Mhp.getFreeId @id))
+	   (=>(Mhp.request clearGtpInputs @id))
+	   (!(GtpActions.handleReport Mhp @id @gtpId))
+
+	   (=>(GtpActions.report @gtpId "OK"))
+
+	   )
+    )
+
+ (defop |handleReport|
+      :invocation(!(GtpActions.handleReport @module @id @actionId))
+      :documentation "Utility function to avoid some code duplication when waiting for the response of a genom module. This can't be used when we don't want to fail if the genom request fails"
+      :body (
+	   (!(= @reportName (TERM-STRING-CAT (VAL @module) ".report")))
+	   (!(= @reportName (MAKE-ATOM @reportName)))
+
+	   ;wait for a report or until we are paused or until we are stopped
+	   (^(|| (@reportName (VAL @id) @report) (GtpActions.halt (VAL @actionId)) (GtpActions.stop (VAL @actionId))))
+
+
+	   (IF(?(GtpActions.stop (VAL @actionId)))
+	      (~>(GtpActions.stop (VAL @actionId)))
+	      
+	      (IF(?(EQUAL @module Softmotion))
+		 (=>(Softmotion.stop (VAL @id)))    
+		 (!(Softmotion.getFreeId @smId))
+		 (=>(Softmotion.request stop (VAL @smId)))
+		 (^(Softmotion.report (VAL @smId) @smReport))
+		 (~>(Softmotion.report (VAL @smId) (VAL @smReport)))
+		 (^(|| (@reportName (VAL @id) @report)))
+		 (~>(@reportName (VAL @id) @report))
+		 
+		 ELSEIF(?(EQUAL @module ArmActions))
+		 (=>(ArmActions.stop @id))
+		 
+		 ELSEIF(?(EQUAL @module Mhp))
+		 (=>(Mhp.stop (VAL @id)))
+		 )
+	      (=>(GtpActions.report @actionId STOPPED))
+	      (!(FAILED))
+	      
+	      
+	      ELSE	 ;we got a report. If it's a good report we continue if not we report a fail and exit.
+	      (~>( @reportName (VAL @id) (VAL @report)))
+	      (IF(?(~(EQUAL @report "OK")))
+		 (!(PRINT @report))
+		 (=> (GtpActions.report (VAL @actionId) @report))
+		 (!(FAILED))
+		 )
+	      )
+	   )
+
+
+      )
 
 )
