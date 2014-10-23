@@ -1,0 +1,38 @@
+(
+
+;;translations from spark to the supervision system
+ (Spark.robotName PR2_ROBOT)
+ (Spark.robotTorso Torso)
+ (Spark.robotHand RIGHT 0)
+ (Spark.robotHand LEFT 1)
+ (Spark.robotFinger RIGHT fingerJointGripper_0)	
+ (Spark.robotFinger LEFT fingerJointGripper_1)	
+ (Spark.human HERAKLES_HUMAN1)
+ (Spark.human HERAKLES_HUMAN2)
+ (Spark.humanTorso TorsoX)
+ (Spark.humanWrist rWristX)
+ (Spark.humanHip rHipX)
+ (Spark.humanHead HeadX)
+ (Spark.humanHand RIGHT 0)
+
+
+;;Spark.typeMonitorSphere OBJECT_CLASS SPHERE_TYPE associates object classes to different kinds of monitor spheres, to monitor the actions. At the moment we only use the SPARK_PICK_OBJECT SPARK_THROW_IN_CONTAINER and SPARK_SIIMPLE_ENTRY monitor sphere types.
+ (Spark.typeMonitorSphere PICKABLE SPARK_PICK_OBJECT)
+ (Spark.typeMonitorSphere BIN SPARK_THROW_IN_CONTAINER)
+ (Spark.typeMonitorSphere PLACEMENT SPARK_SIMPLE_ENTRY)
+
+
+;;Spark.sphereParameter OBJECT_TYPE RADIUS MULTIPLIER associates a radius and a multiplier (used to define the size of the sphere) to a type of object 
+
+ (Spark.sphereParameters PLACEMAT 0.25 1.0)
+ (Spark.sphereParameters TAPE 1.0 1.2)
+ (Spark.sphereParameters TRASHBIN 1 1.0)
+ (Spark.sphereParameters CUBE 1.0 1.5)
+
+;;Spark.monitorParameter actionName PARAMETER_CLASS  this is used at the moment only in the PlanManager.manageHumanActions op to understand what condition triggers completing the action. For example, if the robot wants to monitor when the human takes a take, the action will be completed when the monitor sphere associated to the object is triggered.
+
+ (Spark.monitorParameter take PICKABLE)
+ (Spark.monitorParameter throw PLACEMENT)
+ (Spark.monitorParameter place PLACEMENT)			
+)
+

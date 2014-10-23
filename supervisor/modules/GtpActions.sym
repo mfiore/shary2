@@ -1,0 +1,3 @@
+declare ff GtpActions.freeId 0
+declare be GtpActions.action
+declare cwp GtpActions.previousTask

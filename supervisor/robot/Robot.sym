@@ -1,0 +1,11 @@
+;robot state predicates
+declare ff Robot.isMoving 2   ;Robot.isMoving HEAD/RIGHT_ARM/LEFT_ARM/BASE TRUE/FALSE
+declare ff Robot.gripperStatus 1    ;Robot.gripperStatus RIGHT/LEFT OPEN/CLOSE/WAITING_PRESSURE 
+declare ff Robot.head 1             ;Robot.head PAN/TILT value
+declare cwp Robot.position          ;Robot.position JOINT position . This is the xyz of a point, while location is the semantic position in the map.
+declare ff Robot.location 0 	    
+declare cwp Robot.pose              ;Robot.pose @arm(RIGHT, LEFT)  @object (NO_NAME or value) @support(NO_NAME or value) @pose (EXTENDED, REST, OTHER). Support means if the arm is on a support or not. Object means if the arm is close to an object or not (doesn't mean that the robot has picked the object)  
+declare ff Robot.hasObject 1
+declare ff Robot.hasObjectForThrow 1
+declare ff Robot.name 0
+declare ff Robot.shouldSpeak 0

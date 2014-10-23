@@ -1,0 +1,27 @@
+(
+;;KERNEL OPTIONS
+;;names of the kernels
+(SUP_NAME OPRS_SUP)
+(ONTO_NAME OPRS_DB)  
+
+
+
+;;STARTING ROBOT BEHAVIOR
+(PlanManager.shouldTellPlan FALSE)	;; if TRUE will tell the plan to the user
+(PlanManager.planningModality ROBOT)    ;; possible values ROBOT, HUMAN or ADAPTS (the robot can change modality on its own during it's run)
+(PlanManager.takeInitiative TRUE))     ;;if FALSE when in ROBOT ADAPTS the robot will wait for the user to take the first action  before planning and trying to help, else it will start to try to solve the goal as soon as he has one.
+
+;ACAPELA_OPTIONS
+(Acapela.server "maxc2")
+(Robot.shouldSpeak TRUE)
+
+
+;;PLANNER OPTIONS
+(PlannerInterface.bridgeName  hatp HATPSHARY)  ;;name of the hatp-oprs bridge
+(PlannerInterface.usePlanner HATP)            ;;name of the used task planner
+
+
+;;OTHER OPTIONS
+(Robot.simu FALSE)  ;;true if in simulation (DOH!)
+)
+

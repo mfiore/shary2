@@ -1,0 +1,8 @@
+(
+ (PlanManager.maxPlanningTime 30)
+ (PlanManager.maxPlanningFailures 3)
+ (PlanManager.timeToRetry 5)
+ (PlanManager.shouldRun TRUE)
+ (PlanManager.isRunning FALSE)
+ 
+)

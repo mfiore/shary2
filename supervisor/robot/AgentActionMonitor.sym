@@ -1,0 +1,28 @@
+declare op_predicate AgentActionMonitor.init  ;inits the module
+
+
+declare op_predicate AgentActionMonitor.startMonitoringAgent ;starts monitoring an agent
+declare op_predicate AgentActionMonitor.stopMonitoringAgent  ;stops monitoring an agent
+declare op_predicate AgentActionMonitor.cleanMonitorSpheres  ;erases every activated monitor sphere
+declare op_predicate AgentActionMonitor.cleanAgentMonitorSpheres  ;clean monitor spheres associated to a certain agent
+declare op_predicate AgentActionMonitor.cleanMonitorSphere      ;clean a single monitor sphere
+declare op_predicate AgentActionMonitor.activateMonitorSpheres   ;;activates monitor spheres for a certain agent for a list of objects
+declare op_predicate AgentActionMonitor.calculateInferencesForAgents  ;calculates inferences for an agent, depending on items present on the scene and items eventually held by the agent.
+declare op_predicate AgentActionMonitor.readMonitorSpheresPoster
+
+
+
+declare ff AgentActionMonitor.isStarted 0  ;starts false in the db. Set to true after calling the init opf. Used so that we don't call init twice.
+declare cwp AgentActionMonitor.isMonitoringAgent
+
+
+declare cwp AgentActionMonitor.blockObjectReappears
+
+declare cwp AgentActionMonitor.sphere
+
+declare cwp AgentActionMonitor.monitorAction
+declare cwp AgentActionMonitor.unexpectedAction
+declare cwp AgentActionMonitor.isMonitoringAgent
+declare be AgentActionMonitor.startMonitorSphereLoop
+declare cwp AgentActionMonitor.stopMonitorSphereLoop
+declare cwp Agent.hasObject

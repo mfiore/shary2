@@ -1,0 +1,30 @@
+declare op_predicate ExecutionManager.init   ;inits the module
+declare op_predicate ExecutionManager.getFreeId ;gets a free id for requestes
+declare op_predicate ExecutionManager.chooseArmForTake  ;choses which arm is best to perform a take action  
+declare op_predicate ExecutionManager.handleReport     ;handles a report
+declare op_predicate ExecutionManager.getHumanObservations  ;gets the observations related to a human
+declare op_predicate ExecutionManager.getQForHuman    ;finds the best q0 (i.e. arm direction) to extend the arm toward a human
+declare op_predicate ExecutionManager.cleanModuleRequestes ;stops lingering requestes when we stop an action
+declare ff ExecutionManager.status 1
+
+
+declare ff ExecutionManager.freeId 0  ;id for requestes
+declare cwp ExecutionManager.report   ;report of an action, OK, FAILED, STOPPED
+declare cwp ExecutionManager.stop     ;stops an execution
+declare cwp ExecutionManager.halt     ;pauses an executio n
+declare be ExecutionManager.execute   ;execute @actionName plus different parameters
+declare be ExecutionManager.executeAction  ;called from the planManager. Parses the action parameters and calls the correct method
+declare cwp ExecutionManager.isExecutingAction  ;signals which action is currently being executed by the module.
+declare ff ExecutionManager.oldArmPosition 0
+declare ff ExecutionManager.oldDistance 0
+
+declare cwp objectNotVisible
+
+
+
+
+
+
+
+
+

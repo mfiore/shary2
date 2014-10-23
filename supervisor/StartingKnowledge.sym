@@ -1,6 +1,0 @@
-declare predicate MAX_PLANNING_WAIT
-declare predicate MAX_PLANNING_FAILURES
-declare predicate TIME_TO_RETRY
-declare predicate SUP_NAME
-declare predicate ONTO_NAME
-

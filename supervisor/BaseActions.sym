@@ -1,4 +1,0 @@
-declare ff BaseActions.bridgeName 0
-declare ff BaseActions.timeToWait 0
-declare cwp BaseActions.response 
-declare cwp BaseActions.report 

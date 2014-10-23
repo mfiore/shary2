@@ -1,6 +1,0 @@
-declare ff GtpActions.freeId 0
-declare be GtpActions.executeTask
-declare cwp GtpActions.report
-declare cwp GtpActions.halt
-declare cwp GtpActions.resume
-declare cwp GtpActions.stop
