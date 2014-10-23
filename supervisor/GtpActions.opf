@@ -165,8 +165,9 @@
 	       (!(GtpActions.handleReport Mhp @id @gtpId))
 	      
 	       ELSEIF(?(~(EQUAL @point NO_NAME)))
+	       (!(== (VAL @point) (. @x @y @z .)))
 	       (!(Mhp.getFreeId @id))
-	       (=>(Mhp.request addGtpPoint target @point @id))
+	       (=>(Mhp.request addGtpPoint target @x @y @z @id))
 	       (!(GtpActions.handleReport Mhp @id @gtpId))
 
 	       ELSE
@@ -174,7 +175,7 @@
 	       (!(FAILED))
 	     )
 	  
-	  (!(GtpActions.executeTask "goto" @gtpId))
+	  (!(GtpActions.executeTask "goto" NO_NAME NO_NAME NO_NAME @gtpId))
 	 
 	 )
   )
@@ -205,6 +206,8 @@
    :invocation(!(GtpActions.executeTask @task @arm @object @support @gtpId))
    :body (
 
+	  (!(= @task (MAKE-ATOM @task)))
+
 	  (!(Mhp.getFreeId @id))
 	  (=>(Mhp.request fetchEnvironment @id))
 	  (!(GtpActions.handleReport Mhp @id @gtpId))
@@ -214,6 +217,8 @@
 	  (!(GtpActions.handleReport Mhp @id @gtpId))
 
 	  (?(Mhp.previousTask @taskId @alternativeId))
+	  
+	  
 
 	  (!(Mhp.getFreeId @id))
 	  (=>(Mhp.request smoothGtpTraj @taskId @alternativeId @id))
@@ -292,14 +297,16 @@
 		      (!(Mhp.getFreeId @id))
 		      (=>(Mhp.request loadGtpTaskTrajForNav @taskId @alternativeId @subTrajId @follow @id))
 		      (!(GtpActions.handleReport Mhp @id @gtpId))
+		      (^(Mhp.result (VAL @id) @waypoints))
 		      (?(Mhp.result (VAL @id) @waypoints))
 		      (~>(Mhp.result (VAL @id) @waypoints))
-		      (!(= @finalWaypoints (LAST @waypoints)))
+
+		       (!(BaseActions.getFreeId @id))
+		       (=>(BaseActions.action move @waypoints @id))
+		       (!(GtpActions.handleReport BaseActions @id @gtpId))
 		      
-		      (!(BaseActions.getFreeId @id))
-		      (=>(BaseAction.action move @finalWaypoint @id))
-		      (!(GtpActions.handleReport BaseActions @id @gtpId))
-		      
+		      ELSEIF(?(EQUAL @subTrajName "extract"))
+		      (!(= @a 3))
 		      ELSE
 		      (!(Mhp.getFreeId @id))
 		      (=>(Mhp.request loadGtpTaskTraj @taskId @alternativeId @subTrajId @follow @id))

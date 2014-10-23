@@ -31,9 +31,12 @@
 	 (?(PathPlanner.bridgeName @name))
 	 (?(PathPlanner.timeToWait @time))
 	 (!(SEND-MESSAGE @name (calculatePath @source @goal)))
-	 (^(|| (PathPlanner.response (VAL @name) @path) (ELAPSED-TIME (TIME) @time)))
-	 (IF(?(PathPlanner.response (VAL @name) @path))
-	    (~>(PathPlanner.response (VAL @name) (VAL @path)))
+	 (!(= @reportName (TERM-STRING-CAT (VAL @name) ".report")))
+	 (!(= @reportName (MAKE-ATOM @reportName)))
+
+	 (^(|| (@reportName calculatePath @path) (ELAPSED-TIME (TIME) @time)))
+	 (IF(?(@reportName calculatePath @path))
+	    (~>(@reportName (VAL @name) (VAL @path)))
 	    (=>(PathPlanner.report @id "OK"))
 	    (=>(PathPlanner.result @id @path))
 	    

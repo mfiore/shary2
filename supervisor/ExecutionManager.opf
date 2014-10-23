@@ -2074,7 +2074,7 @@ $distance , $info, $orientation, $speed, $inRange  the output observations"
 	 ;;get list of nodes in semantic map
 	 (?(Robot.location @source))
 	 (!(PathPlanner.getFreeId @pathPlannerId))
-	 (=>(PathPlanner.plan @source @goal))
+	 (=>(PathPlanner.plan @source @goal @pathPlannerId))
 	 (!(ExecutionManager.handleReport PathPlanner @pathPlannerId @executionId TRUE TRUE NO_NAME))
 	 (?(PathPlanner.result @pathPlannerId @path))
 	 ;;get coordinates in these nodes

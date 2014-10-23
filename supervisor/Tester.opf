@@ -4,7 +4,16 @@
 ;;This file contains procedures to test the single modules of the
 ;system.
 
+
 (
+
+ (defop |testGtpGoto|
+   :invocation (!(Tester.testGtpGoto))
+   :body (
+	  (!(Controller.initAll))
+	  (=>(GtpActions.action travelTo NO_NAME (. 2.5 2 0 .) 0))
+	  )
+   )
 
  (defop |testGtpPlan|
    :invocation(!(Tester.testGtpPlan))

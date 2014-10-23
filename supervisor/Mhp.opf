@@ -13,7 +13,7 @@
    :body (
 	  (!(SEM-CREATE Mhp.sem 1 SEM-FIFO))
 	  (=>(Mhp.freeId 0))
-	  (=>(Mhp.previousTask -1 -1))
+	  (=>(Mhp.previousTask -2 -2))
 	  )
    )
  
@@ -316,120 +316,7 @@
        ))
 
 
-	;;  (!(= @params    
-        ;; (STRUCT_TASK_INPUT 
-        ;;    (type 
-        ;;       (name  (TERM-STRING-CAT @task)))
 
-        ;;    (agentKey1 
-        ;;       (name  "mainAgent"))
-
-        ;;    (agentValue1 
-        ;;       (name  "PR2_ROBOT"))
-
-        ;;    (agentKey2 
-        ;;       (name  "NO_NAME"))
-
-        ;;    (agentValue2 
-        ;;       (name  "NO_NAME"))
-
-        ;;    (agentKey3 
-        ;;       (name  "NO_NAME"))
-
-        ;;    (agentValue3 
-        ;;       (name  "NO_NAME"))
-
-        ;;    (agentKey4 
-        ;;       (name  "NO_NAME"))
-
-        ;;    (agentValue4 
-        ;;       (name  "NO_NAME"))
-
-        ;;    (objectKey1 
-        ;;       (name  "mainObject"))
-
-        ;;    (objectValue1 
-        ;;       (name  (TERM-STRING-CAT @object)))
-
-        ;;    (objectKey2 
-        ;;       (name  (TERM-STRING-CAT @objectKey2)))
-
-        ;;    (objectValue2 
-        ;;       (name  (TERM-STRING-CAT @support)))
-
-        ;;    (objectKey3 
-        ;;       (name  "NO_NAME"))
-
-        ;;    (objectValue3 
-        ;;       (name  "NO_NAME"))
-
-        ;;    (objectKey4 
-        ;;       (name  "NO_NAME"))
-
-        ;;    (objectValue4 
-        ;;       (name  "NO_NAME"))
-
-        ;;    (dataKey1 
-        ;;       (name  (TERM-STRING-CAT @dataKey1)))
-
-        ;;    (dataValue1 
-        ;;       (name (TERM-STRING-CAT @hand)))
-
-        ;;    (dataKey2 
-        ;;       (name  "NO_NAME"))
-
-        ;;    (dataValue2 
-        ;;       (name  "NO_NAME"))
-
-        ;;    (dataKey3 
-        ;;       (name  "NO_NAME"))
-
-        ;;    (dataValue3 
-        ;;       (name  "NO_NAME"))
-
-        ;;    (dataKey4 
-        ;;       (name  "NO_NAME"))
-
-        ;;    (dataValue4 
-        ;;       (name  "NO_NAME"))
-
-        ;;    (pointKey1 
-        ;;       (name  "NO_NAME"))
-
-        ;;    (pointValue1 
-        ;;       (x  0.0)
-        ;;       (y  0.0)
-        ;;       (z  0.0))
-
-        ;;    (pointKey2 
-        ;;       (name  "NO_NAME"))
-
-        ;;    (pointValue2 
-        ;;       (x  0.0)
-        ;;       (y  0.0)
-        ;;       (z  0.0))
-
-        ;;    (pointKey3 
-        ;;       (name  "NO_NAME"))
-
-        ;;    (pointValue3 
-        ;;       (x  0.0)
-        ;;       (y  0.0)
-        ;;       (z  0.0))
-
-        ;;    (pointKey4 
-        ;;       (name  "NO_NAME"))
-
-        ;;    (pointValue4 
-        ;;       (x  0.0)
-        ;;       (y  0.0)
-        ;;       (z  0.0))
-
-        ;;    (previousTaskId  @previousTaskId)
-        ;;    (previousTaskAlternativeId  @previousTaskAlternativeId)
-	;;    (computeMotionPlan  GEN_TRUE)
-        ;;    (dummy  GEN_TRUE)
-	;;    )))
 	 (!(GenomInterface.handleRequest MHP MHP_PLANGTPTASK (Mhp.stop (VAL @id)) (FALSE) (FALSE) 300 @params @report @result))
 	 (=>(Mhp.report (VAL @id) (VAL @report)))
 	 (IF(?(EQUAL @report "OK"))
@@ -438,6 +325,7 @@
 				 (taskId  @newTaskId)
 				 (taskAlternativeId  @newTaskAId)
 				 (cost @cost)
+				 (return_report (name @reportName))
 				 
 				 )))
 	       
@@ -667,7 +555,7 @@
   :documentation ""
   :body (
 	 
-	 (!(= @params (STRUCT_TASK_INPUT_STR 
+	 (!(= @params (STRUCT_TASK_INPUT_POINT
            (key 
               (name  (TERM-STRING-CAT @type)))
 
@@ -867,34 +755,35 @@
 				     (x  @x20)
 				     (y  @y20)
 				     (z  @z20)))))
-	       (!(= @pointList (. (. x1 y1 z1 .)  
-				  (. x2 y2 z2 .)  
-				  (. x3 y3 z3 .)  
-				  (. x4 y4 z4 .)  
-				  (. x5 y5 z5 .)  
-				  (. x6 y6 z6 .)  
-				  (. x7 y7 z7 .)  
-				  (. x8 y8 z8 .)  
-				  (. x9 y9 z9 .)  
-				  (. x10 y10 z10 .)  
-				  (. x11 y11 z11 .)  
-				  (. x12 y12 z12 .)  
-				  (. x13 y13 z13 .)  
-				  (. x14 y14 z14 .)  
-				  (. x15 y15 z15 .)  
-				  (. x16 y16 z16 .)  
-				  (. x17 y17 z17 .)  
-				  (. x18 y18 z18 .)  
-				  (. x19 y19 z19 .)  
-				  (. x20 y20 z20 .)  
+	       (!(= @pointList (.   
+				  (. @x2 @y2 @z2 .)  
+				  (. @x3 @y3 @z3 .)  
+				  (. @x4 @y4 @z4 .)  
+				  (. @x5 @y5 @z5 .)  
+				  (. @x6 @y6 @z6 .)  
+				  (. @x7 @y7 @z7 .)  
+				  (. @x8 @y8 @z8 .)  
+				  (. @x9 @y9 @z9 .)  
+				  (. @x10 @y10 @z10 .)  
+				  (. @x11 @y11 @z11 .)  
+				  (. @x12 @y12 @z12 .)  
+				  (. @x13 @y13 @z13 .)  
+				  (. @x14 @y14 @z14 .)  
+				  (. @x15 @y15 @z15 .)  
+				  (. @x16 @y16 @z16 .)  
+				  (. @x17 @y17 @z17 .)  
+				  (. @x18 @y18 @z18 .)  
+				  (. @x19 @y19 @z19 .)  
+				  (. @x20 @y20 @z20 .)  
 				  .)))
-	       (!(= @i 0))
+	       (!(= @i 1))
 	       (!(= @resultList (. .)))
 	       (WHILE(?(< @i @nbPoints))
-		     (!(= @x (CAR @pointList)))
-		     (!(= @y (CAR(CDR @pointList))))
-		     (!(= @z (CAR(CDR(CDR @pointList)))))
-		     (!(= @resultList (CONS-TAIL (. @x @y @z .) @resultList)))
+		     (!(= @w (CAR @pointList)))
+		     (!(= @resultList (CONS-TAIL @w @resultList)))
+
+		     (!(= @pointList (CDR @pointList)))
+		     (!(= @i (+ @i 1)))
 		     )
 	       (=>(Mhp.result @id @resultList))
 	       

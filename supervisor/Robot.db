@@ -7,4 +7,5 @@
 (Robot.gripperStatus LEFT CLOSE)
 (Robot.simu FALSE)
 (Robot.pose RIGHT NO_NAME NO_NAME REST)
+(Robot.location SOFA)
 )

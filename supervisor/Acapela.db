@@ -1,6 +1,6 @@
 (
 (Acapela.server "maxc2")
-(Acapela.isActive TRUE)
+(Acapela.isActive FALSE)
 (Acapela.translation WALLE_TAPE "walle tape")
 (Acapela.translation LOTR_TAPE "lord of the rings tape")
 (Acapela.translation GREY_TAPE "grey tape")
