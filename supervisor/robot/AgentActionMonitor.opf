@@ -460,8 +460,8 @@
    )
 
 (defop |checkActionMonitoring|
-  :documentation "Checks if the action associated to the @sphereId is monitored for @agentName. If yes will issue an actionCompleted report, if not an unexpectedAction report."
   :invocation (!(AgentActionMonitor.checkActionMonitoring @agentName @sphereId))
+  :documentation "Checks if the action associated to the @sphereId is monitored for @agentName. If yes will issue an actionCompleted report, if not an unexpectedAction report."
   :body (
 	 (IF(?(AgentActionMonitor.isMonitoringAgent (VAL @agentName) @monitorId))
 	    (IF(?(AgentActionMonitor.monitorAction (VAL @agentName) @actionId (VAL @sphereId)))

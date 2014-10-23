@@ -8,4 +8,4 @@ declare cwp Robot.pose              ;Robot.pose @arm(RIGHT, LEFT)  @object (NO_N
 declare ff Robot.hasObject 1
 declare ff Robot.hasObjectForThrow 1
 declare ff Robot.name 0
-declare ff Robot.shouldSpeak
+declare ff Robot.shouldSpeak 0

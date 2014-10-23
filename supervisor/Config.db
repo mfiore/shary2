@@ -1,3 +1,4 @@
+(
 ;;KERNEL OPTIONS
 ;;names of the kernels
 (SUP_NAME OPRS_SUP)
@@ -22,5 +23,5 @@
 
 ;;OTHER OPTIONS
 (Robot.simu FALSE)  ;;true if in simulation (DOH!)
-
+)
 

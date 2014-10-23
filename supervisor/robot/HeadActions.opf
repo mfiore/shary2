@@ -55,20 +55,35 @@
 	      (!(= @moveHead TRUE))
 	      )
 	   (IF(?(EQUAL @moveHead TRUE))
-	      (!(Viman.getFreeId @vimanId))
-	      (=>(Viman.request stopTracking @vimanId))
-	      (!(HeadActions.handleReport Viman.report (VAL @vimanId) (VAL @actionId)))
+	      (IF(?(Modules.isActive Softmotion))
+		 (!(Viman.getFreeId @vimanId))
+		 (=>(Viman.request stopTracking @vimanId))
+		 (!(HeadActions.handleReport Viman.report (VAL @vimanId) (VAL @actionId)))
 
-	      (?(Softmotion.freeId @smId))
-	      (=>(Softmotion.request moveHead (VAL @pan) (VAL @tilt) (VAL @smId)))
-	      (=>(Robot.head PAN (VAL @pan)))
-	      (=>(Robot.head TILT (VAL @tilt)))
-	      (!(HeadActions.handleReport Softmotion.report (VAL @smId) (VAL @actionId)))
-
-	      (^(ELAPSED-MTIME (MTIME) 500))
-	      (!(Viman.getFreeId @vimanId))
-	      (=>(Viman.request activateTracking @vimanId))
-	      (!(HeadActions.handleReport Viman.report (VAL @vimanId) (VAL @actionId)))
+		 (?(Softmotion.freeId @smId))
+		 (=>(Softmotion.request moveHead (VAL @pan) (VAL @tilt) (VAL @smId)))
+		 (=>(Robot.head PAN (VAL @pan)))
+		 (=>(Robot.head TILT (VAL @tilt)))
+		 (!(HeadActions.handleReport Softmotion.report (VAL @smId) (VAL @actionId)))
+		 
+		 (^(ELAPSED-MTIME (MTIME) 500))
+		 (!(Viman.getFreeId @vimanId))
+		 (=>(Viman.request activateTracking @vimanId))
+		 (!(HeadActions.handleReport Viman.report (VAL @vimanId) (VAL @actionId)))
+		 
+		 
+		 ELSE
+		 (?(HeadActions.headBridge @bridgeName))
+		 (?(HeadActions.timeToWait @time))
+		 (!(= @reportName (TERM-STRING-CAT (VAL @bridgeName) ".response")))   ;we create the real report name
+		 (!(= @reportName (MAKE-ATOM @reportName)))
+	  
+		 (!(SEND-MESSAGE @bridgeName (moveHead pan @pan)))
+		 (^(@reportName (VAL @bridgeName) @response))
+		 (~>(@reportName (VAL @bridgeName) (VAL @response)))
+		 (!(SEND-MESSAGE @bridgeName (moveHead tilt @tilt)))
+		 (~>(@reportName (VAL @bridgeName) (VAL @response)))
+		 )
 	      
 	      )
 	   (=>(HeadActions.report (VAL @actionId) "OK"))
