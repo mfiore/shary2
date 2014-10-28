@@ -992,7 +992,8 @@ $distance , $info, $orientation, $speed, $inRange  the output observations"
 
 
 
-)
+
+
 (defop |closeGripper|
   :invocation(ExecutionManager.execute closeGripper @gripper @executionId)
   :documentation "closes the RIGHT or LEFT gripper."
@@ -1056,6 +1057,78 @@ $distance , $info, $orientation, $speed, $inRange  the output observations"
 	 (!(SEM-V ExecutionManager.sem))
 	 )
   )
+
+(defop |startGuide| 
+  :invocation(=>(ExecutionManager.execute startGuide @executionId))
+  :body (
+	 (?(Robot.name @robotName))
+	 (!(DatabaseInterface.findList (AGENT-STATEMENT (VAL @robotName) (VAL @robotName) isClosestTo @agentId) (. @agentId .) @result))
+	 (IF(?(~(NULL @result)))
+	    (!(= @agentToGuide (CAR(CAR @result))))
+	    )
+	 (=>(ExecutionManager.execute simplifiedGuide  @agentToGuide @executionId))
+	 )
+  )
+
+
+  (defop |simplifiedGuide|
+    :invocation(=>(ExecutionManager.execute simplifiedGuide @agentToGuide @executionId))
+    :body (
+	 (!(SEM-P ExecutionManager.sem))
+	 
+	 ;;set local function variables
+	 (!(= @robotStatus STOPPED))  ;;STOPPED or GUIDING 
+	 (!(= @nFailures 0))   ;;to deal with failures in motion planning
+	 (!(= @maxFailures 3))
+	 (?(Robot.name @robotName))
+	 
+	 (!(= @goal (. (. 0 0 0 .) .)))
+	 (!(= @start (. (. 0 0 0 .) .)))
+		   
+
+	 (WHILE(?(& (~(EQUAL @task completed)) (~(EQUAL @task failed)) (ExecutionManager.stop (VAL @executionId))))
+	       (!(DatabaseInterface.findList (AGENT-STATEMENT (VAL @robotName) (VAL @agentToGuide) isPresent @value) (. @value .) @result))
+	       (IF(?(~(NULL @result)))
+		  (!(= @isPresent (CAR(CAR @result))))
+		  )
+	       
+	       (IF(?(EQUAL @isPresent TRUE))
+		  (IF(?(EQUAL @robotStatus STOPPED))
+		     (!(BaseActions.getFreeId @goId))
+		     (=>(BaseActions.action move @goal @goId))
+
+		     ;; (!(ExecutionManager.getFreeId @goId))
+		     ;; (=>(ExecutionManager.execute go @goal NO_NAME @goId))		     
+		     (!(= @robotStatus GUIDING))
+		     )
+		  )
+	       (IF(?(ExecutionManager.report (VAL @goId) @report))
+		  (IF(?(EQUAL @report OK))
+		     (!(= @task completed))
+		     ELSE
+		     (!(= @robotStatus STOPPED))
+		     (!(= @nFailures (+ @nFailures 1)))
+		     )
+		  )
+	       
+	       (IF(?(> @nFailures @maxFailures))
+		  (!(= @task failed))
+		  )
+	       )
+
+	       
+	 
+	 (IF(?(EQUAL @task failed))
+	    (!(ExecutionManager.getFreeId @goId))
+	    (!(BaseActions.getFreeId @goId))
+	    (=>(BaseActions.action move @start @goId))
+	    (!(ExecutionManager.handleReport BaseActions @goId @executionId FALSE TRUE (. .)))
+	    )
+	 
+	 (!(SEM-V ExecutionManager.sem))
+	   
+	 )
+    )
 
 
 )

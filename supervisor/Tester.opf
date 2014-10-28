@@ -15,7 +15,7 @@
 	  )
    )
 
-defop |testRosMoveHead| 
+(defop |testRosMoveHead| 
    :invocation(!(TestRosMoveHead))
    :body (
 	  (!(SEND-MESSAGE HeadBridge (moveHead pan 1)))

@@ -35,7 +35,13 @@
 (Object.type TABLE_4 TABLE SUPPORT)
  
 (Object.type PR2_ROBOT ROBOT AGENT)
+(Object.type SPENCER_ROBOT ROBOT AGENT)
 (Object.type HERAKLES_HUMAN1 HUMAN AGENT)
 (Object.type HERAKLES_HUMAN2 HUMAN AGENT)
-
+(Object.type 1 HUMAN AGENT)
+(Object.type 2 HUMAN AGENT)
+(Object.type 3 HUMAN AGENT)
+(Object.type 4 HUMAN AGENT)
+(Object.type 5 HUMAN AGENT)
+(Object.type 6 HUMAN AGENT)
 )
