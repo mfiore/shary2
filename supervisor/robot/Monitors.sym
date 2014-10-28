@@ -3,3 +3,4 @@ declare ff Monitor.positionDanger 0
 declare ff Monitor.handPositionDanger 0
 declare be Monitor.agentAppears
 declare be Monitor.agentDisappears
+declare cwp Monitor.isCloseToPerson

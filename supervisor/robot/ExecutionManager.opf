@@ -1074,7 +1074,7 @@ $distance , $info, $orientation, $speed, $inRange  the output observations"
   (defop |simplifiedGuide|
     :invocation(=>(ExecutionManager.execute simplifiedGuide @agentToGuide @executionId))
     :body (
-	 (!(SEM-P ExecutionManager.sem))
+
 	 
 	 ;;set local function variables
 	 (!(= @robotStatus STOPPED))  ;;STOPPED or GUIDING 
@@ -1123,12 +1123,52 @@ $distance , $info, $orientation, $speed, $inRange  the output observations"
 	    (!(BaseActions.getFreeId @goId))
 	    (=>(BaseActions.action move @start @goId))
 	    (!(ExecutionManager.handleReport BaseActions @goId @executionId FALSE TRUE (. .)))
+	    (=>(ExecutionManager.report (VAL @executionId) FAILED))
+	    
+	    ELSE
+	    (=>(ExecutionManager.report (VAL @executionId) OK))
 	    )
-	 
-	 (!(SEM-V ExecutionManager.sem))
+
+
 	   
 	 )
     )
+(defop |approachPerson|
+  :invocation (=>(ExecutionManager.execute approachPerson @person @executionId))
+  :body (
+	 ;;set local function variables
+	 (!(= @robotStatus STOPPED))  ;;STOPPED or MOVING 
+	 (!(= @nFailures 0))   ;;to deal with failures in motion planning
+	 (!(= @maxFailures 3))
+	 (?(Robot.name @robotName))
+	 
+	 (!(DatabaseInterface.findList (AGENT-STATEMENT (VAL @robotName) (VAL @person) hasLocation @location) (. @location .) @result))
+	 (IF(?(~(NULL @result)))
+	    (!(= @location (CAR(CAR @result))))
+	    )
 
+	 (!(DatabaseInterface.addMonitor (AGENT-STATEMENT (VAL @robotName) (VAL @person) distance CLOSE) (Monitor.isCloseToPerson)))
+
+	 (!(BaseActions.getFreeId @goId))
+	 (=>(BaseActions.action move @goal @goId))
+	 (^ (& (BaseAction.report (VAL @goId) @report) (Monitor.isCloseToPerson) (ExecutionManager.stop (VAL @executionId))))
+
+	 (IF(?(~(BaseAction.report (VAL @goId) @report)))
+	    (!(BaseAction.report (VAL @stopId) @report))
+	    (=>(BaseAction.action stop @stopId))
+	    (!(ExecutionManager.handleReport BaseActions @stopId @executionId FALSE FALSE (. .)))
+	    
+	    ELSE
+	    (~>(BaseAction.report (VAL @goId)  @report))
+	    )
+	 (IF(?(Monitor.isCloseToPerson))
+	    (~>(Monitor.isCloseToPerson))
+	    (=>(ExecutionManager.report @executionId OK))
+	    ELSE
+	    (=>(ExecutionManager.report @executionId FAILED))
+	    
+	    )
+	 )
+  )
 
 )
