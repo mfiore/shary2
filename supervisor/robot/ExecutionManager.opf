@@ -159,8 +159,10 @@
 	 (^(Robot.isMoving LEFT_ARM FALSE))
 	 )
   )
+
+
  (defop |handleReport|
-   :invocation(!(ExecutionManager.handleReport @module @id @executionId @stoppable @failureConditions))
+   :invocation(!(ExecutionManager.handleReport @module @id @executionId @stoppable @haltable @failureConditions))
    :documentation "Utility function to avoid some code duplication when waiting for the response of a genom module. This can't be used when we don't want to fail if the genom request fails
                    @module is the name of the module we are waiting a report (Spark, Softmotion...)
                    @id is the id of the request we are waiting a report
@@ -1134,8 +1136,10 @@ $distance , $info, $orientation, $speed, $inRange  the output observations"
 	 )
     )
 (defop |approachPerson|
-  :invocation (=>(ExecutionManager.execute approachPerson @person @executionId))
+  :invocation (ExecutionManager.execute approachPerson @person @executionId)
   :body (
+	 (!(SEM-P ExecutionManager.sem))
+
 	 ;;set local function variables
 	 (!(= @robotStatus STOPPED))  ;;STOPPED or MOVING 
 	 (!(= @nFailures 0))   ;;to deal with failures in motion planning
@@ -1144,22 +1148,22 @@ $distance , $info, $orientation, $speed, $inRange  the output observations"
 	 
 	 (!(DatabaseInterface.findList (AGENT-STATEMENT (VAL @robotName) (VAL @person) hasLocation @location) (. @location .) @result))
 	 (IF(?(~(NULL @result)))
-	    (!(= @location (CAR(CAR @result))))
+	    (!(= @location (CAR @result)))
 	    )
 
-	 (!(DatabaseInterface.addMonitor (AGENT-STATEMENT (VAL @robotName) (VAL @person) distance CLOSE) (Monitor.isCloseToPerson)))
+	 (!(DatabaseInterface.addMonitor (AGENT-STATEMENT (VAL @robotName) (VAL @person) distance CLOSE) (Monitor.isCloseToPerson) @result))
 
 	 (!(BaseActions.getFreeId @goId))
-	 (=>(BaseActions.action move @goal @goId))
-	 (^ (& (BaseAction.report (VAL @goId) @report) (Monitor.isCloseToPerson) (ExecutionManager.stop (VAL @executionId))))
+	 (=>(BaseActions.action move @location @goId))
+	 (^ (|| (BaseActions.report (VAL @goId) @report) (Monitor.isCloseToPerson) (ExecutionManager.stop (VAL @executionId))))
 
-	 (IF(?(~(BaseAction.report (VAL @goId) @report)))
-	    (!(BaseAction.report (VAL @stopId) @report))
-	    (=>(BaseAction.action stop @stopId))
+	 (IF(?(~(BaseActions.report (VAL @goId) @report)))
+	    (!(BaseActions.getFreeId @stopId))
+	    (=>(BaseActions.action stop @stopId))
 	    (!(ExecutionManager.handleReport BaseActions @stopId @executionId FALSE FALSE (. .)))
 	    
 	    ELSE
-	    (~>(BaseAction.report (VAL @goId)  @report))
+	    (~>(BaseActions.report (VAL @goId)  @report))
 	    )
 	 (IF(?(Monitor.isCloseToPerson))
 	    (~>(Monitor.isCloseToPerson))
@@ -1168,6 +1172,7 @@ $distance , $info, $orientation, $speed, $inRange  the output observations"
 	    (=>(ExecutionManager.report @executionId FAILED))
 	    
 	    )
+	 (!(SEM-V ExecutionManager.sem))
 	 )
   )
 

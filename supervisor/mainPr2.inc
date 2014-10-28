@@ -2,7 +2,7 @@ include "new-default.inc"
 include "semaphore.inc"
 
 load db "supervisor/Config.db"
-load db "supervisor/Pr2.db"
+load db "supervisor/configuration/Pr2.db"
 
 
 load opf "supervisor/Tester.opf"
@@ -54,6 +54,7 @@ load db "supervisor/robot/Robot.db"
 load db "supervisor/robot/PathPlanner.db"
 load db "supervisor/robot/BaseActions.db"
 load db "supervisor/robot/Acapela.db"
+load db "supervisor/robot/DatabaseInterface.db"
 
 
 load opf "supervisor/robot/ExecutionManager.opf"

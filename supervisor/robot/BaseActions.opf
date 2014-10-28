@@ -17,10 +17,10 @@
   :invocation(!(BaseActions.getFreeId $id))
   :documentation "returns an available id for requestes"
   :body (
-	 (!(SEM-P BaseActions.sem))
+
 	 (?(BaseActions.freeId $id))
 	 (=>(BaseActions.freeId (+ $id 1)))
-	 (!(SEM-V BaseActions.sem))
+
 	 )
   )
 (defop |move|
