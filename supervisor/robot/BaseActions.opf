@@ -35,16 +35,22 @@
 	 (!(= @waypoints (CDR @waypoints)))
 	 (!(= @completed FALSE))
 
-	 (!(= @reportName1 (TERM-STRING-CAT (VAL @name) ".report")))
+	 (!(= @reportName1 (TERM-STRING-CAT (VAL @name) ".move.report")))
 	 (!(= @reportName1 (MAKE-ATOM @reportName1)))
 
-	 (!(= @reportName2 (TERM-STRING-CAT (VAL @name) ".update")))
+	 (!(= @reportName2 (TERM-STRING-CAT (VAL @name) ".move.update")))
 	 (!(= @reportName2 (MAKE-ATOM @reportName2)))
 	 
 	 (WHILE(?(EQUAL @completed FALSE))
 	       (^(|| (@reportName1 @status) (@reportName2 @status) (BaseActions.stop (VAL@id)) (ELAPSED-TIME (TIME) @time)))
 	       (IF(?(BaseActions.stop (VAL @id)))
-		  (!(BaseActions.stop))
+		  (!(BaseActions.getFreeId @stopId))
+		  (=>(BaseActions.action stop (VAL @stopId)))
+		  (^(BaseActions.report (VAL @stopId) @report))
+		  (~>(BaseActions.report (VAL @stopId) @report))
+		  (^(BaseActions.report (VAL @id) @report))
+		  (~>(BaseActions.report (VAL @id) @report))
+		 
 		  (=>(BaseActions.report @id "STOPPED"))
 	    
 		  ELSEIF(?(@reportName1 OK))
@@ -77,9 +83,11 @@
   :body (
 	 (?(BaseActions.bridgeName @name))
 	 (?(BaseActions.timeToWait @time))
+	 (!(= @reportName (TERM-STRING-CAT (VAL @name) ".stop.report")))
+	 (!(= @reportName (MAKE-ATOM @reportName)))
 	 (!(SEND-MESSAGE @name (stop)))
-	 (^(||(BaseActions.response (VAL @name @response) (ELAPSED-TIME (TIME) @time))))
-	 (~>(BaseActions.response @name @response))
+	 (^(||(@reportName @report) (ELAPSED-TIME (TIME) @time)))
+	 (~>(@reportName @report))
 	 (=>(BaseActions.report @id "OK"))
 	 )
   )

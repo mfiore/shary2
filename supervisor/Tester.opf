@@ -84,7 +84,7 @@
   :body (
 	 (!(BaseActions.init))
 	 (!(BaseActions.getFreeId @id))
-	 (=>(BaseActions.action move (. (. 7.0 3.71 0 0 0 0 1 .) .)))
+	 (=>(BaseActions.action move (. (. 1.5 2 0 .) .) @id ))
 	 )
   )
 

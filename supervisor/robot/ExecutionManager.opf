@@ -1079,58 +1079,42 @@ $distance , $info, $orientation, $speed, $inRange  the output observations"
 
 	 
 	 ;;set local function variables
-	 (!(= @robotStatus STOPPED))  ;;STOPPED or GUIDING 
-	 (!(= @nFailures 0))   ;;to deal with failures in motion planning
-	 (!(= @maxFailures 3))
 	 (?(Robot.name @robotName))
 	 
 	 (!(= @goal (. (. 0 0 0 .) .)))
 	 (!(= @start (. (. 0 0 0 .) .)))
 		   
+	 ;;add a monitor for when the human who's following disappear
+	 (!(Database.addMonitor (AGENT-STATEMENT (VAL @robotName) (VAL @agentToGuide) isPresent FALSE) (Monitor.humanNotFollowing) @result))
 
-	 (WHILE(?(& (~(EQUAL @task completed)) (~(EQUAL @task failed)) (ExecutionManager.stop (VAL @executionId))))
-	       (!(DatabaseInterface.findList (AGENT-STATEMENT (VAL @robotName) (VAL @agentToGuide) isPresent @value) (. @value .) @result))
-	       (IF(?(~(NULL @result)))
-		  (!(= @isPresent (CAR(CAR @result))))
-		  )
-	       
-	       (IF(?(EQUAL @isPresent TRUE))
-		  (IF(?(EQUAL @robotStatus STOPPED))
-		     (!(BaseActions.getFreeId @goId))
-		     (=>(BaseActions.action move @goal @goId))
-
-		     ;; (!(ExecutionManager.getFreeId @goId))
-		     ;; (=>(ExecutionManager.execute go @goal NO_NAME @goId))		     
-		     (!(= @robotStatus GUIDING))
-		     )
-		  )
-	       (IF(?(ExecutionManager.report (VAL @goId) @report))
-		  (IF(?(EQUAL @report OK))
-		     (!(= @task completed))
-		     ELSE
-		     (!(= @robotStatus STOPPED))
-		     (!(= @nFailures (+ @nFailures 1)))
-		     )
-		  )
-	       
-	       (IF(?(> @nFailures @maxFailures))
-		  (!(= @task failed))
-		  )
-	       )
-
-	       
-	 
-	 (IF(?(EQUAL @task failed))
-	    (!(ExecutionManager.getFreeId @goId))
-	    (!(BaseActions.getFreeId @goId))
-	    (=>(BaseActions.action move @start @goId))
-	    (!(ExecutionManager.handleReport BaseActions @goId @executionId FALSE TRUE (. .)))
-	    (=>(ExecutionManager.report (VAL @executionId) FAILED))
+	 ;;start moving
+	 (!(BaseActions.getFreeId @goId))
+	 (=>(BaseActions.action move @goal @goId))
+	 (^(|| (BaseActions.report (VAL @goId) @report) (Monitor.humanNotFollowing)))
+	 (!(Database.removeMonitor (AGENT-STATEMENT (VAL @robotName) (VAL @agentToGuide) isPresent FALSE) @result))
+	 (IF(?(BaseActions.report (VAL @goId) @report))
+	    (=>(ExecutionManager.report @executionId OK))
 	    
 	    ELSE
-	    (=>(ExecutionManager.report (VAL @executionId) OK))
+	    (IF(?(Monitor.humanNotFollowing))
+	       (~>(Monitor.humanNotFollowing))
+	       
+	       ;;Stop the robot. We assume that if we had other errors the robot is already stopped. Only time will tell if this is bullshit XD
+	       (!(BaseActions.getFreeId @stopId))
+	       (=>(BaseActions.action stop @stopId))
+	       (!(ExecutionManager.handleReport BaseActions (VAL @stopId) @executionId FALSE FALSE (. .)))
+	       (^(BaseActions.report (VAL @goId) @report))
+	       (~>(BaseActions.report (VAL @goId) @report))
+	       )
+	    
+	    ;;go back to base
+	    (=>(BaseActions.getFreeId @backToBaseId))
+	    (=>(BaseActions.action move @start @backToBaseId))
+	    (!(ExecutionManager.handleReport BaseActions (VAL @backToBaseId) @executionId FALSE FALSE (. .)))
+	    
+	    (=>(ExecutionManager.report @executionId FAILED))
+	    
 	    )
-
 
 	   
 	 )
@@ -1140,10 +1124,7 @@ $distance , $info, $orientation, $speed, $inRange  the output observations"
   :body (
 	 (!(SEM-P ExecutionManager.sem))
 
-	 ;;set local function variables
-	 (!(= @robotStatus STOPPED))  ;;STOPPED or MOVING 
-	 (!(= @nFailures 0))   ;;to deal with failures in motion planning
-	 (!(= @maxFailures 3))
+
 	 (?(Robot.name @robotName))
 	 
 	 (!(DatabaseInterface.findList (AGENT-STATEMENT (VAL @robotName) (VAL @person) hasLocation @location) (. @location .) @result))
@@ -1172,6 +1153,7 @@ $distance , $info, $orientation, $speed, $inRange  the output observations"
 	    (=>(ExecutionManager.report @executionId FAILED))
 	    
 	    )
+	 (!(DatabaseInterface.removeMonitor (AGENT-STATEMENT (VAL @robotName) (VAL @person) distance CLOSE) @result))
 	 (!(SEM-V ExecutionManager.sem))
 	 )
   )
