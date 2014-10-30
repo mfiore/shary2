@@ -1074,7 +1074,7 @@ $distance , $info, $orientation, $speed, $inRange  the output observations"
 
 
   (defop |simplifiedGuide|
-    :invocation(=>(ExecutionManager.execute simplifiedGuide @agentToGuide @executionId))
+    :invocation(ExecutionManager.execute simplifiedGuide @agentToGuide @executionId)
     :body (
 
 	 
@@ -1084,14 +1084,14 @@ $distance , $info, $orientation, $speed, $inRange  the output observations"
 	 (!(= @goal (. (. 0 0 0 .) .)))
 	 (!(= @start (. (. 0 0 0 .) .)))
 		   
-	 ;;add a monitor for when the human who's following disappear
-	 (!(Database.addMonitor (AGENT-STATEMENT (VAL @robotName) (VAL @agentToGuide) isPresent FALSE) (Monitor.humanNotFollowing) @result))
+	 ;;add a monitor for when the human who's followingc disappear
+	 (!(DatabaseInterface.addMonitor (AGENT-STATEMENT (VAL @robotName) (VAL @agentToGuide) isPresent FALSE) (Monitor.humanNotFollowing) @result))
 
 	 ;;start moving
 	 (!(BaseActions.getFreeId @goId))
 	 (=>(BaseActions.action move @goal @goId))
 	 (^(|| (BaseActions.report (VAL @goId) @report) (Monitor.humanNotFollowing)))
-	 (!(Database.removeMonitor (AGENT-STATEMENT (VAL @robotName) (VAL @agentToGuide) isPresent FALSE) @result))
+	 (!(DatabaseInterface.removeMonitor (AGENT-STATEMENT (VAL @robotName) (VAL @agentToGuide) isPresent FALSE) @result))
 	 (IF(?(BaseActions.report (VAL @goId) @report))
 	    (=>(ExecutionManager.report @executionId OK))
 	    
@@ -1108,7 +1108,7 @@ $distance , $info, $orientation, $speed, $inRange  the output observations"
 	       )
 	    
 	    ;;go back to base
-	    (=>(BaseActions.getFreeId @backToBaseId))
+	    (!(BaseActions.getFreeId @backToBaseId))
 	    (=>(BaseActions.action move @start @backToBaseId))
 	    (!(ExecutionManager.handleReport BaseActions (VAL @backToBaseId) @executionId FALSE FALSE (. .)))
 	    

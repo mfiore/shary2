@@ -17,7 +17,6 @@
   :invocation(!(BaseActions.getFreeId $id))
   :documentation "returns an available id for requestes"
   :body (
-
 	 (?(BaseActions.freeId $id))
 	 (=>(BaseActions.freeId (+ $id 1)))
 
@@ -27,52 +26,60 @@
   :invocation(BaseActions.action move @waypoints @id)
   :documentation "moves the robot through a list of waypoints"
   :body (
-	 (!(SEM-P BaseActions.sem))
-	 (?(BaseActions.bridgeName @name))
-	 (?(BaseActions.timeToWait @time))
-	 (!(SEND-MESSAGE @name (move euler @waypoints)))
-	 (!(= @nextLocation (CAR @waypoints)))
-	 (!(= @waypoints (CDR @waypoints)))
-	 (!(= @completed FALSE))
+	 (!(SEM-P BaseActions.sem)) 
+	    (?(BaseActions.bridgeName @name))
+	    (?(BaseActions.timeToWait @time))
 
-	 (!(= @reportName1 (TERM-STRING-CAT (VAL @name) ".move.report")))
-	 (!(= @reportName1 (MAKE-ATOM @reportName1)))
+	    (!(= @reportName1 (TERM-STRING-CAT (VAL @name) ".move.report")))
+	    (!(= @reportName1 (MAKE-ATOM @reportName1)))
 
-	 (!(= @reportName2 (TERM-STRING-CAT (VAL @name) ".move.update")))
-	 (!(= @reportName2 (MAKE-ATOM @reportName2)))
-	 
-	 (WHILE(?(EQUAL @completed FALSE))
-	       (^(|| (@reportName1 @status) (@reportName2 @status) (BaseActions.stop (VAL@id)) (ELAPSED-TIME (TIME) @time)))
-	       (IF(?(BaseActions.stop (VAL @id)))
-		  (!(BaseActions.getFreeId @stopId))
-		  (=>(BaseActions.action stop (VAL @stopId)))
-		  (^(BaseActions.report (VAL @stopId) @report))
-		  (~>(BaseActions.report (VAL @stopId) @report))
-		  (^(BaseActions.report (VAL @id) @report))
-		  (~>(BaseActions.report (VAL @id) @report))
-		 
-		  (=>(BaseActions.report @id "STOPPED"))
-	    
-		  ELSEIF(?(@reportName1 OK))
-		  (~>(@reportName1 @status)) 
-		  (=>(Robot.location (VAL @nextLocation)))
-		  (!(= @nextLocation (CAR @waypoints)))
-		  (!(= @waypoints (CDR @waypoints)))
-		  
-		  ELSEIF(?(@reportName2 OK))
-		  (~>(@reportName2 @status)) 
-		  (=>(BaseActions.report @id "OK"))   
-		  (!(= @completed TRUE))
-		  ELSE
-		  (~>(@reportName1 @status)) 
-		  (~>(@reportName2 @status)) 
-		  (=>(BaseActions.report @id "FAILURE"))
-		  (!(= @completed TRUE))
-		  )
-	       )
-	 (~>(@reportName1 @status)) 
-	 (~>(@reportName2 @status)) 
+	    (!(= @reportName2 (TERM-STRING-CAT (VAL @name) ".move.update")))
+	    (!(= @reportName2 (MAKE-ATOM @reportName2)))
+	    (IF(?(Robot.simu FALSE)) 
+	       
+	       (!(SEND-MESSAGE @name (move euler @waypoints)))
+	       (!(= @nextLocation (CAR @waypoints)))
+	       (!(= @waypoints (CDR @waypoints)))
+	       (!(= @completed FALSE))
+	       
+	       
+	       (WHILE(?(EQUAL @completed FALSE))
+		     (^(|| (@reportName1 @status) (@reportName2 @status) (BaseActions.stop (VAL@id)) (ELAPSED-TIME (TIME) @time)))
+		     (IF(?(BaseActions.stop (VAL @id)))
+			(!(BaseActions.getFreeId @stopId))
+			(=>(BaseActions.action stop (VAL @stopId)))
+			(^(BaseActions.report (VAL @stopId) @report))
+			(~>(BaseActions.report (VAL @stopId) @report))
+			(^(BaseActions.report (VAL @id) @report))
+			(~>(BaseActions.report (VAL @id) @report))
+			
+			(=>(BaseActions.report @id "STOPPED"))
+			
+			ELSEIF(?(@reportName1 OK))
+			(~>(@reportName1 @status)) 
+			(=>(Robot.location (VAL @nextLocation)))
+			(!(= @nextLocation (CAR @waypoints)))
+			(!(= @waypoints (CDR @waypoints)))
+			
+			ELSEIF(?(@reportName2 OK))
+			(~>(@reportName2 @status)) 
+			(=>(BaseActions.report @id "OK"))   
+			(!(= @completed TRUE))
+			ELSE
+			(~>(@reportName1 @status)) 
+			(~>(@reportName2 @status)) 
+			(=>(BaseActions.report @id "FAILURE"))
+			(!(= @completed TRUE))
+			)
+		     )
+	       (~>(@reportName1 @status)) 
+	       (~>(@reportName2 @status)) 
+	       
+	       ELSE
+	       (^(|| (@reportName1 @status) (@reportName2 @status) (BaseActions.stop (VAL@id))))
+	       (=>(BaseActions.report @id @status))
 
+	 )
 	 (!(SEM-V BaseActions.sem))
 	 )
   )
@@ -81,6 +88,7 @@
   :invocation(BaseActions.action stop @id)
   :documentation "halts the robot movement"
   :body (
+	 (IF(?(Robot.simu FALSE))
 	 (?(BaseActions.bridgeName @name))
 	 (?(BaseActions.timeToWait @time))
 	 (!(= @reportName (TERM-STRING-CAT (VAL @name) ".stop.report")))
@@ -88,6 +96,7 @@
 	 (!(SEND-MESSAGE @name (stop)))
 	 (^(||(@reportName @report) (ELAPSED-TIME (TIME) @time)))
 	 (~>(@reportName @report))
+	 )
 	 (=>(BaseActions.report @id "OK"))
 	 )
   )
