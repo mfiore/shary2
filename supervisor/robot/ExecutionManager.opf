@@ -148,15 +148,15 @@
   :invocation(!(ExecutionManager.cleanModuleRequestes))
   :documentation "When we stop an action we want to stop all the living requestes like detectPression"
   :body (
-	 (IF(?(ArmActions.hasDetectPressionRequest @gripper @mode @smId))
-	    (~>(ArmActions.hasDetectPressionRequest (VAL @gripper) (VAL @mode) (VAL @smId)))
-	    (?(Softmotion.gripperCancel (VAL @gripper) @state))
-	    (!(Softmotion.getFreeId @smId))
-	    (=>(Softmotion.request useGripper @state @smId))
-	    (^(Softmotion.report (VAL @smId) @report))
-	    )
-	 (^(Robot.isMoving RIGHT_ARM FALSE))
-	 (^(Robot.isMoving LEFT_ARM FALSE))
+	 ;; (IF(?(ArmActions.hasDetectPressionRequest @gripper @mode @smId))
+	 ;;    (~>(ArmActions.hasDetectPressionRequest (VAL @gripper) (VAL @mode) (VAL @smId)))
+	 ;;    (?(Softmotion.gripperCancel (VAL @gripper) @state))
+	 ;;    (!(Softmotion.getFreeId @smId))
+	 ;;    (=>(Softmotion.request useGripper @state @smId))
+	 ;;    (^(Softmotion.report (VAL @smId) @report))
+	 ;;    )
+	 ;; (^(Robot.isMoving RIGHT_ARM FALSE))
+	 ;; (^(Robot.isMoving LEFT_ARM FALSE))
 	 )
   )
 
@@ -1061,7 +1061,7 @@ $distance , $info, $orientation, $speed, $inRange  the output observations"
   )
 
 (defop |startGuide| 
-  :invocation(=>(ExecutionManager.execute startGuide @executionId))
+  :invocation(ExecutionManager.execute startGuide @executionId)
   :body (
 	 (?(Robot.name @robotName))
 	 (!(DatabaseInterface.findList (AGENT-STATEMENT (VAL @robotName) (VAL @robotName) isClosestTo @agentId) (. @agentId .) @result))
@@ -1077,12 +1077,12 @@ $distance , $info, $orientation, $speed, $inRange  the output observations"
     :invocation(ExecutionManager.execute simplifiedGuide @agentToGuide @executionId)
     :body (
 
-	 
-	 ;;set local function variables
+	   (!(SEM-P ExecutionManager.sem))
+	   ;;set local function variables
 	 (?(Robot.name @robotName))
 	 
-	 (!(= @goal (. (. 0 0 0 .) .)))
 	 (!(= @start (. (. 0 0 0 .) .)))
+	 (!(= @goal (. (. -4.8 9 -90 .) .)))
 		   
 	 ;;add a monitor for when the human who's followingc disappear
 	 (!(DatabaseInterface.addMonitor (AGENT-STATEMENT (VAL @robotName) (VAL @agentToGuide) isPresent FALSE) (Monitor.humanNotFollowing) @result))
@@ -1116,7 +1116,7 @@ $distance , $info, $orientation, $speed, $inRange  the output observations"
 	    
 	    )
 
-	   
+	 (!(SEM-V ExecutionManager.sem))	   
 	 )
     )
 (defop |approachPerson|

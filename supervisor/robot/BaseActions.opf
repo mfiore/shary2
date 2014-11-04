@@ -44,7 +44,7 @@
 	       
 	       
 	       (WHILE(?(EQUAL @completed FALSE))
-		     (^(|| (@reportName1 @status) (@reportName2 @status) (BaseActions.stop (VAL@id)) (ELAPSED-TIME (TIME) @time)))
+		     (^(|| (@reportName1 @status) (@reportName2 @status) (BaseActions.stop (VAL @id)) (ELAPSED-TIME (TIME) @time)))
 		     (IF(?(BaseActions.stop (VAL @id)))
 			(!(BaseActions.getFreeId @stopId))
 			(=>(BaseActions.action stop (VAL @stopId)))
@@ -54,13 +54,16 @@
 			(~>(BaseActions.report (VAL @id) @report))
 			
 			(=>(BaseActions.report @id "STOPPED"))
+
+			(!(= @completed TRUE))
 			
 			ELSEIF(?(@reportName1 OK))
 			(~>(@reportName1 @status)) 
 			(=>(Robot.location (VAL @nextLocation)))
-			(!(= @nextLocation (CAR @waypoints)))
-			(!(= @waypoints (CDR @waypoints)))
-			
+			(IF(?(~(NULL @waypoints)))
+			   (!(= @nextLocation (CAR @waypoints)))
+			   (!(= @waypoints (CDR @waypoints)))
+			)
 			ELSEIF(?(@reportName2 OK))
 			(~>(@reportName2 @status)) 
 			(=>(BaseActions.report @id "OK"))   
@@ -96,6 +99,8 @@
 	 (!(SEND-MESSAGE @name (stop)))
 	 (^(||(@reportName @report) (ELAPSED-TIME (TIME) @time)))
 	 (~>(@reportName @report))
+
+	 (=>(BaseActions.report @id "OK"))
 	 )
 	 (=>(BaseActions.report @id "OK"))
 	 )

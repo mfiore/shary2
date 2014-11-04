@@ -32,7 +32,12 @@ The result is returned into $newFact. If it's not bounded than no rules have bee
     (!(= @newFactListTemp (. .)))    
     (IF(!(== (VAL @fact) (AGENT-STATEMENT @agentModel @subject @predicate @value)))     
        
+       (IF(?(NUMBERP @subject))
+	  (!(= @subjectClass AGENT))
+	 
+	ELSE
        (?(Object.type (VAL @subject) @st @subjectClass))
+       )
        (IF(?(Object.type (VAL @value) @vt @valueClass))
 	  (?(Object.type (VAL @value) @vt @valueClass))
 	  

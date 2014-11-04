@@ -7,6 +7,45 @@
 
 (
 
+ (defop |testGuide| 
+   :invocation (!(Tester.testGuide @agent))
+   :body (
+	  (!(Controller.initAll))
+	  (!(ExecutionManager.getFreeId @approachId))
+	  (=>(ExecutionManager.execute approachPerson @agent @approachId))
+	  (^(ExecutionManager.report (VAL @approachId) @report))
+	  (~>(ExecutionManager.report (VAL @approachId) @report))
+
+	  (^(ELAPSED-TIME (TIME) 6))
+	  (!(ExecutionManager.getFreeId @guideId))
+	  (=>(ExecutionManager.execute startGuide @guideId))
+	  (^(ExecutionManager.report (VAL @guideId) @report))
+	  )
+   )
+
+ (defop |testGoBase|
+   :invocation(!(Tester.testGoBase))
+   :body (
+	  (!(Controller.initAll))
+	  (=>(BaseActions.action move (. (. 0 0 0 .) .) 0))
+	  (^(BaseActions.report 0 @report))
+	  )
+   )
+
+ (defop |testSpencerGo|
+   :invocation(!(Tester.testSpencerGo))
+   :body (
+	  (!(Controller.initAll))
+	  (=>(BaseActions.action move (. (. 2 0 -90 .) .) 0))
+	  (^(BaseActions.report 0 @report))
+	  (~>(BaseActions.report 0 @report))
+          (^(ELAPSED-TIME (TIME) 5))
+	  (=>(BaseActions.action move (. (. -2 0 90 .) .) 1))
+;          (=>(BaseActions.action move (. (. -4.8 8 -90 .) .) 1))
+          (^(BaseActions.report 1 @report))
+          (~>(BaseActions.report 1 @report))
+	  )
+   )
  (defop |testGtpGoto|
    :invocation (!(Tester.testGtpGoto))
    :body (
