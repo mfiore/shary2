@@ -148,15 +148,18 @@
   :invocation(!(ExecutionManager.cleanModuleRequestes))
   :documentation "When we stop an action we want to stop all the living requestes like detectPression"
   :body (
-	 ;; (IF(?(ArmActions.hasDetectPressionRequest @gripper @mode @smId))
-	 ;;    (~>(ArmActions.hasDetectPressionRequest (VAL @gripper) (VAL @mode) (VAL @smId)))
-	 ;;    (?(Softmotion.gripperCancel (VAL @gripper) @state))
-	 ;;    (!(Softmotion.getFreeId @smId))
-	 ;;    (=>(Softmotion.request useGripper @state @smId))
-	 ;;    (^(Softmotion.report (VAL @smId) @report))
-	 ;;    )
-	 ;; (^(Robot.isMoving RIGHT_ARM FALSE))
-	 ;; (^(Robot.isMoving LEFT_ARM FALSE))
+
+	 (IF(?(Robot.joints RIGHT_ARM))
+	    (IF(?(ArmActions.hasDetectPressionRequest @gripper @mode @smId))
+	       (~>(ArmActions.hasDetectPressionRequest (VAL @gripper) (VAL @mode) (VAL @smId)))
+	       (?(Softmotion.gripperCancel (VAL @gripper) @state))
+	       (!(Softmotion.getFreeId @smId))
+	       (=>(Softmotion.request useGripper @state @smId))
+	       (^(Softmotion.report (VAL @smId) @report))
+	       )
+	    (^(Robot.isMoving RIGHT_ARM FALSE))
+	    (^(Robot.isMoving LEFT_ARM FALSE))
+	    )
 	 )
   )
 

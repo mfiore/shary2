@@ -8,6 +8,7 @@
    :documentation "inits the module"
    :body (
 	  (=>(HeadActions.freeId 0))
+	  (=>(Robot.isMoving HEAD FALSE))
 	  (!(SEM-CREATE HeadActions.sem 1 SEM-FIFO))
 	  )
    )

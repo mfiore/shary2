@@ -9,8 +9,13 @@
    :documentation "Inits the module "
    :body (
 	  (!(SEM-CREATE ArmActions.sem 1 SEM-FIFO))
-	  
 	  (=>(ArmActions.freeId 0))
+	  (=>(Robot.isMoving LEFT_ARM FALSE))
+	  (=>(Robot.isMoving RIGHT_ARM FALSE))
+	  (=>(Robot.gripperStatus RIGHT CLOSE))
+	  (=>(Robot.gripperStatus LEFT CLOSE))
+	  (=>(Robot.pose RIGHT NO_NAME NO_NAME REST))
+	
 	  )
    )
 

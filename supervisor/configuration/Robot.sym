@@ -1,1 +1,2 @@
 declare ff Module 0
+declare ff Robot.joints

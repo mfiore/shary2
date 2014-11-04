@@ -10,6 +10,7 @@
   :body (
 	 (=>(BaseActions.freeId 0))
 	 (!(SEM-CREATE BaseActions.sem 1 SEM-FIFO))
+	 (!(SEM-CREATE BaseActionsId.sem 1 SEM-FIFO))
 	 )
   )
 
@@ -17,9 +18,10 @@
   :invocation(!(BaseActions.getFreeId $id))
   :documentation "returns an available id for requestes"
   :body (
+	 (!(SEM-P BaseActionsId.sem))
 	 (?(BaseActions.freeId $id))
 	 (=>(BaseActions.freeId (+ $id 1)))
-
+	 (!(SEM-V BaseActionsId.sem))
 	 )
   )
 (defop |move|
@@ -27,14 +29,14 @@
   :documentation "moves the robot through a list of waypoints"
   :body (
 	 (!(SEM-P BaseActions.sem)) 
-	    (?(BaseActions.bridgeName @name))
-	    (?(BaseActions.timeToWait @time))
+	 (?(BaseActions.bridgeName @name))
+	 (?(BaseActions.timeToWait @time))
 
-	    (!(= @reportName1 (TERM-STRING-CAT (VAL @name) ".move.report")))
-	    (!(= @reportName1 (MAKE-ATOM @reportName1)))
+	 (!(= @reportName1 (TERM-STRING-CAT (VAL @name) ".move.report")))
+	 (!(= @reportName1 (MAKE-ATOM @reportName1)))
 
-	    (!(= @reportName2 (TERM-STRING-CAT (VAL @name) ".move.update")))
-	    (!(= @reportName2 (MAKE-ATOM @reportName2)))
+	 (!(= @reportName2 (TERM-STRING-CAT (VAL @name) ".move.update")))
+	 (!(= @reportName2 (MAKE-ATOM @reportName2)))
 	    (IF(?(Robot.simu FALSE)) 
 	       
 	       (!(SEND-MESSAGE @name (move euler @waypoints)))
@@ -54,7 +56,7 @@
 			(~>(BaseActions.report (VAL @id) @report))
 			
 			(=>(BaseActions.report @id "STOPPED"))
-
+			
 			(!(= @completed TRUE))
 			
 			ELSEIF(?(@reportName1 OK))
@@ -63,7 +65,7 @@
 			(IF(?(~(NULL @waypoints)))
 			   (!(= @nextLocation (CAR @waypoints)))
 			   (!(= @waypoints (CDR @waypoints)))
-			)
+			   )
 			ELSEIF(?(@reportName2 OK))
 			(~>(@reportName2 @status)) 
 			(=>(BaseActions.report @id "OK"))   

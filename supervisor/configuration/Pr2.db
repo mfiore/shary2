@@ -8,4 +8,10 @@
 (Module.isActive acapela TRUE)
 (Module.isActive navigation TRUE)
 
+(Robot.joints HEAD)
+(Robot.joints BASE)
+(Robot.joints LEFT_ARM)
+(Robot.joints RIGHT_ARM)
+
+
 )
