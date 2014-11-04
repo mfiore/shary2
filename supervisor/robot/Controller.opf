@@ -47,7 +47,7 @@
 	  (!(ExecutionManager.init))
 	  (!(Timer.init))
 	  
-	  (IF(?(Robot.joints RARM))
+	  (IF(?(Robot.joints RIGHT_ARM))
 	     (!(ArmActions.init))
 	     )
 	  (!(HeadActions.init))
@@ -73,7 +73,7 @@
 	     (!(DatabaseInterface.findList (AGENT-STATEMENT (VAL @robotName) (VAL @robotName) hasLocation @location) (. @location .) @result ))
 	     (IF(?(~(NULL @result)))
 		(!(= @location (CAR(CAR @result))))
-		(!(== (VAL @location) (. @x @y @z @yaw @pitch @roll)))
+		(!(== (VAL @location) (. @x @y @z @yaw @pitch @roll .)))
 		)
 		  
 	     )

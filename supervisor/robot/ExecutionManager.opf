@@ -133,10 +133,10 @@
 	     (~>(Spark.report (VAL @sparkId) @sparkReport))
 	      
 	     (IF(?(> @yOb @yTorso))
-		(!(= $armForTake LEFT))
+		(!(= $armForTake RIGHT))
 		
 		ELSE
-		(!(= $armForTake RIGHT))
+		(!(= $armForTake LEFT))
 		)
 	     )
 	  

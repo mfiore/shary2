@@ -89,12 +89,12 @@
 	     (!(Mhp.getFreeId @mhpId))
 	     (=>(Mhp.request setTrajectory GEN_TRUE (VAL @task) (VAL @mhpArm) (VAL @armStart) (VAL @armGoto) (VAL @object) (VAL @support) (VAL @placement) GEN_FALSE 0 (VAL @objStart) (VAL @useObjGoto) (VAL @objGoto) (VAL @mhpId)))
 	     
-	     (!(ArmActions.handleReport Mhp @mhpId @actionId FALSE))
+	     (!(ArmActions.handleReport Mhp @mhpId @actionId ))
 	     
 
 	     (!(Softmotion.getFreeId @smId))
 	     (=>(Softmotion.request moveArm @smArm @smId))
-	     (!(ArmActions.handleReport Softmotion @smId @actionId FALSE))
+	     (!(ArmActions.handleReport Softmotion @smId @actionId ))
 					;everything went okay
 	     (=>(ArmActions.report (VAL @actionId) "OK"))
 	     (~>(Robot.pose @a @b @c @d))
@@ -188,7 +188,7 @@
 	  ;get the position of the placement
 	  (!(Spark.getFreeId @sparkId))
 	  (=>(Spark.request getJointAbsPose @placement NO_NAME @sparkId))
-	  (!(ArmActions.handleReport Spark @sparkId @actionId FALSE))
+	  (!(ArmActions.handleReport Spark @sparkId @actionId ))
 	  (^(Spark.result (VAL @sparkId) @xp @yp @zp @yawp @pitchp @rollp))
 	  (~>(Spark.result (VAL @sparkId) (VAL @xp) (VAL @yp) (VAL @zp) (VAL @yawp) (VAL @pitchp) (VAL @rollp))) 
 	  (!(= @objGoto (objGoto @xp @yp @zp 0.0 0.0 0.0)))
@@ -293,7 +293,7 @@
 		ELSEIF(?(EQUAL @state LGRAB))
 		(=>(ArmActions.hasGripperGrabRequest LEFT (VAL @smId) (VAL @actionId)))
 		)
-	     (!(ArmActions.handleReport Softmotion @smId @actionId FALSE))
+	     (!(ArmActions.handleReport Softmotion @smId @actionId ))
 	     (=>(ArmActions.report @actionId "OK")) 
 	     
 	     ELSE
@@ -363,7 +363,7 @@ actually know if this really changes something... pressure is pressre."
 	  (!(Softmotion.getFreeId @smId))
 	  (=>(Softmotion.request detectPression @state @smId))
 	  (=>(ArmActions.hasDetectPressionRequest (VAL @gripper) (VAL @mode) (VAL @smId))) ;remember the request for stopdetectPressionRequestes
-	  (!(ArmActions.handleReport Softmotion @smId @actionId TRUE))
+	  (!(ArmActions.handleReport Softmotion @smId @actionId ))
 	  (=>(ArmActions.report @actionId "OK")) 
 	  (~>(ArmActions.hasDetectPressionRequest (VAL @gripper) (VAL @mode) (VAL @smId)))
 

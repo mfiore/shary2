@@ -47,7 +47,7 @@
 	  (=>(Mhp.request addGtpData hand @hand @id))
 	  (!(GtpActions.handleReport Mhp @id @gtpId))
 
-	  (!(GtpActions.executeTask pick @arm @object NO_NAME @gtpId))
+	  (!(GtpActions.executeTask "pick" @arm @object NO_NAME @gtpId))
 
 	  
 	  )
@@ -112,7 +112,7 @@
 	     (!(GtpActions.handleReport Mhp @id @gtpId))
 	  
 	     )
-	  (!(GtpActions.executeTask place @arm @mainObject @placement @gtpId))
+	  (!(GtpActions.executeTask "place" @arm @mainObject @placement @gtpId))
 	 )
   )
 
@@ -141,7 +141,7 @@
 	  (=>(Mhp.request addGtpData hand @hand @id))
 	  (!(GtpActions.handleReport Mhp @id @gtpId))
 
-	  (!(GtpActions.executeTask placeReachable @gtpId))
+	  (!(GtpActions.executeTask "placeReachable" @gtpId))
 
 	 )
   )
@@ -196,7 +196,7 @@
 	  (=>(Mhp.request addGtpData confName @configurationName @id))
 	  (!(GtpActions.handleReport Mhp @id @gtpId))
 	      
-	  (!(GtpActions.executeTask moveto @gtpId))
+	  (!(GtpActions.executeTask "moveto" @gtpId))
 	 
 	  )
   )

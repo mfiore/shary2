@@ -56,7 +56,7 @@
 	      (!(= @moveHead TRUE))
 	      )
 	   (IF(?(EQUAL @moveHead TRUE))
-	      (IF(?(Modules.isActive Softmotion))
+	      (IF(?(Module.isActive softmotion TRUE))
 		 (!(Viman.getFreeId @vimanId))
 		 (=>(Viman.request stopTracking @vimanId))
 		 (!(HeadActions.handleReport Viman.report (VAL @vimanId) (VAL @actionId)))
