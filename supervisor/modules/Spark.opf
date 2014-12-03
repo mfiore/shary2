@@ -118,10 +118,10 @@
 	 
 
 	 (IF(?(EQUAL @activateSphere GEN_FALSE))
-	    (=>(Spark.freeSphereId @id))
-	 
-	    (!(= @radius 0))
-	    (!(= @multiplier 0))
+        (=>(Spark.freeSphereId @sphereId)
+
+           (!(= @radius 0)))
+        (!(= @multiplier 0))
 
 	    ELSE
 	    (?(Object.type (VAL @objectName) @class @objectType))
