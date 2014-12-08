@@ -89,11 +89,11 @@
    :invocation(!(Tester.testGtpTake))
    :body (
 	  (!(Controller.initAll))
-	  (=>(GtpActions.action pick RED_CUBE "right" 0))
+	  (=>(GtpActions.action pick BLUE_CUBE RIGHT 0))
 	  (^(GtpActions.report 0 @report))
 	  (~>(GtpActions.report @id @report))
 	  
-	  (=>(GtpActions.action place RED_CUBE TABLE_4 "right" FALSE (. .) "force_place" (. 6.8 6.7 0.72 7.8 6.7 0.72 6.8 6.1 0.72 7.8 6.1 0.72 .) 1))
+	  (=>(GtpActions.action place BLUE_CUBE TABLE_4 PLACEMAT_BLUE (. .) RIGHT 1))
 	  (^(GtpActions.report 1 @report))
 	  (~>(GtpActions.report @id @report))
 	  )
@@ -102,7 +102,7 @@
  (defop |testGtpPlace|
    :invocation(!(Tester.testGtpPlace))
    :body (
-	  (=>(GtpActions.action place WALLE_TAPE PLACEMAT_GREEN "right" FALSE (. .) "force_place" (. 7.0 6.9 0.72 8.0 6.9 0.72 7.0 5.9 0.72 8.0 5.9 0.72 .) 1))
+	  (=>(GtpActions.action place BLUE_CUBE TABLE_4 PLACEMAT_BLUE (. .) RIGHT 1))
 	  (^(GtpActions.report 1 @report))
 	  (~>(GtpActions.report @id @report))
 	  )

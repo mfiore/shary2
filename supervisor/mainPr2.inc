@@ -15,11 +15,13 @@ include "supervisor/modules/GenomInterface.sym"
 include "supervisor/modules/Softmotion.sym"
 include "supervisor/modules/Acapela.sym"
 include "supervisor/modules/GtpActions.sym"
+include "supervisor/modules/Connector.sym"
 
 load db "supervisor/modules/Spark.db"
 load db "supervisor/modules/Mhp.db"
 load db "supervisor/modules/Softmotion.db"
 load db "supervisor/modules/Acapela.db"
+load db "supervisor/modules/Connector.db"
 
 load opf "supervisor/modules/Mhp.opf"
 load opf "supervisor/modules/GenomInterface.opf"
@@ -28,7 +30,7 @@ load opf "supervisor/modules/Viman.opf"
 load opf "supervisor/modules/Spark.opf"
 load opf "supervisor/modules/Acapela.opf"
 load opf "supervisor/modules/GtpActions.opf"
-
+load opf "supervisor/modules/Connector.opf"
 
 
 include "supervisor/robot/PlanManager.sym"
@@ -40,7 +42,7 @@ include "supervisor/robot/ArmActions.sym"
 include "supervisor/robot/HeadActions.sym"
 include "supervisor/robot/PlannerInterface.sym"
 include "supervisor/robot/AgentActionMonitor.sym"
-include "supervisor/robot/Connector.sym"
+
 include "supervisor/robot/Monitors.sym"
 include "supervisor/robot/Robot.sym"
 include "supervisor/robot/PathPlanner.sym"
@@ -48,12 +50,11 @@ include "supervisor/robot/BaseActions.sym"
 
 load db "supervisor/robot/PlanManager.db"
 load db "supervisor/robot/PlannerInterface.db"
-load db "supervisor/robot/Connector.db"
 load db "supervisor/robot/AgentActionMonitor.db"
-load db "supervisor/robot/Robot.db"
+
 load db "supervisor/robot/PathPlanner.db"
 load db "supervisor/robot/BaseActions.db"
-load db "supervisor/robot/Acapela.db"
+
 load db "supervisor/robot/DatabaseInterface.db"
 
 
@@ -63,23 +64,22 @@ load opf "supervisor/robot/ArmActions.opf"
 load opf "supervisor/robot/HeadActions.opf"
 load opf "supervisor/robot/PlannerInterface.opf"
 load opf "supervisor/robot/AgentActionMonitor.opf"
-load opf "supervisor/robot/Connector.opf"
+
 load opf "supervisor/robot/PathPlanner.opf"
 load opf "supervisor/robot/BaseActions.opf"
 load opf "supervisor/robot/MonitorManager.opf"
 load opf "supervisor/robot/DatabaseInterface.opf"
 load opf "supervisor/robot/PlanManager.opf"
-load opf "supervisor/robot/PriorityQueue.opf"
 
 
 
-
-load db "supervisor/domains/Object.db"
-load db "supervisor/domains/sActions.db"
 include "supervisor/domains/Actions.sym"
 
-load db "supervisor/domains/POMDP.db"
-load db "supervisor/domains/Queue.db"
+load db "supervisor/domains/Object.db"
+load db "supervisor/domains/Actions.db"
+
+
+load db "supervisor/utilities/POMDP.db"
 
 
 include "supervisor/utilities/Queue.sym"

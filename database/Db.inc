@@ -10,3 +10,5 @@ load opf "database/Attention.opf"
 load opf "database/Tester.opf"
 load db "supervisor/domains/Object.db"
 load db "database/HatpRules.db"
+
+load db "database/domains/userStudy.db"

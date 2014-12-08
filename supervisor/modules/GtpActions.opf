@@ -88,7 +88,7 @@
  	  (=>(Mhp.request addGtpData hand @hand @id))
 	  (!(GtpActions.handleReport Mhp @id @gtpId))
 
-	  (IF(?(~(EQUAL @null PLACEMENT)))
+	  (IF(?(~(EQUAL @placement NO_NAME )))
 	     (!(Spark.getFreeId @sparkId))
 	     (=>(Spark.request getJointAbsPose @placement NO_NAME @sparkId))
 	     (!(ExecutionManager.handleReport Spark @sparkId @executionId FALSE FALSE NO_NAME))

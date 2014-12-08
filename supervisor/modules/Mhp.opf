@@ -793,5 +793,14 @@
 	    )
 	 )
   )
+(defop |RemoveGtpAttachments|
+  :invocation(Mhp.request removeGtpAttachments @id)
+  :body (
 
+	 (!(GenomInterface.handleRequest MHP MHP_REMOVEGTPATTACHEMENTS (FALSE) (FALSE) (FALSE) 300 nil @report @result))
+	 (=>(Mhp.report (VAL @id) (VAL @report)))
+	 )
+  )
 )
+
+

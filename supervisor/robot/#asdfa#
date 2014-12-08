@@ -1,0 +1,21 @@
+#include "opaque-pub.h"
+#include "mp-pub.h"
+
+
+    //connect to openprs
+    int mpSocket=external_register_to_the_mp_prot("Navigation", 3300, STRINGS_PT);
+    if (mpSocket!=-1) {
+
+
+    //read the openprs message
+    int length;
+    char *sender=read_string_from_socket(mpSocket,&length);
+    char *message=read_string_from_socket(mpSocket,&length);
+
+    //computatuoin     
+
+    string strmessage="(Navigation.stop.report OK)";
+    char returnMessage[50];
+    strcpy(returnMessage,strmessage.c_str());
+    ROS_INFO("Return message %s",returnMessage);
+    send_message_string(returnMessage,dest.c_str()); 

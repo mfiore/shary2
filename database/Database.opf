@@ -35,9 +35,13 @@ The result is returned into $newFact. If it's not bounded than no rules have bee
        (IF(?(NUMBERP @subject))
 	  (!(= @subjectClass AGENT))
 	 
-	ELSE
-       (?(Object.type (VAL @subject) @st @subjectClass))
-       )
+	  ELSE
+	    (IF(?(Object.type (VAL @subject) @st @subjectClass))
+	       (?(Object.type (VAL @subject) @st @subjectClass))
+	       ELSE
+	       (!(SUCCEED))
+	       )
+	  )
        (IF(?(Object.type (VAL @value) @vt @valueClass))
 	  (?(Object.type (VAL @value) @vt @valueClass))
 	  

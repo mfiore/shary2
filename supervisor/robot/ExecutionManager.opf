@@ -179,9 +179,9 @@
 	  ;;we wait until we have a report, we are stopped or paused.
 	 (^(|| 
 	    (@reportName (VAL @id) @report) 
-	    (& (EQUAL @stoppable TRUE
+	    (& (EQUAL @stoppable TRUE)
 		      (|| (Monitor.handPositionDanger TRUE) (ExecutionManager.stop (VAL @executionId)))
-		      ))))
+		      )))
 	 
 	 (IF(?(@reportName (VAL @id) @report))   ;if we have a report
 	    (~>(@reportName (VAL @id) (VAL @report)))
@@ -195,12 +195,12 @@
 		  (WHILE(?(~(NULL @addConditions)))
 			(!(= @condition (CAR @addConditions)))
 			(!(= @addConditions (CDR @addConditions)))
-			(!(DatabaseInterface.add @conditions @result))
+			(!(DatabaseInterface.add @condition @result))
 			)
 		  (WHILE(?(~(NULL @removeConditions)))
 			(!(= @condition (CAR @removeConditions)))
 			(!(= @removeConditions (CDR @removeConditions)))
-			(!(DatabaseInterface.remove @conditions @result))
+			(!(DatabaseInterface.remove @condition @result))
 			)
 	       )
 	       (!(SEM-V ExecutionManager.sem))
@@ -322,9 +322,9 @@
 ;	  (=>(ArmActions.action moveToObject @armForPick @object @actionId))
 
 	  (IF(?(Module.isActive gtp TRUE)) 
-  (!(GtpActions.getFreeId @gtpId))
-	   (=>(GtpActions.action pick @object @armForPick @gtpId))
-	   (!(ExecutionManager.handleReport GtpActions @gtpId @executionId TRUE TRUE (. (. (AGENT-STATEMENT PR2_ROBOT (VAL @object) isReachableBy PR2_ROBOT false) (AGENT-STATEMENT PR2_ROBOT (VAL @object) isReachable false) .) (. (AGENT-STATEMENT PR2_ROBOT (VAL @object) isReachableBy PR2_ROBOT true) (AGENT-STATEMENT PR2_ROBOT (VAL @object) isReachable true) .) .)))
+	     (!(GtpActions.getFreeId @gtpId))
+	     (=>(GtpActions.action pick @object @armForPick @gtpId))
+	     (!(ExecutionManager.handleReport GtpActions @gtpId @executionId TRUE TRUE (. (. (AGENT-STATEMENT PR2_ROBOT (VAL @object) isReachableBy PR2_ROBOT false) (AGENT-STATEMENT PR2_ROBOT (VAL @object) isReachable false) .) (. (AGENT-STATEMENT PR2_ROBOT (VAL @object) isReachableBy PR2_ROBOT true) (AGENT-STATEMENT PR2_ROBOT (VAL @object) isReachable true) .) .)))
 	  
 	   ELSE
 	   ;;plan and execute the trajectory
@@ -946,7 +946,14 @@ $distance , $info, $orientation, $speed, $inRange  the output observations"
 	  (!(DatabaseInterface.remove (AGENT-STATEMENT PR2_ROBOT PR2_ROBOT hasInHand (VAL @object)) @result))
 
 
-	  
+	  (!(Mhp.getfreeId @mhpId))
+	  (=>(Mhp.request removeGtpAttachments @mhpId))
+	  (!(ExecutionManager.handleReport Mhp @mhpId @executionId FALSE FALSE (. .)))
+ 
+	  (!(Mhp.getfreeId @mhpId))
+	  (=>(Mhp.request fetchEnvironment @mhpId))
+	  (!(ExecutionManager.handleReport Mhp @mhpId @executionId FALSE FALSE (. .)))	 
+ 
 	  (!(SEM-V ExecutionManager.sem))
 	  
 	  (~>(ExecutionManager.isExecutingAction (VAL @executionId)))
@@ -983,9 +990,18 @@ $distance , $info, $orientation, $speed, $inRange  the output observations"
 
 
 
-	 (!(GtpActions.getFreeId @id))
+	 (!(GtpActions.getFreeId @gtpId))
 	 (=>(GtpActions.action place @object @support @placement (. .) @arm @id ))
 	 (!(ExecutionManager.handleReport GtpActions @gtpId @executionId TRUE TRUE (. .)))
+
+	 (!(Mhp.getFreeId @mhpId))
+	 (=>(Mhp.request removeGtpAttachments @mhpId))
+	 (!(ExecutionManager.handleReport Mhp @mhpId @executionId FALSE FALSE (. .)))
+ 
+	 (!(Mhp.getFreeId @mhpId))
+	 (=>(Mhp.request fetchEnvironment @mhpId))
+	 (!(ExecutionManager.handleReport Mhp @mhpId @executionId FALSE FALSE (. .)))
+
 
 	 (=>(ExecutionManager.report @executionId OK))
 

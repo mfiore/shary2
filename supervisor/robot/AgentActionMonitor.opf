@@ -82,7 +82,7 @@
 	  (WHILE(?(< @sphereId 10))   ;from 0 to 10 (indexes of the monitor spheres in spark)
 		(!(Spark.getFreeId @sparkId))
 		;we use a fake item and agent
-		(=>(Spark.request updateSphereMonitor (VAL @sphereId) GEN_FALSE NO_NAME 0 HERAKLES_HUMAN1 0 0 0 SPARK_PICK_OBJECT (VAL @sparkId)))
+		(=>(Spark.request updateSphereMonitor (VAL @sphereId) GEN_FALSE BLUE_CUBE 0 HERAKLES_HUMAN1 0 0 0 SPARK_PICK_OBJECT (VAL @sparkId)))
 		(^(Spark.report (VAL @sparkId) @report))
 		(~>(Spark.report (VAL @sparkId) @report))
 		(IF(?(AgentActionMonitor.sphere @agent @object (VAL @sphereId)))  ;we erase the spheres from the db
@@ -104,7 +104,7 @@
 	  (WHILE(?(< @sphereId 10))  ;from 0 to 9 (index of the monitor spheres in spark)
 		(IF(?(AgentActionMonitor.sphere (VAL @agent) @object (VAL @sphereId)))  ;if there is a sphere for an agent if we cancel it
 		   (!(Spark.getFreeId @sparkId))
-		   (=>(Spark.request updateSphereMonitor (VAL @sphereId) GEN_FALSE GREY_TAPE 0 HERAKLES_HUMAN1 0 0 0 SPARK_PICK_OBJECT (VAL @sparkId)))
+		   (=>(Spark.request updateSphereMonitor (VAL @sphereId) GEN_FALSE (VAL @object) 0 HERAKLES_HUMAN1 0 0 0 SPARK_PICK_OBJECT (VAL @sparkId)))
 		   (^(Spark.report (VAL @sparkId) @report))
 		   (~>(Spark.report (VAL @sparkId) @report))
 		   (~>(AgentActionMonitor.sphere (VAL @agent) (VAL @object) (VAL @sphereId)))
@@ -189,9 +189,10 @@
   :invocation(Monitor.agentAppears @agent)
   :documentation "add the pick inferences when an agent enters the scene"
   :body (
-
-	 (!(AgentActionMonitor.calculateInferencesForAgents (. @agent .)))
-
+	 (?(Robot.name @robotName))
+	 (IF(?(~(EQUAL @agent @robotName)))
+	    (!(AgentActionMonitor.calculateInferencesForAgents (. @agent .)))
+	    )
 	 )
   )
 
@@ -370,8 +371,9 @@
 		      (!(= @objectName (MAKE-ATOM @objectFactName)))	   
 		      ;;if this sphere is active
 		      
-		      (IF(?(EQUAL @isSphereActive 1))
-			 (IF(?(EQUAL @monitorGetOutResult 1)) ;if the target has exited the sphere
+		      (IF(?(|| (EQUAL @isSphereActive 1) (AgentActionMonitor.isSphereActive (VAL @sphereId) TRUE)))
+			 (IF(?(|| (EQUAL @monitorGetOutResult 1) (AgentActionMonitor.isSphereActive (VAL @sphereId) TRUE))) ;if the target has exited the sphere
+			    (~>(AgentActionMonitor.isSphereActive (VAL @sphereId) TRUE))
 			    (IF(?(EQUAL @sphereType SPARK_SIMPLE_ENTRY))   ;;we use this for placements
 
 			       (IF(?(Agent.hasObject (VAL @agentName) @heldObject))
@@ -379,7 +381,7 @@
 				  (!(AgentActionMonitor.checkActionMonitoring @agentName @sphereId))  ;;checks if we were monitoring this action. If not will issue an unexpectedAction command
 				  
 				  ;;recalculate monitor spheres and update world state
-				  (!(AgentActionMonitor.cleanMonitorSpheresForAgent @agentName)) 
+				  (!(AgentActionMonitor.cleanAgentMonitorSpheres @agentName)) 
 				  
 				  
 				  (!(Spark.getFreeId @sparkId))
@@ -421,8 +423,8 @@
 			       )
 			    )
 			 ;;same as for pick
-			 (IF(?(EQUAL @monitorEnterInResult 1))		
-			    
+			 (IF(?(|| (EQUAL @monitorEnterInResult 1) (AgentActionMonitor.isSphereActive (VAL @sphereId) TRUE)))		
+			    (~>(AgentActionMonitor.isSphereActive (VAL @sphereId) TRUE))
 
 			    (IF(?(EQUAL @sphereType SPARK_THROW_IN_CONTAINER))
 			       (IF(?(Agent.hasObject (VAL @agentName) @heldObject))
@@ -473,7 +475,13 @@
 	    )
 
 	 )
-  
-
   )
+
+(defop |simulateAgentAction|
+  :invocation(!(AgentActionMonitor.simulateAgentAction @sphereId))
+  :body (
+	 (=>(AgentActionMonitor.isSphereActive (VAL @sphereId) TRUE))
+	 )
+  )
+
 )

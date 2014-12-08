@@ -26,3 +26,5 @@ declare cwp AgentActionMonitor.isMonitoringAgent
 declare be AgentActionMonitor.startMonitorSphereLoop
 declare cwp AgentActionMonitor.stopMonitorSphereLoop
 declare cwp Agent.hasObject
+
+declare cwp AgentActionMonitor.isSphereActive
