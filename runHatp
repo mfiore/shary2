@@ -4,5 +4,5 @@ xterm -sb -rightbar -T "hatp oprs bridge" -geometry 30x5+1500+600 -e "msgconnect
 
 xterm -sb -rightbar -T "hatp console" -geometry 30x5+1650+800 -e "hatpconsole localhost 5500" &
 sleep 5
-xterm -sb -rightbar -T "hatp on board" -geometry 30x5+1680+800 -e "cd /home/mfiore/openrobots_new/src/HATPOnboard/build/onboard; ./hatponboard  -vvv --oprs OPRS_DB" &
+xterm -sb -rightbar -T "hatp on board" -geometry 30x5+1680+800 -e "cd $HATP_BASE/build/onboard; ./hatponboard  -vvv --oprs" OPRS_DB &
 

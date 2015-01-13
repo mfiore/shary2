@@ -381,7 +381,7 @@
 				  (!(AgentActionMonitor.checkActionMonitoring @agentName @sphereId))  ;;checks if we were monitoring this action. If not will issue an unexpectedAction command
 				  
 				  ;;recalculate monitor spheres and update world state
-				  (!(AgentActionMonitor.cleanAgentMonitorSpheres @agentName)) 
+				  (!(AgentActionMonitor.cleanMonitorSpheresForAgent @agentName)) 
 				  
 				  
 				  (!(Spark.getFreeId @sparkId))
@@ -475,7 +475,7 @@
 	    )
 
 	 )
-  )
+  
 
 (defop |simulateAgentAction|
   :invocation(!(AgentActionMonitor.simulateAgentAction @sphereId))
@@ -483,5 +483,4 @@
 	 (=>(AgentActionMonitor.isSphereActive (VAL @sphereId) TRUE))
 	 )
   )
-
 )
