@@ -37,11 +37,13 @@
 	 (^(|| (@reportName calculatePath @path) (ELAPSED-TIME (TIME) @time)))
 	 (IF(?(@reportName calculatePath @path))
 	    (~>(@reportName (VAL @name) (VAL @path)))
-	    (=>(PathPlanner.report @id "OK"))
-	    (=>(PathPlanner.result @id @path))
+        (!(ReportManager.publish PathPlanner.report @id "OK"))
+
+        (=>(PathPlanner.result @id @path))
 	    
-	    ELSE
-	    (=>(PathPlanner.report @id FAILURE))
+        ELSE
+        (!(ReportManager.publish PathPlanner.report @id "FAILURE"))
+
 	    )
 	 )
   )

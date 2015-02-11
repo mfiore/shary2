@@ -37,7 +37,7 @@
 
 	 (!(= @reportName2 (TERM-STRING-CAT (VAL @name) ".move.update")))
 	 (!(= @reportName2 (MAKE-ATOM @reportName2)))
-	    (IF(?(Robot.simu FALSE)) 
+        (IF(?(Softmotion.sim FALSE))
 	       
 	       (!(SEND-MESSAGE @name (move euler @waypoints)))
 	       (!(= @nextLocation (CAR @waypoints)))
@@ -49,14 +49,16 @@
 		     (^(|| (@reportName1 @status) (@reportName2 @status) (BaseActions.stop (VAL @id)) (ELAPSED-TIME (TIME) @time)))
 		     (IF(?(BaseActions.stop (VAL @id)))
 			(!(BaseActions.getFreeId @stopId))
-			(=>(BaseActions.action stop (VAL @stopId)))
-			(^(BaseActions.report (VAL @stopId) @report))
-			(~>(BaseActions.report (VAL @stopId) @report))
-			(^(BaseActions.report (VAL @id) @report))
-			(~>(BaseActions.report (VAL @id) @report))
-			
-			(=>(BaseActions.report @id "STOPPED"))
-			
+            (=>(BaseActions.action stop (VAL @stopId)))
+            (!(ReportManager.sub BaseActions.report @stopId))
+            (^(BaseActions.report (VAL @stopId) @report))
+            (!(ReportManager.unsub BaseActions.report @stopId))
+            (!(ReportManager.sub BaseActions.report @id))
+            (^(BaseActions.report (VAL @id) @report))
+            (!(ReportManager.unsub BaseActions.report @id))
+
+            (!(ReportManager.publish BaseActions.report @id "STOPPED"))
+
 			(!(= @completed TRUE))
 			
 			ELSEIF(?(@reportName1 OK))
@@ -67,13 +69,15 @@
 			   (!(= @waypoints (CDR @waypoints)))
 			   )
 			ELSEIF(?(@reportName2 OK))
-			(~>(@reportName2 @status)) 
-			(=>(BaseActions.report @id "OK"))   
+            (~>(@reportName2 @status))
+            (!(ReportManager.publish BaseActions.report @id "OK"))
+
 			(!(= @completed TRUE))
 			ELSE
 			(~>(@reportName1 @status)) 
-			(~>(@reportName2 @status)) 
-			(=>(BaseActions.report @id "FAILURE"))
+            (~>(@reportName2 @status))
+            (!(ReportManager.publish BaseActions.report @id "FAILURE"))
+
 			(!(= @completed TRUE))
 			)
 		     )
@@ -81,8 +85,9 @@
 	       (~>(@reportName2 @status)) 
 	       
 	       ELSE
-	       (^(|| (@reportName1 @status) (@reportName2 @status) (BaseActions.stop (VAL@id))))
-	       (=>(BaseActions.report @id @status))
+           (^(|| (@reportName1 @status) (@reportName2 @status) (BaseActions.stop (VAL@id))))
+           (!(ReportManager.publish BaseActions.report @id @status))
+
 
 	 )
 	 (!(SEM-V BaseActions.sem))
@@ -93,7 +98,7 @@
   :invocation(BaseActions.action stop @id)
   :documentation "halts the robot movement"
   :body (
-	 (IF(?(Robot.simu FALSE))
+     (IF(?(Softmotion.sim FALSE))
 	 (?(BaseActions.bridgeName @name))
 	 (?(BaseActions.timeToWait @time))
 	 (!(= @reportName (TERM-STRING-CAT (VAL @name) ".stop.report")))
@@ -102,9 +107,11 @@
 	 (^(||(@reportName @report) (ELAPSED-TIME (TIME) @time)))
 	 (~>(@reportName @report))
 
-	 (=>(BaseActions.report @id "OK"))
-	 )
-	 (=>(BaseActions.report @id "OK"))
+     (!(ReportManager.publish BaseActions.report @id "OK"))
+
+     )
+     (!(ReportManager.publish BaseActions.report @id "OK"))
+
 	 )
   )
 

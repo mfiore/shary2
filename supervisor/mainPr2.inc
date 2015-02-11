@@ -22,6 +22,7 @@ load db "supervisor/modules/Mhp.db"
 load db "supervisor/modules/Softmotion.db"
 load db "supervisor/modules/Acapela.db"
 load db "supervisor/modules/Connector.db"
+load db "supervisor/modules/AttentionalInterface.db"
 
 load opf "supervisor/modules/Mhp.opf"
 load opf "supervisor/modules/GenomInterface.opf"
@@ -31,6 +32,7 @@ load opf "supervisor/modules/Spark.opf"
 load opf "supervisor/modules/Acapela.opf"
 load opf "supervisor/modules/GtpActions.opf"
 load opf "supervisor/modules/Connector.opf"
+load opf "supervisor/modules/AttentionInterface.opf"
 
 
 include "supervisor/robot/PlanManager.sym"
@@ -42,6 +44,7 @@ include "supervisor/robot/ArmActions.sym"
 include "supervisor/robot/HeadActions.sym"
 include "supervisor/robot/PlannerInterface.sym"
 include "supervisor/robot/AgentActionMonitor.sym"
+include "supervisor/robot/ReportManager.sym"
 
 include "supervisor/robot/Monitors.sym"
 include "supervisor/robot/Robot.sym"
@@ -70,6 +73,7 @@ load opf "supervisor/robot/BaseActions.opf"
 load opf "supervisor/robot/MonitorManager.opf"
 load opf "supervisor/robot/DatabaseInterface.opf"
 load opf "supervisor/robot/PlanManager.opf"
+load opf "supervisor/robot/ReportManager.opf"
 
 
 

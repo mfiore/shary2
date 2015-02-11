@@ -7,6 +7,33 @@
 
 (
 
+ (defop |registerConnection|
+   :invocation(Database.connect @name)
+   :body (
+          (=>(Database.isConnected @name))
+          (!(Database.sendWorldState @name));
+          )
+   )
+
+ (defop |sendWorldState|
+   :invocation(!(Database.sendWorldState @name))
+   :body (
+          (!(Database.findListLocal (AGENT-STATEMENT PR2_ROBOT @subject @predicate @value) (. @subject @predicate @value .) @result))
+          (!(= @n (LENGTH @result)))
+          (!(SEND-MESSAGE @name (Database.nfacts @n)))
+          (WHILE(?(~(NULL @result)))
+                (!(= @element (CAR @result)))
+                (!(= @result (CDR @result)))
+
+                (!(== (VAL @element) (. @subject @predicate @value .)))
+
+                (!(SEND-MESSAGE @name (Database.operation add)))
+                (!(SEND-MESSAGE @name (AGENT-STATEMENT PR2_ROBOT @subject @predicate @value )))
+                )
+          )
+   )
+
+
 (defop |setReachabilityFalse| 
   :invocation(Database.setReachabilityFalse @object @caller)
   :documentation "Used to change the reachability of an object from the supervisor. This is used because sometimes (often) SPARK overestimates the capacity of the robot to reach objects"
@@ -30,7 +57,7 @@ easy if we want to keep the rules list small. For know I will do a series of IF 
 The result is returned into $newFact. If it's not bounded than no rules have been applied"
    :body   (
     (!(= @newFactListTemp (. .)))    
-    (IF(!(== (VAL @fact) (AGENT-STATEMENT @agentModel @subject @predicate @value)))     
+    (IF(!(== (VAL @fact) (AGENT-STATEMENT @agentModel @subject @predicate @value)))
        
        (IF(?(NUMBERP @subject))
 	  (!(= @subjectClass AGENT))
@@ -197,7 +224,13 @@ $unboundVariables= lisp-list containing the variables for which we want to find 
 	     (IF (? (toMonitor (VAL @fact) @event))
 		 (! (SEND-MESSAGE @supName @event))
 		 )
-	     
+
+         (IF(?(Database.isConnected @name))
+            (!(SEND-MESSAGE @name (Database.nfacts 1)))
+            (!(SEND-MESSAGE @name (Database.operation add)))
+            (!(SEND-MESSAGE @name @fact))
+            )
+
 	     )
    )
 
@@ -207,8 +240,10 @@ $unboundVariables= lisp-list containing the variables for which we want to find 
    :invocation (Database.add @fact @caller)
    :documentation "this procedure adds $fact into the database and returns $result. $fact= a composed term like (isOn cup_0 table_0). SHOULD CHECK FOR RULES BEFORE ADDING (What are these rules? To check)" 
    :body ( 
-	     (!(Database.add @fact))	  
-	     (!(SEND-MESSAGE @caller (Database.result (. OK .))))
+          (!(Database.add @fact))
+
+         (!(SEND-MESSAGE @caller (Database.result (. OK .))))
+
 	  
 
 
@@ -234,7 +269,11 @@ $unboundVariables= lisp-list containing the variables for which we want to find 
 	    )
 ;	 (!(PRINT @fact))
 	 (~> (VAL @fact))
-		  
+     (IF(?(Database.isConnected @name))
+        (!(SEND-MESSAGE @name (Database.nfacts 1)))
+        (!(SEND-MESSAGE @name (Database.operation remove)))
+        (!(SEND-MESSAGE @name @fact))
+        )
 	 )
 )
  (defop |remove|

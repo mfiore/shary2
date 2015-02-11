@@ -13,7 +13,7 @@
    :body (
 	  (!(SEM-CREATE Mhp.sem 1 SEM-FIFO))
 	  (=>(Mhp.freeId 0))
-	  (=>(Mhp.previousTask -2 -2))
+      (=>(Mhp.previousTask -1 -1))
 	  )
    )
  
@@ -91,18 +91,19 @@
 
 		(!(Mhp.getFreeId @mhpTrajId))
 
-		
+        (!(ReportManager.sub Mhp.report @mhpTrajId))
 		(=>(Mhp.request setTrajectory GEN_TRUE @task @armId @armStart @armGoto @object @support @placement @cartesian @useObjStart @objStart @useObjGoto @objGoto @mhpTrajId))
 
 		(^(Mhp.report (VAL @mhpTrajId) @report)) ;we don't actually do error report here. We leave that part to the execution manager when he actually tries to get the trajectory
 
-		(~>(Mhp.report (VAL @mhpTrajId) (VAL @report)))
-
+        (!(ReportManager.unsub Mhp.report @mhpTrajId))
+        )
 	
-		)
-	  
-	  )
+      )
    )
+
+	  
+
 
    ( defop |setTrajectory|
    :invocation(Mhp.request setTrajectory @startIsCurrent @task @armId @armStart @armGoto @object @support @placement @cartesian @useObjStart @objStart @useObjGoto @objGoto @mhpId)
@@ -116,32 +117,36 @@
 	 (!(Mhp.getFreeId @mhpId2))  ;;this procedure must call one or two mhp requestes so we get other ids.
 	 (IF(?(Mhp.hasTrajectory @trajId (VAL @armId) (VAL @task) (VAL @target))) ;if there is already a trajectory we just switch the poster to that one.
 
+        (!(ReportManager.sub Mhp.report @mhpId2))
 	    (=>(Mhp.request armSelectTraj @trajId @mhpId2))
 	    (^(Mhp.report (VAL @mhpId2) @report))
-	    (~>(Mhp.report (VAL @mhpId2) (VAL @report)))
-	    (=>(Mhp.report (VAL @mhpId) @report))  ;the final report is equal to the report of the switch trajectory request.
+        (!(ReportManager.unsub Mhp.report @mhpId2))
+        (!(ReportManager.publish Mhp.report @mhpId @report))     ;the final report is equal to the report of the switch trajectory request.
 
 	    ELSE ;we don't have a trajectory so we're going to calculate it and switch to it.
 	    
-	    (=> (Mhp.request armPlanTask @startIsCurrent @task @armId @armStart @armGoto @object @support @placement @cartesian @useObjStart @objStart @useObjGoto @objGoto @mhpId2))  
+        (=> (Mhp.request armPlanTask @startIsCurrent @task @armId @armStart @armGoto @object @support @placement @cartesian @useObjStart @objStart @useObjGoto @objGoto @mhpId2))
+        (!(ReportManager.sub Mhp.report @mhpId2))
 	    (^(Mhp.report (VAL @mhpId2) @report1))       
-	    (~>(Mhp.report (VAL @mhpId2) (VAL @report1)))
+        (!(ReportManager.unsub Mhp.report @mhpId2))
 	    (IF(?(EQUAL @report1 "OK")) ;if the trajectory is calculated successfully we switch to it
 	       (IF(?(Mhp.hasTrajectory @trajId (VAL @armId) (VAL @task) (VAL @target)))
 		  ;;if we don't enter this loop it means the the trajectories were canceled after a move action. This means that basically we fail to calculate this trajectory. It should only happen if this procedure was called from the "SetTrajectories" function.
 		  
 		  (!(Mhp.getFreeId @mhpId3))
-		  (=>(Mhp.request armSelectTraj @trajId @mhpId3))
+          (!(ReportManager.sub Mhp.report @mhpId3))
+          (=>(Mhp.request armSelectTraj @trajId @mhpId3))
+
 		  (^(Mhp.report (VAL @mhpId3) @report2))
-		  (~>(Mhp.report (VAL @mhpId3) (VAL @report2)))
+          (!(ReportManager.unsub Mhp.report @mhpId3))
 		  
 		  ELSE
 		  ;in this case we don't switch to the new function and edit the @report1 variable to a canceled state
 		  (!(= @report@1 CANCELED))
 		  
 		  )
-	       )
-	    (=>(Mhp.report (VAL @mhpId) @report1)) ;in this case we take for final report the report of mhp.armplantask since the other will not fail (is this correct?)
+           )
+        (!(ReportManager.publish Mhp.report @mhpId @report1))  ;in this case we take for final report the report of mhp.armplantask since the other will not fail (is this correct?)
 
 	    )
 	 
@@ -154,33 +159,33 @@
   :documentation "Select a trajectory for execution"
   :body (
 
-	 (!(SEM-P Mhp.sem))
-	 (!(= @parameters 
-	     (INTEGER (VAL @trajId))
-	    ));  $RQST-ID))
-	 (!(GenomInterface.handleRequest MHP MHP_ARMSELECTTRAJ (Mhp.stop (VAL @id)) (FALSE) (FALSE) 300 (VAL @parameters) @report @result))
+     (!(SEM-P Mhp.sem))
+     (!(= @parameters
+         (INTEGER (VAL @trajId))
+        ));  $RQST-ID))
+     (!(GenomInterface.handleRequest MHP MHP_ARMSELECTTRAJ (Mhp.stop (VAL @id)) (FALSE) (FALSE) 300 (VAL @parameters) @report @result))
 
-	 (=>(Mhp.report (VAL @id) (VAL @report)))
+     (!(ReportManager.publish Mhp.report (VAL @id) (VAL @report)))
 
-	 (!(SEM-V Mhp.sem))
+     (!(SEM-V Mhp.sem))
 
-	 )
+     )
   )
 
 (defop |chooseTargetForTrajectory|
   :invocation(!(Mhp.chooseTargetForTrajectory  @task @object @placement @armGoto @useObjGoto @objGoto $target))
   :documentation "utility function. Does some controls to choose which the target to put\retrieve from the database depending on the task e target point of the trajectory"
   :body (
-	 (IF(?(EQUAL @useObjGoto 0)) 
-	    (IF(?(EQUAL @task MHP_ARM_PICK_GOTO))
-	       (!(= $target (VAL @object)))  ;if planning a pick our target is the object
-	       
-	       ELSEIF(?(|| (EQUAL @task MHP_ARM_PICK_TAKE_TO_PLACE) (EQUAL @task MHP_PLACE_FROM_FREE)))
-	       (!(= $target (VAL @placement)))     ;if planning a place we save the name of the placement
-	       
-	       ELSE
-	       (!(= $target (VAL @armGoto)))   ;target is the q configuration.
-	       )
+     (IF(?(EQUAL @useObjGoto 0))
+        (IF(?(EQUAL @task MHP_ARM_PICK_GOTO))
+           (!(= $target (VAL @object)))  ;if planning a pick our target is the object
+
+           ELSEIF(?(|| (EQUAL @task MHP_ARM_PICK_TAKE_TO_PLACE) (EQUAL @task MHP_PLACE_FROM_FREE)))
+           (!(= $target (VAL @placement)))     ;if planning a place we save the name of the placement
+
+           ELSE
+           (!(= $target (VAL @armGoto)))   ;target is the q configuration.
+           )
 	    ELSE  
 	    (!(= $target (VAL @objGoto)))  ;if we are planning a trajectory to a point we save that point
 	    )
@@ -222,7 +227,7 @@
 		  )
 	       )
 	     (!(GenomInterface.handleRequest MHP MHP_ARMPLANTASK (Mhp.stop (VAL @id)) (FALSE) (FALSE) 300 (VAL @parameters) @report @result))
-	     (=>(Mhp.report (VAL @id) (VAL @report)))
+         (!(ReportManager.publish Mhp.report (VAL @id) (VAL @report)))
 
 
 	     (IF(?(EQUAL @report "OK"))
@@ -231,7 +236,7 @@
 		)
 	       
 	  ELSE
-	  (=>(Mhp.report (VAL @id) "OK"))
+      (!(ReportManager.publish Mhp.report (VAL @id) "OK"))
 
 	  )
 	  (!(SEM-V Mhp.sem))
@@ -284,7 +289,7 @@
   :documentation "inits the geometrical task planner module"
   :body (
 	 (!(GenomInterface.handleRequest MHP MHP_INITGTP (Mhp.stop (VAL @id)) (FALSE) (FALSE) 300 nil @report @result))
-	 (=>(Mhp.report (VAL @id) (VAL @report)))
+     (!(ReportManager.publish Mhp.report (VAL @id) (VAL @report)))
 	 
 	 )
   )
@@ -294,7 +299,7 @@
   :documentation ""
   :body (
 	 (!(GenomInterface.handleRequest MHP MHP_FETCHENVIRONMENT (Mhp.stop (VAL @id)) (FALSE) (FALSE) 300 nil @report @result))
-	 (=>(Mhp.report (VAL @id) (VAL @report)))
+     (!(ReportManager.publish Mhp.report (VAL @id) (VAL @report)))
 	 )
   )
 (defop |planGtpTask|
@@ -318,9 +323,9 @@
 
 
 	 (!(GenomInterface.handleRequest MHP MHP_PLANGTPTASK (Mhp.stop (VAL @id)) (FALSE) (FALSE) 300 @params @report @result))
-	 (=>(Mhp.report (VAL @id) (VAL @report)))
+     (!(ReportManager.publish Mhp.report (VAL @id) (VAL @report)))
 	 (IF(?(EQUAL @report "OK"))
-	    (IF(?(Robot.simu FALSE))
+        (IF(?(Mhp.sim FALSE))
 	       (!(== (VAL @result) (STRUCT_TASK_OUTPUT 
 				 (taskId  @newTaskId)
 				 (taskAlternativeId  @newTaskAId)
@@ -351,7 +356,7 @@
 	      )
 	   )
 	 (!(GenomInterface.handleRequest MHP MHP_SMOOTHGTPTRAJ (Mhp.stop (VAL @id)) (FALSE) (FALSE) 300 @params @report @result))
-	 (=>(Mhp.report @id @report))
+     (!(ReportManager.publish Mhp.report @id @report))
 	 )
   )
 (defop |getGtpTaskDetails|
@@ -365,9 +370,9 @@
 	      )
 	   )
 	 (!(GenomInterface.handleRequest MHP MHP_GETGTPTASKDETAILS (Mhp.stop (VAL @id)) (FALSE) (FALSE) 300 @params @report @result))
-	 (=>(Mhp.report @id @report))
+     (!(ReportManager.publish Mhp.report @id @report))
 	 (IF(?(EQUAL @report "OK"))
-	    (IF(?(Robot.simu FALSE))
+        (IF(?(Mhp.sim FALSE))
 	       (!(== (VAL @result)   
 		     (STRUCT_TASK_DETAILS 
 		      (taskType 
@@ -508,7 +513,7 @@
               (name  (TERM-STRING-CAT @name))))))
 
 	 (!(GenomInterface.handleRequest MHP MHP_ADDGTPAGENT (Mhp.stop (VAL @id)) (FALSE) (FALSE) 300 @params @report @result))
-	 (=>(Mhp.report (VAL @id) (VAL @report)))
+     (!(ReportManager.publish Mhp.report (VAL @id) (VAL @report)))
 	 
 	 )
   )
@@ -527,7 +532,7 @@
               (name  (TERM-STRING-CAT @name))))))
 
 	 (!(GenomInterface.handleRequest MHP MHP_ADDGTPOBJECT (Mhp.stop (VAL @id)) (FALSE) (FALSE) 300 @params @report @result))
-	 (=>(Mhp.report (VAL @id) (VAL @report)))
+     (!(ReportManager.publish Mhp.report (VAL @id) (VAL @report)))
 	 
 	 )
   )
@@ -545,7 +550,7 @@
               (name  (TERM-STRING-CAT @name))))))
 
 	 (!(GenomInterface.handleRequest MHP MHP_ADDGTPDATA (Mhp.stop (VAL @id)) (FALSE) (FALSE) 300 @params @report @result))
-	 (=>(Mhp.report (VAL @id) (VAL @report)))
+     (!(ReportManager.publish Mhp.report (VAL @id) (VAL @report)))
 	 
 	 )
   )
@@ -566,7 +571,7 @@
 	   )))
 
 	 (!(GenomInterface.handleRequest MHP MHP_ADDGTPPOINT (Mhp.stop (VAL @id)) (FALSE) (FALSE) 300 @params @report @result))
-	 (=>(Mhp.report (VAL @id) (VAL @report)))
+     (!(ReportManager.publish Mhp.report (VAL @id) (VAL @report)))
 	 
 	 )
   )
@@ -594,7 +599,7 @@
            (dummy  0)
            (specificValue  @specific))))
 	 (!(GenomInterface.handleRequest MHP MHP_ADDGTPCONSTRAINTFACT (Mhp.stop (VAL @id)) (FALSE) (FALSE) 300 @params @report @result))
-	 (=>(Mhp.report (VAL @id) (VAL @report)))
+     (!(ReportManager.publish Mhp.report (VAL @id) (VAL @report)))
 	 
 	 )
   )
@@ -611,7 +616,7 @@
               (name  (TERM-STRING-CAT @name))))))
 
 	 (!(GenomInterface.handleRequest MHP MHP_ADDGTPCONSTRAINTRESSOURCE (Mhp.stop (VAL @id)) (FALSE) (FALSE) 300 @params @report @result))
-	 (=>(Mhp.report (VAL @id) (VAL @report)))
+     (!(ReportManager.publish Mhp.report (VAL @id) (VAL @report)))
 	 
 	 )
   )
@@ -620,7 +625,7 @@
   :invocation(Mhp.request clearGtpInputs @id)
   :body (
 	 (!(GenomInterface.handleRequest MHP MHP_CLEARGTPINPUTS (Mhp.stop (VAL @id)) (FALSE) (FALSE) 300 nil @report @result))
-	 (=>(Mhp.report (VAL @id) (VAL @report)))
+     (!(ReportManager.publish Mhp.report (VAL @id) (VAL @report)))
 
 	 )
   )
@@ -659,7 +664,7 @@
 		(z  @dz))
 	       )))
 	 (!(GenomInterface.handleRequest MHP MHP_ADDGTPCONSTRAINTREGION (Mhp.stop (VAL @id)) (FALSE) (FALSE) 300 @params @report @result))
-	 (=>(Mhp.report (VAL @id) (VAL @report)))
+     (!(ReportManager.publish Mhp.report (VAL @id) (VAL @report)))
 	 )
   )
 
@@ -674,7 +679,7 @@
 			      (follow  @follow))
 	      ))
 	 (!(GenomInterface.handleRequest MHP MHP_LOADGTPTASKTRAJ (Mhp.stop (VAL @id)) (FALSE) (FALSE) 300 @params @report @result))
-	 (=>(Mhp.report (VAL @id) (VAL @report)))
+     (!(ReportManager.publish Mhp.report (VAL @id) (VAL @report)))
 	 )
   )
 (defop |loadGtpTaskTrajForNav|
@@ -688,9 +693,9 @@
 			      (follow  @follow))
 	      ))
 	 (!(GenomInterface.handleRequest MHP MHP_LOADGTPTASKTRAJFORNAV (Mhp.stop (VAL @id)) (FALSE) (FALSE) 300 @params @report @result))
-	 (=>(Mhp.report (VAL @id) (VAL @report)))
+     (!(ReportManager.publish Mhp.report (VAL @id) (VAL @report)))
 	 (IF(?(EQUAL @report "OK"))
-	    (IF(?(Robot.simu FALSE))
+        (IF(?(Mhp.sim FALSE))
 	       (!(== (VAL @result) (STRUCT_TRAJ_NAV_GTP 
 				    (nbPoints  @nbPoints)
 				    (dummy  @dummy)
@@ -798,7 +803,7 @@
   :body (
 
 	 (!(GenomInterface.handleRequest MHP MHP_REMOVEGTPATTACHEMENTS (FALSE) (FALSE) (FALSE) 300 nil @report @result))
-	 (=>(Mhp.report (VAL @id) (VAL @report)))
+     (!(ReportManager.publish Mhp.report (VAL @id) (VAL @report)))
 	 )
   )
 )

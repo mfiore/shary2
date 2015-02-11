@@ -62,7 +62,7 @@
 
 	  (=>(Robot.pose (VAL @arm) NO_NAME NO_NAME OTHER))
 
-	  (IF(?(Robot.simu FALSE))
+      (IF(?(Supervisor.sim FALSE))
 	     (IF(?(~(EQUAL @object NO_NAME)))
 		(!(= @result NULL))
 		;;this is done because in take requestes MHP doesn't need the support that the object is on but we still want to record this information in the system
@@ -95,15 +95,19 @@
 	     (!(Softmotion.getFreeId @smId))
 	     (=>(Softmotion.request moveArm @smArm @smId))
 	     (!(ArmActions.handleReport Softmotion @smId @actionId ))
-					;everything went okay
-	     (=>(ArmActions.report (VAL @actionId) "OK"))
+                                        ;everything went okay
+         (!(ReportManager.publish ArmActions.report @actionId "OK"))
+
 	     (~>(Robot.pose @a @b @c @d))
-	     (=>(Robot.pose (VAL @arm) (VAL @object) (VAL @realSupport) (VAL @pose)))
-	     (=>(Mhp.previousTask -2 -2))
+         (=>(Robot.pose (VAL @arm) (VAL @object) (VAL @realSupport) (VAL @pose)))
+         (~>(Mhp.previousTask @a @b))
+         (=>(Mhp.previousTask -1 -1))
 
 	     
-	     ELSE
-	     (=>(ArmActions.report (VAL @actionId) "OK"))
+         ELSE
+         (!(ReportManager.publish ArmActions.report @actionId "OK"))
+
+         (~>(Robot.pose @a @b @c @d))
 	     (=>(Robot.pose (VAL @arm) (VAL @object) (VAL @realSupport) (VAL @pose)))
 	     )
 	  )
@@ -278,7 +282,7 @@
    :invocation(ArmActions.action useGripper @state @actionId)
    :documentation "Moves the gripper to state @state"
    :body (
-	  (IF(?(Robot.simu FALSE))
+      (IF(?(Supervisor.sim FALSE))
 	     (!(Softmotion.getFreeId @smId))
 	     
 	     (=>(Softmotion.request useGripper (VAL @state) (VAL @smId)))
@@ -293,11 +297,12 @@
 		ELSEIF(?(EQUAL @state LGRAB))
 		(=>(ArmActions.hasGripperGrabRequest LEFT (VAL @smId) (VAL @actionId)))
 		)
-	     (!(ArmActions.handleReport Softmotion @smId @actionId ))
-	     (=>(ArmActions.report @actionId "OK")) 
+         (!(ArmActions.handleReport Softmotion @smId @actionId ))
+         (!(ReportManager.publish ArmActions.report @actionId "OK"))
+
 	     
 	     ELSE
-	     (=>(ArmActions.report @actionId "OK")) 	     
+         (!(ReportManager.publish ArmActions.report @actionId "OK"))
 	     )	  
 	  )
    )
@@ -306,10 +311,14 @@
   :documentation "Utility function to stop a gribber grab release request"
   :body (
 	 (IF(?(ArmActions.hasGripperReleaseRequest (VAL @gripper) @smId @gripperActionId))
-	     (=>(Softmotion.stop (VAL @smId)))
-	     (^(Softmotion.report (VAL @smId) @report))
-	     (^(ArmActions.report (VAL @gripperActionId) @report))
-	     (~>(ArmActions.report (VAL @smGripperActionId) @report))
+        (=>(Softmotion.stop (VAL @smId)))
+        (!(ReportManager.sub Softmotion.report @smId))
+        (^(Softmotion.report (VAL @smId) @report))
+        (!(ReportManager.unsub Softmotion.report @smId))
+         (!(ReportManager.sub ArmActions.report @gripperActionId))
+         (^(ArmActions.report (VAL @gripperActionId) @report))
+         (!(ReportManager.unsub ArmActions.report @gripperActionId))
+
 	     (~>(ArmActions.hasGripperReleaseRequest (VAL @gripper) (VAL @smId) (VAL @smGripperActionId)))
 	     )
 	  
@@ -325,17 +334,21 @@
   :body (
  	 (IF(?(ArmActions.hasGripperGrabRequest (VAL @gripper) @smId @gripperActionId))
 	    (IF(?(Robot.gripperStatus (VAL @gripper) WAITING_CONTACT))
-	       (=>(Softmotion.stop (VAL @smId)))
-	       (^(Softmotion.report (VAL @smId) @report))
-	       (^(ArmActions.report (VAL @gripperActionId) @report))
-	       (~>(ArmActions.report (VAL @smGripperActionId) @report))
+           (=>(Softmotion.stop (VAL @smId)))
+           (!(ReportManager.sub Softmotion.report @smId))
+           (^(Softmotion.report (VAL @smId) @report))
+           (!(ReportManager.unsub Softmotion.report @smId))
+           (!(ReportManager.sub ArmActions.report @gripperActionId))
+           (^(ArmActions.report (VAL @gripperActionId) @report))
+           (!(ReportManager.unsub ArmActions.report @gripperActionId))
 	       )
  	    (~>(ArmActions.hasGripperGrabRequest (VAL @gripper) (VAL @smId) (VAL @smGripperActionId)))
  	     )
 	 (IF(?(Robot.gripperStatus (VAL @gripper) WAITING_CONTACT)))
 	    (?(Softmotion.gripperCancel (VAL @gripper) @state))
-	    (=>(ArmActions.action useGripper  @state (VAL @actionId)))
-	    (=>(ArmActions.report @actionId "OK"))
+        (=>(ArmActions.action useGripper  @state (VAL @actionId)))
+        (!(ReportManager.publish ArmActions.report @actionId "OK"))
+
 	    )
   )
 
@@ -361,11 +374,12 @@ actually know if this really changes something... pressure is pressre."
 	    (?(Softmotion.gripperRelease (VAL @gripper) @state))
 	 )
 	  (!(Softmotion.getFreeId @smId))
-	  (=>(Softmotion.request detectPression @state @smId))
+      (=>(Softmotion.request detectPression @state @smId))
+      (!(ReportManager.sub Softmotion.report @smId))
 	  (=>(ArmActions.hasDetectPressionRequest (VAL @gripper) (VAL @mode) (VAL @smId))) ;remember the request for stopdetectPressionRequestes
-	  (!(ArmActions.handleReport Softmotion @smId @actionId ))
-	  (=>(ArmActions.report @actionId "OK")) 
-	  (~>(ArmActions.hasDetectPressionRequest (VAL @gripper) (VAL @mode) (VAL @smId)))
+      (!(ArmActions.handleReport Softmotion @smId @actionId ))
+      (!(ReportManager.publish ArmActions.report @actionId "OK"))
+      (~>(ArmActions.hasDetectPressionRequest (VAL @gripper) (VAL @mode) (VAL @smId)))
 
 	 
 	 )
@@ -379,11 +393,14 @@ actually know if this really changes something... pressure is pressre."
 	 (IF(?(ArmActions.hasDetectPressionRequest (VAL @gripper) (VAL @mode) @detectPressionId))
 	    (~>(ArmActions.hasDetectPressionRequest (VAL @gripper) (VAL @mode) @detectPressionId))
 	    (?(Softmotion.gripperCancel (VAL @gripper) @state))
-	    (!(Softmotion.getFreeId @smId))
+        (!(Softmotion.getFreeId @smId))
+        (!(ReportManager.sub Softmotion.request @smId))
 	    (=>(Softmotion.request useGripper @state @smId))
-	    (^(Softmotion.report (VAL @smId) @report))
-	    )
-	 (=>(ArmActions.report @actionId "OK"))
+        (^(Softmotion.report (VAL @smId) @report))
+        (!(ReportManager.unsub Softmotion.report @smId))
+        )
+     (!(ReportManager.publish ArmActions.report @actionId "OK"))
+
 	 )
   
 )
@@ -396,9 +413,11 @@ actually know if this really changes something... pressure is pressre."
 	 (IF(?(~(EQUAL @object NO_NAME)))
 	    (IF(?(~(Robot.hasObject (VAL @arm) (VAL @object))))
 	       (!(ArmActions.getFreeId @escapeId))
-	       (=>(ArmActions.action escapeObject (VAL @arm) (VAL @object) @escapeId))
-	       (^(ArmActions.report (VAL @escapeId) @report))
-	       (~>(ArmActions.report (VAL @escapeId) (VAL @report)))
+           (=>(ArmActions.action escapeObject (VAL @arm) (VAL @object) @escapeId))
+           (!(ReportManager.sub ArmActions.report @escapeId))
+           (^(ArmActions.report (VAL @escapeId) @report))
+           (!(ReportManager.unsub ArmActions.report @escapeId))
+
 	       
 	       )
 	    )
@@ -413,6 +432,7 @@ actually know if this really changes something... pressure is pressre."
 	  (!(= @reportName (TERM-STRING-CAT (VAL @module) ".report")))
 	  (!(= @reportName (MAKE-ATOM @reportName)))
 
+      (!(ReportManager.sub @reportName @id))
 	  ;wait for a report or until we are paused or until we are stopped
 	  (^(|| (@reportName (VAL @id) @report) (ArmActions.stop (VAL @actionId))))
 		
@@ -423,19 +443,24 @@ actually know if this really changes something... pressure is pressre."
 		(IF(?(EQUAL @module Softmotion))
 		   (IF(?(ArmActions.hasDetectPressionRequest @gripper @mode (VAL @id)))
 		      (!(ArmActions.getFreeId @newActionId))
-		      (=>(ArmActions.action stopDetectPression (VAL @gripper) (VAL @mode) (VAL @newActionId)))
-		      (^(ArmActions.report @newActionId @report))
-		      (~>(ArmActions.report (VAL @newActionId) (VAL @report)))
+              (=>(ArmActions.action stopDetectPression (VAL @gripper) (VAL @mode) (VAL @newActionId)))
+              (!(ReportManager.sub ArmActions.report @newActionId))
+              (^(ArmActions.report @newActionId @report))
+              (!(ReportManager.unsub ArmActions.report @newActionId))
+
 		      
 
 		      ELSE
 		      (=>(Softmotion.stop (VAL @id)))    
 		      (!(Softmotion.getFreeId @smId))
-		      (=>(Softmotion.request stop (VAL @smId)))
-		      (^(Softmotion.report (VAL @smId) @smReport))
-		      (~>(Softmotion.report (VAL @smId) (VAL @smReport)))
-		      (^(|| (@reportName (VAL @id) @report)))
-		      (~>(@reportName (VAL @id) @report))
+              (=>(Softmotion.request stop (VAL @smId)))
+              (!(ReportManager.sub Softmotion.report @smId))
+              (^(Softmotion.report (VAL @smId) @smReport))
+              (!(ReportManager.sub Softmotion.report @smId))
+
+              (^(|| (@reportName (VAL @id) @report)))
+              (!(ReportManager.unsub @reportName @id))
+
 		      
 		      )
 		   
@@ -446,12 +471,13 @@ actually know if this really changes something... pressure is pressre."
 		(!(FAILED))  ;;I had commented this. Why? =\
 		
 		
-		ELSE	 ;we got a report. If it's a good report we continue if not we report a fail and exit.
-		(~>( @reportName (VAL @id) (VAL @report)))
+        ELSE	 ;we got a report. If it's a good report we continue if not we report a fail and exit.
+        (!(ReportManager.unsub @reportName @id))
+
 		(IF(?(~(EQUAL @report "OK")))
-		   (!(PRINT @report))
-		   (=> (ArmActions.report (VAL @actionId) @report))
-		   (!(FAILED))
+           (!(PRINT @report))
+           (!(ReportManager.publish ArmActions.report @actionId @report))
+           (!(FAILED))
 		   )
 		)
 	  )

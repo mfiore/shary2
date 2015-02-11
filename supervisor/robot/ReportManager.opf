@@ -1,0 +1,44 @@
+
+
+;; -*-Lisp-*-
+;;author: Michelangelo Fiore
+;;this module contains high-level actions like take an item, give, drop.
+
+(
+ (defop |SubscribeToReport|
+   :invocation(!(ReportManager.sub @report @id))
+   :body (
+          (IF(?(ReportManager.subNumber (VAL @report) (VAL @id) @n))
+
+             (=>(ReportManager.subNumber (VAL @report) (VAL @id) (+ @n 1)))
+             ELSE
+             (=>(ReportManager.subNumber (VAL @report) (VAL @id) 1))
+             )
+          )
+   )
+
+ (defop |publish|
+ :invocation(!(ReportManager.publish @report @id @value))
+ :body (
+        (IF(?(ReportManager.subNumber (VAL @report) (VAL @id) @n))
+           (=>(@report @id @value))
+           )
+        )
+ )
+
+ (defop |unsubscribeToReport|
+   :invocation(!(ReportManager.unsub @report @id))
+   :body (
+          (?(ReportManager.subNumber (VAL @report) (VAL @id)  @n))
+            (!(= @n (- @n 1)))
+
+            (IF(?(EQUAL @n 0))
+               (~>(@report (VAL @id) @any))
+               (~>(ReportManager.subNumber (VAL @report) (VAL @id) @any))
+               ELSE
+               (=>(ReportManager.subNumber (VAL @report) (VAL @id) @n))
+               )
+            )
+          )
+
+ )

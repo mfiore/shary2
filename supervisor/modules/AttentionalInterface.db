@@ -1,0 +1,12 @@
+(
+
+
+    (AttentionalInterface.agentName HERAKLES_HUMAN1)
+    (AttentionalInterface.placeSupport TABLE_4)
+    (AttentionalInterface.placeArea CLEANER_BOTTLE 1)
+    (AttentionalInterface.placeArea BRACKET_1 2)
+    (AttentionalInterface.placeArea BRACKET_2 3)
+    (AttentionalInterface.placeArea BRACKET_3 4)
+    (AttentionalInterface.placeArea GLUE_BOTTLE 5)
+    
+)

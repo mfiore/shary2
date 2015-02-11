@@ -49,7 +49,7 @@
 		(robotPart (VAL @armId)))))
 
 	  (!(GenomInterface.handleRequest  PR2SOFTMOTION PR2SOFTMOTION_TRACKQ (Softmotion.stop (VAL @id)) (Robot.isMoving (VAL @armJoint) TRUE) (Robot.isMovingArm (VAL @armJoint) FALSE) 300 (VAL @parameters) @report @result))
-	  (=>(Softmotion.report (VAL @id) (VAL @report)))
+      (!(ReportManager.publish Softmotion.report (VAL @id) (VAL @report)))
 	  (=>(Softmotion.freeId (+ @id 1)))
 	 
 	  (IF(?(EQUAL @arm RIGHT))
@@ -83,7 +83,7 @@
 		(robotPart (VAL @armId)))))
 
 	  (!(GenomInterface.handleRequest  PR2SOFTMOTION PR2SOFTMOTION_TRACKQ (Softmotion.stop (VAL @id)) (Robot.isMovingArm (VAL @arm) TRUE) (Robot.isMovingArm (VAL @arm) FALSE) 300 (VAL @parameters) @report @result))
-	  (=>(Softmotion.report (VAL @id) (VAL @report)))
+      (!(ReportManager.publish Softmotion.report (VAL @id) (VAL @report)))
 	  (=>(Softmotion.freeId (+ @id 1)))
 	 
 	  (IF(?(EQUAL @arm RIGHT))
@@ -140,8 +140,9 @@
 	   
 
 	   (!(GenomInterface.handleRequest PR2SOFTMOTION PR2SOFTMOTION_GOTOQ (Softmotion.stop (VAL @id)) (Robot.isMoving HEAD TRUE) (Robot.isMoving HEAD FALSE) 300 (VAL @parameters) @report @result))
-	   (=>(Softmotion.report (VAL @id) (VAL @report)))
+       (!(ReportManager.publish Softmotion.report (VAL @id) (VAL @report)))
 
+       (~>(Mhp.previousTask @a @b))
 	   (=>(Mhp.previousTask -1 -1))
 	   (!(SEM-V Softmotion.sem))
 	 )
@@ -193,7 +194,7 @@
 	   
 
 	   (!(GenomInterface.handleRequest PR2SOFTMOTION PR2SOFTMOTION_GOTOQ (Softmotion.stop (VAL @id)) (Robot.isMoving HEAD TRUE) (Robot.isMoving HEAD FALSE) 300 (VAL @parameters) @report @result))
-	   (=>(Softmotion.report (VAL @id) (VAL @report)))
+       (!(ReportManager.publish Softmotion.report (VAL @id) (VAL @report)))
 	   (!(SEM-V Softmotion.sem))
 
 	   )
@@ -208,7 +209,7 @@
 	  (=>(Softmotion.freeId (+ @id 1)))
 	  
 	  (!(GenomInterface.handleRequest PR2SOFTMOTION PR2SOFTMOTION_HALT (Softmotion.stop (VAL @id)) (FALSE) (FALSE) 300  NIL @report @result))
-	  (=>(Softmotion.report (VAL @id) (VAL @report)))
+      (!(ReportManager.publish Softmotion.report (VAL @id) (VAL @report)))
 
 
 	  )
@@ -224,7 +225,7 @@
 	  (=>(Softmotion.freeId (+ @id 1)))
 	  
 	  (!(GenomInterface.handleRequest PR2SOFTMOTION PR2SOFTMOTION_RESUME (Softmotion.stop (VAL @id)) (FALSE) (FALSE) 300  NIL @report @result))
-	  (=>(Softmotion.report (VAL @id) (VAL @report)))
+      (!(ReportManager.publish Softmotion.report (VAL @id) (VAL @report)))
 
 
 	  )
@@ -243,7 +244,7 @@
 	  (=> (Robot.isMoving HEAD FALSE))
 	  (=> (Robot.isMoving RIGHT_ARM FALSE))
 	  (=> (Robot.isMoving LEFT_ARM FALSE))
-	  (=>(Softmotion.report (VAL @id) (VAL @report)))
+      (!(ReportManager.publish Softmotion.report (VAL @id) (VAL @report)))
 
 	  
 
@@ -329,20 +330,20 @@
 	  )
       
 	  
-	  (IF (?(Robot.simu FALSE)) ;;the gripper doesn't seem to work in simulation
+      (IF (?(Softmotion.sim FALSE)) ;;the gripper doesn't seem to work in simulation
 	      (!(= @parameters (PR2SM_gripperGrabRelease (VAL @state))))	     
 
 	      (!(GenomInterface.handleRequest PR2SOFTMOTION PR2SOFTMOTION_GRIPPERGRABRELEASE (Softmotion.stop (VAL @id)) (VAL @irAddFact) (VAL @stopFact) (VAL @waitTime) @parameters @report @result)) 
-	      (=>(Softmotion.report (VAL @id) (VAL @report)))
+          (!(ReportManager.publish Softmotion.report (VAL @id) (VAL @report)))
 	      
 	      ELSEIF(?(EQUAL @state RRELEASE))
 	      (^(Softmotion.stop (VAL @id)))
 	      (~>(Softmotion.stop (VAL @id)))
-	      (=>(Softmotion.report (VAL @id) "OK"))
+          (!(ReportManager.publish Softmotion.report (VAL @id) "OK"))
 	      
 	      ELSE
 	      (=>(VAL @stopFact))
-	      (=>(Softmotion.report (VAL @id) "OK"))
+          (!(ReportManager.publish Softmotion.report (VAL @id) "OK"))
 	      )
 
 	  (IF(?(||(EQUAL @state ROPEN) (EQUAL @state RGRAB) (EQUAL @state RCLOSE) (EQUAL @state RCANCEL) (EQUAL @state RRELEASE)))
@@ -371,9 +372,9 @@
 	       ))
 	  
 	  (!(GenomInterface.handleRequest PR2SOFTMOTION PR2SOFTMOTION_GETPANTILTFROMXYZ (Softmotion.stop (VAL @id)) (FALSE) (FALSE) 300 @parameters @report @result))
-	  (=>(Softmotion.report (VAL @id) (VAL @report)))
+      (!(ReportManager.publish Softmotion.report (VAL @id) (VAL @report)))
 
-	  (IF(?(Robot.simu FALSE))
+      (IF(?(Softmotion.sim FALSE))
 	     (!(== (VAL @result) (PR2SM_PanTilt 
 				  (pan  @pan)
 				  (tilt  @tilt))
@@ -406,7 +407,7 @@
 	  
 	  (!(= @parameters (PR2SM_gripperGrabRelease (VAL @state))))	     
 	  (!(GenomInterface.handleRequest PR2SOFTMOTION PR2SOFTMOTION_DETECTPRESSION (Softmotion.stop (VAL @id)) @irAddFact (FALSE) (FALSE) @parameters @report @result)) 
-	  (=>(Softmotion.report (VAL @id) (VAL @report)))
+      (!(ReportManager.publish Softmotion.report (VAL @id) (VAL @report)))
 	  (IF(?(EQUAL @report "OK"))
 	     (=> (VAL @stopFact))
 	     

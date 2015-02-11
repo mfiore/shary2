@@ -26,15 +26,15 @@
 	 )
   )
  (defop |testAndConditions|
-   :invocation(MonitorManager.testAndConditions @conditionList @monitorFact @testId)
+   :invocation(MonitorManager.testAndConditions @conditionList @monitorFact @monitorId @testId)
    :documentation "utility function to check in the database if the and of the conditions present in @conditionList is true. This is actually a hack because I can't make an expression like (?(VAL @fact)) work when @fact is a general expression containing an &. @monitor fact is inserted into the database if everything is true. This procedure is blocked when the fact MonitorManager.stopTestAndConditions @testId is true"
    :body (
 	
           (!(= @tempResult TRUE))
 	  (!(= @backUpConditionList (VAL @conditionList) ))
 	  (IF(?(~(NULL @conditionList)))
-	     (=>(MonitorManager.isTestingConditions (VAL @testId)))
-	     (WHILE(?(& (~(MonitorManager.stopTestConditions (VAL @testId)))  (~ (VAL @monitorFact))))
+         (=>(MonitorManager.isTestingConditions @monitorId (VAL @testId)))
+         (WHILE(?(& (~(MonitorManager.stopTestConditions (VAL @monitorId) (VAL @testId)))  (~ (VAL @monitorFact))))
 		   (^(ELAPSED-TIME (TIME) 1))
 		   (!(= @actualCondition (CAR @conditionList)))
 		   (!(= @conditionList (CDR @conditionList)))
@@ -53,40 +53,42 @@
 		      )
 		   
 		   )
-	     (IF(?(MonitorManager.stopTestConditions (VAL @testId)))
-		(~> (MonitorManager.stopTestConditions (VAL @testId)))
+         (IF(?(MonitorManager.stopTestConditions (VAL @monitorId) (VAL @testId)))
+        (~> (MonitorManager.stopTestConditions (VAL @monitorId) (VAL @testId)))
 		)
-	     (~>(MonitorManager.isTestingConditions (VAL @testId)))
+         (~>(MonitorManager.isTestingConditions (VAL @monitorId) (VAL @testId)))
 	     )
 	  )
    )
  (defop |testOrConditions|
-  :invocation (MonitorManager.testOrConditions @conditionList @monitorFact @testId)
+  :invocation (MonitorManager.testOrConditions @conditionList @monitorFact @monitorId @testId)
   :documentation  "utility function to check in the database if the or of the conditions present in @conditionList is true. This is actually a hack because I can't make an expression like (?(VAL @fact)) work when @fact is a general expression containing an ||. @monitor fact in inserted into the database if everything is true"
   :body (
 	
 	 (!(= @backUpConditionList (VAL @conditionList)))
 	
 	 (IF(?(~(NULL @conditionList)))
-	    (=>(MonitorManager.isTestingConditions (VAL @testId)))
-	  (WHILE(?(&  (~(MonitorManager.stopTestConditions (VAL @testId))) (~(VAL @monitorFact))))
-		(^(ELAPSED-TIME (TIME) 1))
-		(!(= @actualCondition (CAR @conditionList)))
-		(!(= @conditionList (CDR @conditionList)))
-		(IF(?(VAL @actualCondition))
-		   (=> (VAL @monitorFact))
-		   )
-		(IF(?(NULL @conditionList))
-		   (!(= @conditionList (VAL @backUpConditionList)))
-		   )
-		)
-	  (~>(MonitorManager.isTestingConditions (VAL @testId)))
-	  (IF(?(MonitorManager.stopTestConditions (VAL @testId)))
-	     (~> (MonitorManager.stopTestConditions (VAL @testId)))
-	     )
-	  )
-	 ) 
+        (=>(MonitorManager.isTestingConditions @monitorId (VAL @testId)))
+        (WHILE(?(&  (~(MonitorManager.stopTestConditions (VAL @monitorId) (VAL @testId))) (~(VAL @monitorFact))))
+              (^(ELAPSED-TIME (TIME) 1))
+
+              (!(= @actualCondition (CAR @conditionList)))
+              (!(= @conditionList (CDR @conditionList)))
+              (IF(?(VAL @actualCondition))
+                 (=> (VAL @monitorFact))
+                 )
+              (IF(?(NULL @conditionList))
+                 (!(= @conditionList (VAL @backUpConditionList)))
+                 )
+              )
+        (~>(MonitorManager.isTestingConditions (VAL @monitorId) (VAL @testId)))
+        (IF(?(MonitorManager.stopTestConditions (VAL @monitorId) (VAL @testId)))
+           (~> (MonitorManager.stopTestConditions (VAL @monitorId) (VAL @testId)))
+           )
+        )
+     )
   )
+
 
 (defop |parseConditions|
   :invocation (!(MonitorManager.parseConditions @conditionList @robotName @actor @subject @value $factList))
@@ -135,12 +137,21 @@ be moved in another class"
 	 )
   )
 
+(defop |subscribeToReport|
+  :invocation(!(MonitorManager.sub @report @id @monitorId))
+  :body (
+         (!(ReportManager.sub @report @id))
+         (=>(MonitorManager.isSub @report @id @monitorId))
+         )
+  )
+
+
 (defop |stopTestConditions|
-  :invocation (!(MonitorManager.stopTestConditions @testId))
+  :invocation (!(MonitorManager.stopTestConditions @monitorId @testId))
   :documentation "Utility function to stop the monitoring of a TestCondition"
   :body (
-	 (IF(?(MonitorManager.isTestingConditions (VAL @testId )))
-	    (=>(MonitorManager.stopTestConditions (VAL @testId)))
+     (IF(?(MonitorManager.isTestingConditions (VAL @monitorId) (VAL @testId )))
+        (=>(MonitorManager.stopTestConditions @monitorId (VAL @testId)))
 	    )
 	 
 	 )
@@ -184,7 +195,7 @@ be moved in another class"
 	  (IF(?(MonitorManager.startLoop FALSE))
 	     (=>(MonitorManager.startLoop TRUE))
 	     )
-	  (=>(MonitorManager.target (VAL @target) (VAL @priority)))
+
    	  )
 
    )
@@ -222,26 +233,30 @@ be moved in another class"
 		   (!(== (VAL @successConditions) (. @successConditionsAnd @successConditionsOr .)))             ;;get the AND and OR part of success\failconditions
 		   (!(== (VAL @failureConditions) (. @failureConditionsAnd @failureConditionsOr .)))
 		   
-		   (=>(MonitorManager.testAndConditions @successConditionsAnd @successConditionsTrue 1))        ;;start the monitoring of success\failconditions
-		   (=>(MonitorManager.testOrConditions @successConditionsOr @successConditionsTrue 2))
+           (=>(MonitorManager.testAndConditions @successConditionsAnd @successConditionsTrue @monitorId 1))        ;;start the monitoring of success\failconditions
+           (=>(MonitorManager.testOrConditions @successConditionsOr @successConditionsTrue @monitorId 2))
 		   
-		   (=>(MonitorManager.testAndConditions @failureConditionsAnd @failureConditionsTrue 3))
-		   (=>(MonitorManager.testOrConditions @failureConditionsOr @failureConditionsTrue 4))
+           (=>(MonitorManager.testAndConditions @failureConditionsAnd @failureConditionsTrue @monitorId 3))
+           (=>(MonitorManager.testOrConditions @failureConditionsOr @failureConditionsTrue @monitorId 4))
 		  
-		   (!(HeadActions.getFreeId @actionId))  ;we link execution to an ID. This is the last used ID + 1 (needs to be implemented
+           (!(HeadActions.getFreeId @actionId))  ;we link execution to an ID. This is the last used ID + 1 (needs to be implemented
+           (!(ReportManager.sub HeadActions.report @actionId))
 		   (=>(HeadActions.action lookAt (VAL @target) (VAL @targetPart) (VAL @actionId)))
 		   (^(HeadActions.report (VAL @actionId) @executionReport))
-		   (~>(HeadActions.report (VAL @actionId) (VAL @executionReport)))
+           (!(ReportManager.unsub HeadActions.report @actionId))
+
 
 		   (WHILE(?(& (~(VAL @successConditionsTrue)) (~(VAL @failureConditionsTrue)) (MonitorManager.highestAvailablePriority  (VAL @priority)) (~(MonitorManager.cancelMonitoring (VAL @monitorId))) (MonitorManager.shouldRun TRUE) (EQUAL @executionReport "OK")))
 ;			 (^(ELAPSED-MTIME (TIME) 500))
 			 
-			 (IF(?(Robot.simu FALSE))
+             (IF(?(Softmotion.sim FALSE))
 			 
-			    (!(HeadActions.freeId @executionId))  ;we link execution to an ID. This is the last used ID + 1 (needs to be implemented
+                (!(HeadActions.freeId @executionId))  ;we link execution to an ID. This is the last used ID + 1 (needs to be implemented
+                (!(ReportManager.sub HeadActions.report @executionId))
 			    (=>(HeadActions.action lookAt (VAL @target) (VAL @targetPart) (VAL @executionId)))
 			    (^(HeadActions.report (VAL @executionId) @executionReport))
-			    (~>(HeadActions.report (VAL @executionId) (VAL @executionReport)))
+                (!(ReportManager.unsub HeadActions.report @executionId))
+
 
 			    ELSE
 			    (^(ELAPSED-TIME (TIME) 1))
@@ -254,10 +269,15 @@ be moved in another class"
 		      ;;if the monitor has success or failure erase the element from the head and send and post the result
 		      
 	      
-		      (!(MonitorManager.stopTestConditions 1))
-		      (!(MonitorManager.stopTestConditions 2))
-		      (!(MonitorManager.stopTestConditions 3))
-		      (!(MonitorManager.stopTestConditions 4))
+              (!(MonitorManager.stopTestConditions @monitorId 1))
+              (!(MonitorManager.stopTestConditions @monitorId 2))
+              (!(MonitorManager.stopTestConditions @monitorId 3))
+              (!(MonitorManager.stopTestConditions @monitorId 4))
+
+              (WHILE(?(MonitorManager.isSub @report @id (VAL @monitorId)))
+                    (!(ReportManager.unsub (VAL @report) (VAL @id)))
+                    (~>(MonitorManager.isSub (VAL @report) (VAL @id) (VAL @monitorId)))
+               )
 		      
 		      (!(Queue.pop (VAL @queueInUse)))
 		      (IF(?(Queue.isEmpty MonitorManager.highPriorityQueue FALSE))
@@ -271,16 +291,17 @@ be moved in another class"
 		
 			 )
 		      (IF (?(VAL @successConditionsTrue))
-			  (~>(VAL @successConditionsTrue))
-			  (=> (MonitorManager.report @monitorId OK))
-			  
-			  ELSEIF(?(|| (VAL @failureConditionsTrue) (~(EQUAL @executionReport OK))))
-			  (~>(VAL @failureConditionsTrue))
-			  (=> (MonitorManager.report @monitorId FAILURE))
+                  (~>(VAL @successConditionsTrue))
+                  (!(ReportManager.publish MonitorManager.report @monitorId OK))
+
+                  ELSEIF(?(|| (VAL @failureConditionsTrue) (~(EQUAL @executionReport OK))))
+                  (~>(VAL @failureConditionsTrue))
+                  (!(ReportManager.publish MonitorManager.report @monitorId FAILURE))
+
 			  
 			  ELSEIF(?(MonitorManager.cancelMonitoring (VAL @monitorId)))
 			  (~>(MonitorManager.cancelMonitoring (VAL @monitorId)))
-			  (=>(MonitorManager.report @monitorId CANCELED))
+              (!(ReportManager.publish MonitorManager.report @monitorId CANCELED))
 			  )
 		      )
 		   )

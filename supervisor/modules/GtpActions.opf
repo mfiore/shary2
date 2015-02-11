@@ -10,8 +10,8 @@
    :documentation "init the module"
    :body (
 	  (=>(GtpActions.freeId 0))
-	  (!(Mhp.getFreeId @id))
-	  (=>(Mhp.request fetchEnvironment @id))
+      (!(Mhp.getFreeId @id))
+      (=>(Mhp.request fetchEnvironment @id))
 	  (!(GtpActions.handleReport Mhp @id @gtpId))
 	  ) 
    )
@@ -27,14 +27,18 @@
    :invocation(GtpActions.action pick @object @arm @gtpId)
    :body (
 	  (?(Robot.name @robotName))
-	  
+
+
+      (!(= @arm RIGHT)) ;;HACK!! LEFT ARM DOESN'T WORK IN GTP RIGHT NOW
+
 	  (IF(?(EQUAL @arm RIGHT))
 	     (!(= @hand "right"))
 	     
 	     ELSE
 	     (!(= @hand "left"))
 	     )
-	  
+
+
 	  (!(Mhp.getFreeId @id))
 	  (=>(Mhp.request addGtpAgent mainAgent @robotName @id))
 	  (!(GtpActions.handleReport Mhp @id @gtpId))
@@ -93,7 +97,8 @@
 	     (=>(Spark.request getJointAbsPose @placement NO_NAME @sparkId))
 	     (!(ExecutionManager.handleReport Spark @sparkId @executionId FALSE FALSE NO_NAME))
 	     (?(Spark.result (VAL @sparkId) @x @y @z @yaw @pitch @roll))
-	 
+         (~>(Spark.result (VAL @sparkId) (VAL @x) (VAL @y) (VAL @z) (VAL @yaw) (VAL @pitch) (VAL @roll)))
+
 	     (!(= @ax (- @x 0.2)))
 	     (!(= @ay (+ @y 0.2)))
 	     (!(= @az @z))
@@ -170,8 +175,14 @@
 	       (=>(Mhp.request addGtpPoint target @x @y @z @id))
 	       (!(GtpActions.handleReport Mhp @id @gtpId))
 
-	       ELSE
-	       (=>(GtpActions.report (VAL @gtpId) FAILURE))
+           ELSE
+           (!(ReportManager.publish GtpActions.report @gtpId FAILURE))
+           (!(Mhp.getFreeId @id))
+           (!(ReportManager.sub Mhp.report @id))
+           (=>(Mhp.request clearGtpInputs @id))
+           (^(Mhp.report (VAL @id) @report))
+           (!(ReportManager.unsub Mhp.report @id))
+
 	       (!(FAILED))
 	     )
 	  
@@ -225,10 +236,12 @@
 	  (!(GtpActions.handleReport Mhp @id @gtpId))
 
 
-	  (!(Mhp.getFreeId @id))
-	  (=>(Mhp.request getGtpTaskDetails @taskId @alternativeId @id))
-	  (^(Mhp.report (VAL @id) @report))
-	  (~>(Mhp.report (VAL @id) (VAL @report)))
+      (!(Mhp.getFreeId @id))
+
+      (=>(Mhp.request getGtpTaskDetails @taskId @alternativeId @id))
+      (!(ReportManager.sub Mhp.report @id))
+      (^(Mhp.report (VAL @id) @report))
+      (!(ReportManager.unsub Mhp.report @id))
 	  
 	  (!(= @follow 0))
 	  (IF(?(EQUAL @report "OK"))
@@ -244,7 +257,10 @@
 		   (!(= @subTrajId (CAR @traj)))
 		   (!(= @dummy (CAR(CDR @traj))))
 		   (!(= @subTrajName (CAR(CDR(CDR @traj)))))
-		   (!(= @robot (CAR(CDR(CDR(CDR @traj))))))  
+           (!(= @robot (CAR(CDR(CDR(CDR @traj))))))
+
+           (~>(Robot.pose @a @b @c @d))
+           (=>(Robot.pose @arm NO_NAME NO_NAME OTHER))
 
 		   (IF(?(EQUAL @subTrajName "grasp"))
 		      (!(ArmActions.getFreeId @id))
@@ -254,7 +270,8 @@
 		      (IF(?(EQUAL @task pick))
 			 (=> (Robot.hasObject (VAL @arm) (VAL @object))) ;if we arrive here with no FAILED than we've got the item (hopefully XD)
 			 (!(Spark.getFreeId @sparkId))
-			 (=>(Spark.request setObjectInHand PR2_ROBOT (VAL @object) (VAL @arm) TRUE (VAL @sparkId)))
+             (=>(Spark.request setObjectInHand PR2_ROBOT (VAL @object) (VAL @arm) TRUE (VAL @sparkId)))
+
 			 (!(ExecutionManager.handleReport Spark @sparkId @executionId FALSE FALSE NO_NAME))
 		      
 			 (!(DatabaseInterface.add (AGENT-STATEMENT PR2_ROBOT PR2_ROBOT hasInHand (VAL @object)) @result))
@@ -276,12 +293,13 @@
 			 (=>(Spark.request getJointAbsPose PR2_ROBOT @sparkHand @sparkId))
 			 (!(ExecutionManager.handleReport Spark @sparkId @executionId FALSE FALSE NO_NAME))
 			 (^(Spark.result (VAL @sparkId) @rx @ry @rz @rtx @rty @rtz))
+             (~>(Spark.result (VAL @sparkId) (VAL @rx) (VAL @ry) (VAL @rz) (VAL @rtx) (VAL @rty) (VAL @rtz)))
 
 			 (!(Spark.getFreeId @sparkId))
 			 (=>(Spark.request getJointAbsPose @support NO_NAME @sparkId))
 			 (!(ExecutionManager.handleReport Spark @sparkId @executionId FALSE FALSE NO_NAME))
 			 (^(Spark.result (VAL @sparkId) @tx @ty @tz @ttx @tty @ttz))
-			 
+             (~>(Spark.result (VAL @sparkId) (VAL @tx) (VAL @ty) (VAL @tz) (VAL @ttx) (VAL @tty) (VAL @ttz)))
 			 
 			 
 			 )
@@ -329,106 +347,131 @@
 	  (=>(Mhp.request clearGtpInputs @id))
 	  (!(GtpActions.handleReport Mhp @id @gtpId))
 
-	  (=>(GtpActions.report @gtpId "OK"))
+      (!(ReportManager.publish GtpActions.report @gtpId "OK"))
+
 
 	  )
    )
 
 (defop |handleReport|
-     :invocation(!(GtpActions.handleReport @module @id @actionId))
-     :documentation "Utility function to avoid some code duplication when waiting for the response of a genom module. This can't be used when we don't want to fail if the genom request fails"
-     :body (
-	  (!(= @reportName (TERM-STRING-CAT (VAL @module) ".report")))
-	  (!(= @reportName (MAKE-ATOM @reportName)))
+  :invocation(!(GtpActions.handleReport @module @id @actionId))
+  :documentation "Utility function to avoid some code duplication when waiting for the response of a genom module. This can't be used when we don't want to fail if the genom request fails"
+  :body (
+         (!(= @reportName (TERM-STRING-CAT (VAL @module) ".report")))
+         (!(= @reportName (MAKE-ATOM @reportName)))
 
-	  ;wait for a report or until we are paused or until we are stopped
-	  (^(|| (@reportName (VAL @id) @report) (GtpActions.halt (VAL @actionId)) (GtpActions.stop (VAL @actionId))))
-		
-	  ;if we are paused we give a halt request if we were doing a softmotion request or simply wait for a resume
-	  (IF(?(GtpActions.halt (VAL @actionId)))
-	     (~>(GtpActions.halt (VAL @actionId)))
-	     (IF(?(EQUAL @module Softmotion))
-		   (!(Softmotion.getFreeId @smId))
-		   (=>(Softmotion.request halt (VAL @smId)))
-		   (^(Softmotion.report (VAL @smId) @smReport))
-		   (~>(Softmotion.report (VAL @smId) (VAL @smReport)))
-		   (^(@reportName (VAL @id) @report))
-		   (~>(@reportName (VAL @id) (VAL @report)))
+         (!(ReportManager.sub @reportName @id))
+                                        ;wait for a report or until we are paused or until we are stopped
+         (^(|| (@reportName (VAL @id) @report) (GtpActions.halt (VAL @actionId)) (GtpActions.stop (VAL @actionId))))
 
-		   ELSEIF(?(EQUAL @module ArmActions))
-		   (=>(ArmActions.halt (VAL @id)))
-		   )
-	     ;we wait for a stop or for a resume
-	     (^(|| (GtpActions.stop (VAL @actionId)) (GtpActions.resume (VAL @actionId))))
-	     (IF(?(GtpActions.resume (VAL @actionId)))   ;we ask to resume and recall this function to wait for the report
-		(~>(GtpActions.resume (VAL @actionId)))
-		(IF(?(EQUAL @module Softmotion))
-		   (!(Softmotion.getFreeId @smId))
-		   (=>(Softmotion.request resume @smId))
-		   (^(Softmotion.report (VAL @smId) @smReport))
-		   (~>(Softmotion.report (VAL @smId) (VAL @smReport)))
-		   (^(ELAPSED-TIME (TIME) 3))
+                                        ;if we are paused we give a halt request if we were doing a softmotion request or simply wait for a resume
+         (IF(?(GtpActions.halt (VAL @actionId)))
+            (~>(GtpActions.halt (VAL @actionId)))
+            (IF(?(EQUAL @module Softmotion))
+               (!(Softmotion.getFreeId @smId))
+               (!(ReportManager.sub Softmotion.report @smId))
+               (=>(Softmotion.request halt (VAL @smId)))
+               (^(Softmotion.report (VAL @smId) @smReport))
+               (!(ReportManager.unsub Softmotion.report @smId))
+               (^(@reportName (VAL @id) @report))
+               (!(ReportManager.unsub @reportName @id))
 
-		   ELSEIF(?(EQUAL @module ArmActions))
-		   (=>(ArmActions.resume (VAL @id)))
-		   )
-		ELSEIF(?(GtpActions.stop (VAL @actionId)))
-		(~>(GtpActions.stop (VAL @actionId)))
-		
-		(IF(?(EQUAL @module Softmotion))
-		   (=>(Softmotion.stop (VAL @id)))    
-		      (!(Softmotion.getFreeId @smId))
-		      (=>(Softmotion.request stop (VAL @smId)))
-		      (^(Softmotion.report (VAL @smId) @smReport))
-		      (~>(Softmotion.report (VAL @smId) (VAL @smReport)))
-		      (^(|| (@reportName (VAL @id) @report)))
-		      (~>(@reportName (VAL @id) @report))
-		      
-		      
-		      ELSEIF(?(EQUAL @module ArmActions))
-		      (=>(ArmActions.stop @id))
-		      
-		      ELSEIF(?(EQUAL @module Mhp))
-		      (=>(Mhp.stop (VAL @id)))
-		      )
-		(=>(GtpActions.report @actionId STOPPED))
-		(!(FAILED))
-		)
-	     
-	     
-	     ELSEIF(?(GtpActions.stop (VAL @actionId)))
-	     (~>(GtpActions.stop (VAL @actionId)))
-	     
- 	     (IF(?(EQUAL @module Softmotion))
-		(=>(Softmotion.stop (VAL @id)))    
-		(!(Softmotion.getFreeId @smId))
-		(=>(Softmotion.request stop (VAL @smId)))
-		(^(Softmotion.report (VAL @smId) @smReport))
-		(~>(Softmotion.report (VAL @smId) (VAL @smReport)))
-		(^(|| (@reportName (VAL @id) @report)))
-		(~>(@reportName (VAL @id) @report))
-		
-		ELSEIF(?(EQUAL @module ArmActions))
-		(=>(ArmActions.stop @id))
-	       	
-		ELSEIF(?(EQUAL @module Mhp))
-		(=>(Mhp.stop (VAL @id)))
-		)
-	     (=>(GtpActions.report @actionId STOPPED))
-	     (!(FAILED))
-	     
-	     
-	     ELSE	 ;we got a report. If it's a good report we continue if not we report a fail and exit.
-	     (~>( @reportName (VAL @id) (VAL @report)))
-	     (IF(?(~(EQUAL @report "OK")))
-		(!(PRINT @report))
-		(=> (GtpActions.report (VAL @actionId) @report))
-		(!(FAILED))
-		)
-	     )
-	  )
-     )
 
- 
+               ELSEIF(?(EQUAL @module ArmActions))
+               (=>(ArmActions.halt (VAL @id)))
+               )
+                                        ;we wait for a stop or for a resume
+            (^(|| (GtpActions.stop (VAL @actionId)) (GtpActions.resume (VAL @actionId))))
+            (IF(?(GtpActions.resume (VAL @actionId)))   ;we ask to resume and recall this function to wait for the report
+               (~>(GtpActions.resume (VAL @actionId)))
+               (IF(?(EQUAL @module Softmotion))
+                  (!(Softmotion.getFreeId @smId))
+                  (!(ReportManager.sub Softmotion.report @smId))
+                  (=>(Softmotion.request resume @smId))
+                  (^(Softmotion.report (VAL @smId) @smReport))
+                  (!(ReportManager.unsub Softmotion.report @smId))
+                  (^(ELAPSED-TIME (TIME) 3))
+
+                  ELSEIF(?(EQUAL @module ArmActions))
+                  (=>(ArmActions.resume (VAL @id)))
+                  )
+               ELSEIF(?(GtpActions.stop (VAL @actionId)))
+               (~>(GtpActions.stop (VAL @actionId)))
+
+               (IF(?(EQUAL @module Softmotion))
+                  (=>(Softmotion.stop (VAL @id)))
+                  (!(Softmotion.getFreeId @smId))
+                  (=>(Softmotion.request stop (VAL @smId)))
+                  (!(ReportManager.sub Softmotion.report @smId))
+                  (^(Softmotion.report (VAL @smId) @smReport))
+                  (!(ReportManager.unsub Softmotion.report @smId))
+
+                  (^(|| (@reportName (VAL @id) @report)))
+                  (!(ReportManager.unsub @reportName @id))
+
+
+
+                  ELSEIF(?(EQUAL @module ArmActions))
+                  (=>(ArmActions.stop @id))
+
+                  ELSEIF(?(EQUAL @module Mhp))
+                  (=>(Mhp.stop (VAL @id)))
+                  )
+               (!(ReportManager.publish GtpActions.report @actionId STOPPED))
+               (!(Mhp.getFreeId @id))
+               (!(ReportManager.sub Mhp.report @id))
+               (=>(Mhp.request clearGtpInputs @id))
+               (^(Mhp.report (VAL @id) @report))
+               (!(ReportManager.unsub Mhp.report @id))
+               (!(FAILED))
+               )
+
+
+            ELSEIF(?(GtpActions.stop (VAL @actionId)))
+            (~>(GtpActions.stop (VAL @actionId)))
+
+            (IF(?(EQUAL @module Softmotion))
+               (=>(Softmotion.stop (VAL @id)))
+               (!(Softmotion.getFreeId @smId))
+               (=>(Softmotion.request stop (VAL @smId)))
+               (!(ReportManager.sub Softmotion.report @smId))
+               (^(Softmotion.report (VAL @smId) @smReport))
+               (!(ReportManager.unsub Softmotion.report @smId))
+               (^(|| (@reportName (VAL @id) @report)))
+               (!(ReportManager.sub @reportName @id))
+
+               ELSEIF(?(EQUAL @module ArmActions))
+               (=>(ArmActions.stop @id))
+
+               ELSEIF(?(EQUAL @module Mhp))
+               (=>(Mhp.stop (VAL @id)))
+               )
+            (=>(GtpActions.report @actionId STOPPED))
+            (!(Mhp.getFreeId @id))
+            (!(ReportManager.sub Mhp.report @id))
+            (=>(Mhp.request clearGtpInputs @id))
+            (^(Mhp.report (VAL @id) @report))
+            (!(ReportManager.unsub Mhp.report @id))
+            (!(FAILED))
+
+
+            ELSE	 ;we got a report. If it's a good report we continue if not we report a fail and exit.
+            (!(ReportManager.unsub @reportName @id))
+
+            (IF(?(~(EQUAL @report "OK")))
+               (!(PRINT @report))
+               (!(ReportManager.publish GtpActions.report @actionId @report))
+               (!(Mhp.getFreeId @id))
+               (!(ReportManager.sub Mhp.report @id))
+               (=>(Mhp.request clearGtpInputs @id))
+               (^(Mhp.report (VAL @id) @report))
+               (!(ReportManager.unsub Mhp.report @id))
+               (!(FAILED))
+               )
+            )
+         )
+  )
+
+
 
 )

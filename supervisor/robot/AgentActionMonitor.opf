@@ -28,12 +28,15 @@
 	  (IF(?(~(AgentActionMonitor.isMonitoringAgent (VAL @agent) @id)))
 	     (!(MonitorManager.getFreeId @monitorId))
   
-	     ;;set the parameters for the monitor manager. We stop when the human has completed his actions and we fail if he fails or he's stopped
+         ;;set the parameters for the monitor manager. We stop when the human has completed his actions and we fail if he fails or he's stopped
+
+
 	     (!(= @successConditions (. (.(PlanManager.agentReport (VAL @agent) OK) .) (. .) .)))
 	     (!(= @failureConditions (. (. .) (. (PlanManager.agentReport (VAL @agent) FAILURE) (PlanManager.agentReport (VAL @agent) STOPPED) .) .) )) 		   
-	     (?(Spark.humanHead @sparkHumanHead))
-	     
-	     ;;start the monitoring
+         (?(Spark.humanHead @sparkHumanHead))
+
+         (!(MonitorManager.sub PlanManager.agentReport @agent @monitorId))
+         ;;start the monitoring
 	     (!(MonitorManager.monitorTarget @agent @sparkHumanHead @successConditions @failureConditions MEDIUM @monitorId))
 	     (=>(AgentActionMonitor.isMonitoringAgent @agent @monitorId))
 	     )
@@ -41,6 +44,14 @@
 	  )
    )
 
+ (defop |cancelActions|
+   :invocation (!(AgentActionMonitor.cancelActions @agent))
+   :body (
+          (WHILE(?(AgentActionMonitor.monitorAction (VAL @agent) @action @sphere))   ;;since we are not monitoring the agent anymore we are not monitoring his actions anymore
+                (~>(AgentActionMonitor.monitorAction (VAL @agent) (VAL @action) (VAL @sphere)))
+                )
+          )
+   )
  (defop |stopMonitoringAgent|
    :invocation(!(AgentActionMonitor.stopMonitoringAgent @agent))
    :documentation "Stops monitoring the agent"
@@ -49,9 +60,7 @@
 	     ;;we cancel even when the monitoring manager is not monitoring the agent because maybe the module has the agent in it's queue but it's currently monitoring something else. With the current implementation there could be some problems, like the monitoring manager looking for a second at the agent before stopping.
 	     (=>(MonitorManager.cancelMonitoring (VAL @monitorId)))
 	     (~>(AgentActionMonitor.isMonitoringAgent (VAL @agent) (VAL @monitorId)))
-	     (WHILE(?(AgentActionMonitor.monitorAction (VAL @agent) @action @sphere))   ;;since we are not monitoring the agent anymore we are not monitoring his actions anymore
-		   (~>(AgentActionMonitor.monitorAction (VAL @agent) (VAL @action) (VAL @sphere)))
-		   )
+         (!(AgentActionMonitor.cancelActions @agent))
 	     )
 	  )
    )
@@ -64,11 +73,13 @@
    :documentation "clean the monitor spheres associated to an object"
    :body (
 	  (!(SEM-P AgentActionMonitor.sem))
-	  (WHILE(?(AgentActionMonitor.sphere @agent (VAL @object) @sphereId))
-		(=>(Spark.request updateSphereMonitor (VAL @sphereId) GEN_FALSE (VAL @object) 0 (VAL @agent) 0 0 0 SPARK_PICK_OBJECT (VAL @sparkId)))
-		(^(Spark.report (VAL @sparkId) @report))
-		(~>(Spark.report (VAL @sparkId) @report))
-		(~>(AgentActionMonitor.sphere (VAL @agent) (VAL @object) (VAL @sphereId)))		
+      (WHILE(?(AgentActionMonitor.sphere @agent (VAL @object) @sphereId))
+            (!(Spark.getFreeId @sparkId))
+            (!(ReportManager.sub Spark.report @sparkId))
+            (=>(Spark.request updateSphereMonitor (VAL @sphereId) GEN_FALSE (VAL @object) 0 (VAL @agent) 0 0 0 SPARK_PICK_OBJECT (VAL @sparkId)))
+            (^(Spark.report (VAL @sparkId) @report))
+            (!(ReportManager.unsub Spark.report @sparkId))
+            (~>(AgentActionMonitor.sphere (VAL @agent) (VAL @object) (VAL @sphereId)))
 		)
 	  (!(SEM-V AgentActionMonitor.sem))
 	  )
@@ -80,11 +91,13 @@
 	  (!(SEM-P AgentActionMonitor.sem))
 	  (!(= @sphereId 0))        
 	  (WHILE(?(< @sphereId 10))   ;from 0 to 10 (indexes of the monitor spheres in spark)
-		(!(Spark.getFreeId @sparkId))
-		;we use a fake item and agent
-		(=>(Spark.request updateSphereMonitor (VAL @sphereId) GEN_FALSE BLUE_CUBE 0 HERAKLES_HUMAN1 0 0 0 SPARK_PICK_OBJECT (VAL @sparkId)))
-		(^(Spark.report (VAL @sparkId) @report))
-		(~>(Spark.report (VAL @sparkId) @report))
+            (!(Spark.getFreeId @sparkId))
+            (!(ReportManager.sub Spark.report @sparkId))
+                                        ;we use a fake item and agent
+            (=>(Spark.request updateSphereMonitor (VAL @sphereId) GEN_FALSE BLUE_CUBE 0 HERAKLES_HUMAN1 0 0 0 SPARK_PICK_OBJECT (VAL @sparkId)))
+            (^(Spark.report (VAL @sparkId) @report))
+            (!(ReportManager.unsub Spark.report @sparkId))
+
 		(IF(?(AgentActionMonitor.sphere @agent @object (VAL @sphereId)))  ;we erase the spheres from the db
 		   (~>(AgentActionMonitor.sphere (VAL @agent) (VAL @object) (VAL @sphereId)))
 		   )
@@ -103,10 +116,12 @@
 	  (!(= @sphereId 0))
 	  (WHILE(?(< @sphereId 10))  ;from 0 to 9 (index of the monitor spheres in spark)
 		(IF(?(AgentActionMonitor.sphere (VAL @agent) @object (VAL @sphereId)))  ;if there is a sphere for an agent if we cancel it
-		   (!(Spark.getFreeId @sparkId))
+           (!(Spark.getFreeId @sparkId))
+           (!(ReportManager.sub Spark.report @sparkId))
 		   (=>(Spark.request updateSphereMonitor (VAL @sphereId) GEN_FALSE (VAL @object) 0 HERAKLES_HUMAN1 0 0 0 SPARK_PICK_OBJECT (VAL @sparkId)))
-		   (^(Spark.report (VAL @sparkId) @report))
-		   (~>(Spark.report (VAL @sparkId) @report))
+           (^(Spark.report (VAL @sparkId) @report))
+           (!(ReportManager.unsub Spark.report @sparkId))
+
 		   (~>(AgentActionMonitor.sphere (VAL @agent) (VAL @object) (VAL @sphereId)))
 		   )
 		(!(= @sphereId (+ @sphereId 1)))
@@ -123,13 +138,15 @@
    :body (
 	  (!(SEM-P AgentActionMonitor.sem))
 	  (!(Spark.getFreeId @sparkId))
+      (!(ReportManager.sub Spark.report @sparkId))
 	  (=>(Spark.request updateSphereMonitor (VAL @sphereId) GEN_FALSE GREY_TAPE 0 HERAKLES_HUMAN1 0 0 0 SPARK_PICK_OBJECT (VAL @sparkId)))
 	  (^(Spark.report (VAL @sparkId) @report))
-	  (~>(Spark.report (VAL @sparkId) @report))
+      (!(ReportManager.unsub Spark.report @sparkId))
+
 	  (IF(?(AgentActionMonitor.sphere @agent @object (VAL @sphereId)))
 	     (~>(AgentActionMonitor.sphere @agent @object (VAL @sphereId)))
 	     )
-	     
+
 	  (!(SEM-V AgentActionMonitor.sem))
 	  )
    )
@@ -146,10 +163,12 @@
 		(IF(?(~(AgentActionMonitor.sphere (VAL @agent) (VAL @currentObject) @sphereId))) ;if the sphere is not already activated
 		   ;;get the coordinates of the object
 		   (!(Spark.getFreeId @sparkId))
+           (!(ReportManager.sub Spark.report @sparkId))
 		   (=>(Spark.request getJointAbsPose @currentObject NO_NAME @sparkId))
 		   (^(Spark.report (VAL @sparkId) @report))
 		   (^(Spark.result (VAL @sparkId) @x @y @z @yaw @pitch @roll))
-		   (~>(Spark.report (VAL @sparkId) @report))
+           (!(ReportManager.unsub Spark.report @sparkId))
+
 		   (~>(Spark.result (VAL @sparkId) (VAL @x) (VAL @y) (VAL @z) (VAL @yaw) (VAL @pitch) (VAL @roll)))		
 		   ;;activate a monitor sphere
 		   (!(Spark.getFreeId @sparkId))
@@ -158,10 +177,12 @@
 		   ;;different objects have different affordances associated to them, which translate to different kinds of monitor spheres.
 		   (?(Object.type (VAL @currentObject) @class @type))
 		   (?(Spark.typeMonitorSphere (VAL @type) @sphereType))
+           (!(ReportManager.sub Spark.report @sparkId))
 		   (=>(Spark.request updateSphereMonitor (VAL @sphereId) GEN_TRUE (VAL @currentObject) (VAL @sparkHand)
-				     (VAL @agent) (VAL @x) (VAL @y) (VAL @z) (VAL @sphereType) (VAL @sparkId)))
+                             (VAL @agent) (VAL @x) (VAL @y) (VAL @z) (VAL @sphereType) (VAL @sparkId)))
 		   (^(Spark.report (VAL @sparkId) @report))
-		   (~>(Spark.report (VAL @sparkId) @report))
+           (!(ReportManager.unsub Spark.report @sparkId))
+
 		   
 		   
 		   (=>(AgentActionMonitor.sphere @agent @currentObject @sphereId))
@@ -297,7 +318,7 @@
    :invocation(AgentActionMonitor.startMonitorSphereLoop) 
    :documentation "Loop to read the poster of the monitor spheres"
    :body (
-	  (IF(?(Robot.simu FALSE))
+      (IF(?(Spark.sim FALSE))
 	     (WHILE(?(~(AgentActionMonitor.stopMonitorSphereLoop)))
 		   (!(AgentActionMonitor.readMonitorSpheresPoster))
 		   (^ (ELAPSED-TIME (TIME) 1))
@@ -313,7 +334,7 @@
    :invocation(!(AgentActionMonitor.readMonitorSpheresPoster))
    :documentation "Reads the monitor sphere poster and updates knowledge"
    :body (
-	  (IF(?(Robot.simu FALSE))
+      (IF(?(Spark.sim FALSE))
 	     (!(READ-POSTER-INTERNAL SPARK_MONITORINGSPHERES @poster))
 	     (IF(! (==  (VAL @poster) (SPARK_MONITORINGSPHERES_POSTER_STR (monitoringSpheres @spheres (modifIndex @currentSpheresModifIndex)))))
 		(!(= @sphereId 0))
@@ -373,7 +394,7 @@
 		      
 		      (IF(?(|| (EQUAL @isSphereActive 1) (AgentActionMonitor.isSphereActive (VAL @sphereId) TRUE)))
 			 (IF(?(|| (EQUAL @monitorGetOutResult 1) (AgentActionMonitor.isSphereActive (VAL @sphereId) TRUE))) ;if the target has exited the sphere
-			    (~>(AgentActionMonitor.isSphereActive (VAL @sphereId) TRUE))
+                (~>(AgentActionMonitor.isSphereActive (VAL @sphereId) TRUE))
 			    (IF(?(EQUAL @sphereType SPARK_SIMPLE_ENTRY))   ;;we use this for placements
 
 			       (IF(?(Agent.hasObject (VAL @agentName) @heldObject))
@@ -384,15 +405,19 @@
 				  (!(AgentActionMonitor.cleanMonitorSpheresForAgent @agentName)) 
 				  
 				  
-				  (!(Spark.getFreeId @sparkId))
+                  (!(Spark.getFreeId @sparkId))
+                  (!(ReportManager.sub Spark.report @sparkId))
 				  (?(Spark.humanHand RIGHT @sparkHand))
 				  (=>(Spark.request setInferrenceForObject @heldObject 0 @agentName @sparkHand SPARK_HUMAN_HAND 1.0 @sparkId))
-				  (^(Spark.report (VAL @sparkId) @report))
+                  (^(Spark.report (VAL @sparkId) @report))
+                  (!(ReportManager.unsub Spark.report @sparkId))
 				  
 				  ;;we place the object in the center of the sphere (possibly placeholder)
-				  (!(Spark.getFreeId @sparkId))
+                  (!(Spark.getFreeId @sparkId))
+                  (!(ReportManager.sub Spark.report @sparkId))
 				  (=>(Spark.request placeObject @heldObject @x @y @z 0 0 0 @sparkId))
-				  (^(Spark.report (VAL @sparkId) @report))
+                  (^(Spark.report (VAL @sparkId) @report))
+                  (!(ReportManager.unsub Spark.report @sparkId))
 				  
 				  (~>(Agent.hasObject (VAL @agentName) (VAL @heldObject)))
 				  (!(DatabaseInterface.remove (AGENT-STATEMENT PR2_ROBOT @agentName hasInHand (VAL @heldObject)) @result))				  
@@ -411,8 +436,10 @@
 
 				  (!(Spark.getFreeId @sparkId))
 				  (?(Spark.humanHand RIGHT @sparkHand))
-				  (=>(Spark.request setInferrenceForObject @objectName 1 @agentName @sparkHand SPARK_HUMAN_HAND 1.0 @sparkId))
-				  (^(Spark.report (VAL @sparkId) @report))
+                  (=>(Spark.request setInferrenceForObject @objectName 1 @agentName @sparkHand SPARK_HUMAN_HAND 1.0 @sparkId))
+                  (!(ReportManager.sub Spark.report @sparkId))
+                  (^(Spark.report (VAL @sparkId) @report))
+                  (!(ReportManager.unsub Spark.report @sparkId))
 				  (=>(Agent.hasObject @agentName @objectName))
 
 				  (!(DatabaseInterface.add (AGENT-STATEMENT PR2_ROBOT @agentName hasInHand (VAL @objectName)) @result))
@@ -439,12 +466,16 @@
 
 				  (!(Spark.getFreeId @sparkId))
 				  (?(Spark.humanHand RIGHT @sparkHand))
-				  (=>(Spark.request setInferrenceForObject @heldObject 0 @agentName @sparkHand SPARK_HUMAN_HAND 1.0 @sparkId))
-				  (^(Spark.report (VAL @sparkId) @report))
+                  (=>(Spark.request setInferrenceForObject @heldObject 0 @agentName @sparkHand SPARK_HUMAN_HAND 1.0 @sparkId))
+                  (!(ReportManager.sub Spark.report @sparkId))
+                  (^(Spark.report (VAL @sparkId) @report))
+                  (!(ReportManager.unsub Spark.report @sparkId))
 				  
 				  (!(Spark.getFreeId @sparkId))
-				  (=>(Spark.request setInferrenceForObject @heldObject 1 @objectName 0 SPARK_IS_IN 1.0 @sparkId))
-				  (^(Spark.report (VAL @sparkId) @report))
+                  (=>(Spark.request setInferrenceForObject @heldObject 1 @objectName 0 SPARK_IS_IN 1.0 @sparkId))
+                  (!(ReportManager.sub Spark.report @sparkId))
+                  (^(Spark.report (VAL @sparkId) @report))
+                  (!(ReportManager.unsub Spark.report @sparkId))
 				  
 				  (~>(Agent.hasObject (VAL @agentName) (VAL @heldObject)))
 				  (!(DatabaseInterface.remove (AGENT-STATEMENT PR2_ROBOT @agentName hasInHand (VAL @heldObject)) @result))				  
@@ -456,8 +487,8 @@
 		      (!(= @sphereId (+ @sphereId 1)))	 
 		      )
 		
-		)
-	     )
+        )
+         )
 	  )  	  
    )
 
@@ -475,12 +506,140 @@
 	    )
 
 	 )
-  
+  )
 
+(defop |simulateNextAction|
+:invocation (!(AgentActionMonitor.simulateNextAction))
+:body (
+       (?(AgentActionMonitor.sphere @agentName @target  @sphereId))
+       (!(AgentActionMonitor.simulateAgentAction @sphereId))
+
+       )
+)
 (defop |simulateAgentAction|
   :invocation(!(AgentActionMonitor.simulateAgentAction @sphereId))
   :body (
-	 (=>(AgentActionMonitor.isSphereActive (VAL @sphereId) TRUE))
-	 )
+         (IF(?(Spark.sim FALSE))
+            (=>(AgentActionMonitor.isSphereActive (VAL @sphereId) TRUE))
+
+            ELSE
+            (?(AgentActionMonitor.sphere  @agentName @target (VAL @sphereId)))
+              (IF(?(Object.type (VAL @target) @c PICKABLE))
+                 (IF(?(~(Agent.hasObject (VAL @agentName) @object)))
+
+                  ;;if we were monitoring this action then we say it was completed, else it was an unexpected action
+                  (!(AgentActionMonitor.checkActionMonitoring @agentName @sphereId))
+
+                  ;;recalculate monitor spheres and update world state
+                  (!(AgentActionMonitor.cleanAgentMonitorSpheres @agentName))
+
+
+                  (!(Spark.getFreeId @sparkId))
+                  (=>(Spark.request placeObjectForSimu @target 0 0 0 0 0 0 1 @sparkId))
+                  (!(ReportManager.sub Spark.report @sparkId))
+                  (^(Spark.report (VAL @sparkId) @report))
+                  (!(ReportManager.unsub Spark.report @sparkId))
+
+                  (!(Spark.getFreeId @sparkId))
+                  (?(Spark.humanHand RIGHT @sparkHand))
+                  (!(ReportManager.sub Spark.report @sparkId))
+
+                  (=>(Spark.request setInferrenceForObject @target 1 @agentName @sparkHand SPARK_HUMAN_HAND 1.0 @sparkId))
+                  (^(Spark.report (VAL @sparkId) @report))
+                  (!(ReportManager.unsub Spark.report @sparkId))
+                  (=>(Agent.hasObject @agentName @target))
+
+                  (!(DatabaseInterface.add (AGENT-STATEMENT PR2_ROBOT @agentName hasInHand (VAL @target)) @result))
+
+                  (!(DatabaseInterface.remove (AGENT-STATEMENT PR2_ROBOT @target isOn HUMAN_AREA) @result))
+                  (!(DatabaseInterface.remove (AGENT-STATEMENT PR2_ROBOT HUMAN_AREA supports @target) @result))
+                  (!(DatabaseInterface.remove (AGENT-STATEMENT PR2_ROBOT PLACEMAT_BLUE supports @target) @result))
+                  (IF(?(Spark.sim TRUE))
+                     (!(DatabaseInterface.remove (AGENT-STATEMENT PR2_ROBOT @target isOn PLACEMAT_BLUE) @result))
+                     )
+                  )
+
+               ELSEIF(?(Object.type (VAL @target) @class PLACEMENT))
+               (IF(?(Agent.hasObject (VAL @agentName) @heldObject))
+                  ;;same as the two cases before
+                  (!(AgentActionMonitor.checkActionMonitoring @agentName @sphereId))
+                  ;;erase this monitor sphere
+                  (!(AgentActionMonitor.cleanAgentMonitorSpheres @agentName))
+
+                  (!(Spark.getFreeId @sparkId))
+                  (?(Spark.humanHand RIGHT @sparkHand))
+                  (=>(Spark.request setInferrenceForObject @heldObject 0 @agentName @sparkHand SPARK_HUMAN_HAND 1.0 @sparkId))
+                  (!(ReportManager.sub Spark.report @sparkId))
+                  (^(Spark.report (VAL @sparkId) @report))
+                  (!(ReportManager.unsub Spark.report @sparkId))
+
+                  (!(Spark.getFreeId @sparkId))
+                  (=>(Spark.request getJointAbsPose @target NO_NAME @sparkId))
+                  (!(ReportManager.sub Spark.report @sparkId))
+                  (^(Spark.report (VAL @sparkId) @report))
+                  (^(Spark.result (VAL @sparkId) @x @y @z @yaw @pitch @roll))
+                  (~>(Spark.result (VAL @sparkId) (VAL @x) (VAL @y) (VAL @z) (VAL @yaw) (VAL @pitch) (VAL @roll)))
+                  (!(ReportManager.unsub Spark.report @sparkId))
+
+                  ;;we place the object in the center of the sphere (possibly placeholder)
+                  (!(Spark.getFreeId @sparkId))
+                  (=>(Spark.request placeObjectForSimu @heldObject @x @y 0.74 0 0 0 0 @sparkId))
+                  (!(ReportManager.sub Spark.report @sparkId))
+                  (^(Spark.report (VAL @sparkId) @report))
+                  (!(ReportManager.unsub Spark.report @sparkId))
+
+                  (~>(Agent.hasObject (VAL @agentName) (VAL @heldObject)))
+                  (!(DatabaseInterface.remove (AGENT-STATEMENT PR2_ROBOT @agentName hasInHand (VAL @heldObject)) @result))
+                  (!(AgentActionMonitor.calculateInferencesForAgents (. @agentName .)))
+
+                  (!(DatabaseInterface.remove (AGENT-STATEMENT PR2_ROBOT HUMAN_AREA supports @target) @result))
+                  (!(DatabaseInterface.remove (AGENT-STATEMENT PR2_ROBOT PLACEMAT_BLUE supports @target) @result))
+                  (!(DatabaseInterface.add (AGENT-STATEMENT PR2_ROBOT PLACEMAT_GREEN supports @heldObject) @result ))
+                  (IF(?(Spark.sim TRUE))
+                     (!(DatabaseInterface.add (AGENT-STATEMENT PR2_ROBOT @heldObject isOn PLACEMAT_GREEN) @result))
+                     )
+
+                  )
+
+
+               ELSEIF(?(Object.type (VAL @target) @class BIN))
+               (IF(?(Agent.hasObject (VAL @agentName) @heldObject))
+                  (!(AgentActionMonitor.checkActionMonitoring @agentName @sphereId))
+                  ;;erase this monitor sphere
+                  (!(AgentActionMonitor.cleanAgentMonitorSpheres @agentName))
+
+                  (!(Spark.getFreeId @sparkId))
+                  (?(Spark.humanHand RIGHT @sparkHand))
+                  (=>(Spark.request setInferrenceForObject @heldObject 0 @agentName @sparkHand SPARK_HUMAN_HAND 1.0 @sparkId))
+                  (!(ReportManager.sub Spark.report @sparkId))
+                  (^(Spark.report (VAL @sparkId) @report))
+                  (!(ReportManager.unsub Spark.report @sparkId))
+
+                  (!(Spark.getFreeId @sparkId))
+                  (=>(Spark.request placeObjectForSimu @heldObject 0 0 0 0 0 0 1 @sparkId))
+                  (!(ReportManager.sub Spark.report @sparkId))
+                  (^(Spark.report (VAL @sparkId) @report))
+                  (!(ReportManager.unsub Spark.report @sparkId))
+
+                  (!(Spark.getFreeId @sparkId))
+                  (=>(Spark.request setInferrenceForObject @heldObject 1 @target 0 SPARK_IS_IN 1.0 @sparkId))
+                  (!(ReportManager.sub Spark.report @sparkId))
+                  (^(Spark.report (VAL @sparkId) @report))
+                  (!(ReportManager.unsub Spark.report @sparkId))
+
+                  (~>(Agent.hasObject (VAL @agentName) (VAL @heldObject)))
+                  (!(DatabaseInterface.remove (AGENT-STATEMENT PR2_ROBOT @agentName hasInHand (VAL @heldObject)) @result))
+                  (IF(?(Spark.sim TRUE))
+                     (!(DatabaseInterface.add (AGENT-STATEMENT PR2_ROBOT @heldObject isIn GREEN_TRASHBIN) @result))
+                     )
+
+
+
+                  (!(AgentActionMonitor.calculateInferencesForAgents (. @agentName .)))
+                  )
+
+               )
+            )
+         )
   )
 )

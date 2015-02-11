@@ -1,0 +1,91 @@
+;; -*-Lisp-*-
+;;author: Michelangelo Fiore
+
+(
+
+ (defop |getCommand|
+   :invocation(AttentionalInterface.execute @actionName @object @position @sender)
+   :body (
+          (?(AttentionalInterface.agentName @agentName))
+          (?(AttentionalInterface.placeSupport @support))
+          (IF(?(~(EQUAL @object NULL)))
+             (?(AttentionalInterface.placeArea (VAL @object) @objectPos))
+             )
+
+          (IF(?(EQUAL @actionName stop))
+             (IF(?(ExecutionManager.isExecutingAction @executionId))
+             (=>(ExecutionManager.stop @executionId))
+             (^(ExecutionManager.report @executionId @report))
+             )
+             (!(SEND-MESSAGE @sender (AttentionalInterface.report OK)))
+
+             ELSEIF(?(EQUAL @actionName give))
+             (!(ExecutionManager.getFreeId @executionId))
+             (!(ReportManager.sub ExecutionManager.report @executionId))
+             (=>(ExecutionManager.execute go @objectPos NO_NAME @executionId))
+             (^(ExecutionManager.report @executionId @report))
+             (!(ReportManager.unsub ExecutionManager.report @executionId))
+             (IF(?(EQUAL @report OK))
+                (!(ExecutionManager.getFreeId @executionId))
+                (!(ReportManager.sub ExecutionManager.report @executionId))
+                (=>(ExecutionManager.execute take @object RIGHT @executionId))
+                (^(ExecutionManager.report @executionId @report))
+                (!(ReportManager.unsub ExecutionManager.report @executionId))
+                (IF(?(EQUAL @report OK))
+                   (!(ExecutionManager.getFreeId @executionId))
+                   (!(ReportManager.sub ExecutionManager.report @executionId))
+                   (=>(ExecutionManager.execute go @position NO_NAME @executionId))
+                   (^(ExecutionManager.report @executionId @report))
+                   (!(ReportManager.unsub ExecutionManager.report @executionId))
+
+                   (IF(?(EQUAL @report OK))
+                      (!(ExecutionManager.getFreeId @executionId))
+                      (!(ReportManager.sub ExecutionManager.report @executionId))
+                      (=>(ExecutionManager.execute handover GIVE @object @agentName @executionId))
+                      (^(ExecutionManager.report @executionId @report))
+                      (!(ReportManager.unsub ExecutionManager.report @executionId))
+                      )
+                   )
+                )
+             (!(SEND-MESSAGE @sender (AttentionalInterface.report @report)))
+
+             ELSEIF(?(EQUAL @actionName receive))
+             (!(ExecutionManager.getFreeId @executionId))
+             (!(ReportManager.sub ExecutionManager.report @executionId))
+             (=>(ExecutionManager.execute go @position NO_NAME @executionId))
+             (^(ExecutionManager.report @executionId @report))
+             (!(ReportManager.unsub ExecutionManager.report @executionId))
+             (IF(?(EQUAL @report OK))
+                (!(ExecutionManager.getFreeId @executionId))
+                (!(ReportManager.sub ExecutionManager.report @executionId))
+                (=>(ExecutionManager.execute handover GRAB @object @agentName @executionId))
+                (^(ExecutionManager.report @executionId @report))
+                (!(ReportManager.unsub ExecutionManager.report @executionId))
+                (IF(?(EQUAL @report OK))
+                   (!(ExecutionManager.getFreeId @executionId))
+                   (!(ReportManager.sub ExecutionManager.report @executionId))
+                   (=>(ExecutionManager.execute go @objectPos NO_NAME @executionId))
+                   (^(ExecutionManager.report @executionId @report))
+                   (!(ReportManager.unsub ExecutionManager.report @executionId))
+
+                   (IF(?(EQUAL @report OK))
+                      (!(ExecutionManager.getFreeId @executionId))
+                      (!(ReportManager.sub ExecutionManager.report @executionId))
+                      (=>(ExecutionManager.execute place @object @support NO_NAME @executionId))
+                      (^(ExecutionManager.report @executionId @report))
+                      (!(ReportManager.unsub ExecutionManager.report @executionId))
+                      )
+                   )
+                )
+             (!(SEND-MESSAGE @sender (AttentionalInterface.report @report)))
+
+             ELSE
+             (!(SEND-MESSAGE @sender (AttentionalInterface.report OK)))
+
+             )
+
+          )
+
+   )
+
+ )

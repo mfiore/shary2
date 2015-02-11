@@ -1,5 +1,14 @@
 (
 
+ (defop |testSendMessage|
+   :invocation(!(Tester.testSendMessage))
+   :body (
+          (!(= @report "OK"))
+          (!(SEND-MESSAGE A (@report)))
+
+          )
+
+   )
  (defop |testFactPoster|
    :invocation(!(Tester.testFactPoster))
    :body (

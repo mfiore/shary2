@@ -9,8 +9,7 @@
    :documentation "This procedure handles Genom Requestes. exictFact and irAddFact must be set to
 FALSE if they are not used"
    :body (
-	  (IF(?(Robot.simu FALSE))
-	     (IF(?(EQUAL @waitTime (FALSE)))
+         (IF(?(EQUAL @waitTime (FALSE)))
 		(!(= @waitTime 1))
 		(!(= @shouldWaitTime false))
 		
@@ -68,8 +67,7 @@ FALSE if they are not used"
 	     (~>(GenomInterface.waitExitFact (VAL @module) (VAL @request) @any))
 	     (~> (IR @module (VAL @request) (VAL @requestId) (VAL @actId)))
 	     
-	     ELSE
-	     (!(= $report "OK"))
+
 	     )
 	  )
    )

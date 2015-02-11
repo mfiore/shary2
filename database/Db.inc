@@ -12,3 +12,4 @@ load db "supervisor/domains/Object.db"
 load db "database/HatpRules.db"
 
 load db "database/domains/userStudy.db"
+load db "database/domains/testUserStudy.db" 

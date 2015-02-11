@@ -5,8 +5,30 @@
 ;system.
 
 
+
 (
 
+ (defop |testSendMessage|
+   :invocation(!(Tester.testSendMessage))
+   :body (
+          (!(= @report "OK"))
+          (!(SEND-MESSAGE asd (AttentionalInterface.report @report)))
+          )
+   )
+
+
+ (defop |testReportManager|
+   :invocation(!(Tester.testReportManager))
+   :body (
+          (!(ReportManager.sub ExecutionManager.report 0))
+          ;; (!(ReportManager.sub ExecutionManager.report 0))
+          ;; (!(ReportManager.unsub ExecutionManager.report 0))
+          ;; (!(ReportManager.unsub ExecutionManager.report 0))
+
+          (!(ReportManager.publish ExecutionManager.report 0 OK))
+
+          )
+   )
  (defop |testGuide| 
    :invocation (!(Tester.testGuide @agent))
    :body (

@@ -21,7 +21,10 @@
 (PlannerInterface.usePlanner HATP)            ;;name of the used task planner
 
 
-;;OTHER OPTIONS
-(Robot.simu FALSE)  ;;true if in simulation (DOH!)
+;;SIMULATION OPTIONS
+;;we can set this options true to simulate single components of the system
+(Mhp.sim FALSE)  
+(Softmotion.sim TRUE)
+(Spark.sim TRUE)
+(Supervisor.sim TRUE)  
 )
-

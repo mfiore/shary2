@@ -34,7 +34,7 @@
   :invocation(ExecutionManager.executeAction @actionName @actionParameters @executionId)
   :documentation "Launching point to allow other modules to launch actions in a generic way"
   :body (
-	 (IF(?(Robot.simu FALSE))
+     (IF(?(Supervisor.sim FALSE))
 	    (?(Action.type (VAL @actionName) @type))
 	    (IF(?(EQUAL @type MANIPULATION))
 	       (!(== (VAL @actionParameters) (. @object .)))
@@ -77,13 +77,15 @@
 		  ELSE 
 		  (=>(ExecutionManager.execute handover GIVE @object @agent2 @executionId))
 		  )
-	       ELSEIF(?(EQUAL @actionName undefined))  ;this kind of actions are not executed at the moment and the module returns just an ok
-	       (=>(ExecutionManager.report (VAL @executionId) "OK"))
+           ELSEIF(?(EQUAL @actionName undefined))  ;this kind of actions are not executed at the moment and the module returns just an ok
+           (!(ReportManager.publish ExecutionManager.report @executionId OK))
+
 	       
 	       )				
 	    ELSE
-	    (^(ELAPSED-TIME (TIME) 1))
-	    (=>(ExecutionManager.report (VAL @executionId) OK))
+        (^(ELAPSED-TIME (TIME) 1))
+        (!(ReportManager.publish ExecutionManager.report @executionId OK))
+
 	    )
 	 
 	 )
@@ -107,30 +109,36 @@
 	     ;;otherwise calculate which is the best arm to use based on the object position relative to the robot
 	     
 	     (!(Spark.getFreeId @sparkId))
-	     (=>(Spark.request getJointAbsPose (VAL @object) "NO_NAME" (VAL @sparkId))) 
-	     (^(Spark.report (VAL @sparkId) @sparkReport))
-	     (IF(?(~(EQUAL @sparkReport "OK")))
-		(=> (ExecutionManager.report (VAL @executionId) (VAL @sparkReport)))
-		(!(SEM-V ExecutionManager.sem))
-		(~>(ExecutionManager.isExecutingAction (VAL @executionId)))
-		(!(FAILED))
+         (=>(Spark.request getJointAbsPose (VAL @object) "NO_NAME" (VAL @sparkId)))
+         (!(ReportManager.sub Spark.report @sparkId))
+         (^(Spark.report (VAL @sparkId) @sparkReport))
+         (!(ReportManager.unsub Spark.report @sparkId))
+         (IF(?(~(EQUAL @sparkReport "OK")))
+            (!(ReportManager.publish ExecutionManager.report @executionId @sparkReport))
+            (!(SEM-V ExecutionManager.sem))
+            (~>(ExecutionManager.isExecutingAction (VAL @executionId)))
+            (!(FAILED))
 		)
 	     (^(Spark.result (VAL @sparkId) @xOb @yOb @zOb @yawOb @pitchOb @rollOb))
 	     (~>(Spark.result (VAL @sparkId) @xOb @yOb @zOb @yawOb @pitchOb @rollOb))
-	     (~>(Spark.report (VAL @sparkId) @sparkReport))
+
 	     
 	     (!(Spark.getFreeId @sparkId))
-	     (=>(Spark.request getJointAbsPose (VAL @robotName ) (VAL @torso) (VAL @sparkId))) 
-	     (^(Spark.report (VAL @sparkId) @sparkReport))
-	     (IF(?(~(EQUAL @sparkReport "OK")))
-		(=> (ExecutionManager.report (VAL @executionId) (VAL @sparkReport)))
-		(!(SEM-V ExecutionManager.sem))
-		(~>(ExecutionManager.isExecutingAction (VAL @executionId)))
-		(!(FAILED))
+         (=>(Spark.request getJointAbsPose (VAL @robotName ) (VAL @torso) (VAL @sparkId)))
+         (!(ReportManager.sub Spark.report @sparkId))
+         (^(Spark.report (VAL @sparkId) @sparkReport))
+         (!(ReportManager.unsub Spark.report @sparkId))
+
+         (IF(?(~(EQUAL @sparkReport "OK")))
+            (!(ReportManager.publish @executionId @sparkReport))
+
+            (!(SEM-V ExecutionManager.sem))
+            (~>(ExecutionManager.isExecutingAction (VAL @executionId)))
+            (!(FAILED))
 		)
 	     (^(Spark.result (VAL @sparkId) @xTorso @yTorso @zTorso @yawTorso @pitchTorso @rollTorso))
 	     (~>(Spark.result (VAL @sparkId) @xTorso @yTorso @zTorso @yawTorso @pitchTorso @rollTorso))
-	     (~>(Spark.report (VAL @sparkId) @sparkReport))
+
 	      
 	     (IF(?(> @yOb @yTorso))
 		(!(= $armForTake RIGHT))
@@ -153,9 +161,11 @@
 	    (IF(?(ArmActions.hasDetectPressionRequest @gripper @mode @smId))
 	       (~>(ArmActions.hasDetectPressionRequest (VAL @gripper) (VAL @mode) (VAL @smId)))
 	       (?(Softmotion.gripperCancel (VAL @gripper) @state))
-	       (!(Softmotion.getFreeId @smId))
+           (!(Softmotion.getFreeId @smId))
+           (!(ReportManager.sub Softmotion.report @smId))
 	       (=>(Softmotion.request useGripper @state @smId))
-	       (^(Softmotion.report (VAL @smId) @report))
+           (^(Softmotion.report (VAL @smId) @report))
+           (!(ReportManager.unsub Softmotion.report @smId))
 	       )
 	    (^(Robot.isMoving RIGHT_ARM FALSE))
 	    (^(Robot.isMoving LEFT_ARM FALSE))
@@ -176,33 +186,37 @@
 	  (!(= @reportName (TERM-STRING-CAT (VAL @module) ".report")))   ;we create the real report name
 	  (!(= @reportName (MAKE-ATOM @reportName)))
 
-	  ;;we wait until we have a report, we are stopped or paused.
+      ;;we wait until we have a report, we are stopped or paused.
+      (!(ReportManager.sub @reportName @id))
 	 (^(|| 
 	    (@reportName (VAL @id) @report) 
 	    (& (EQUAL @stoppable TRUE)
 		      (|| (Monitor.handPositionDanger TRUE) (ExecutionManager.stop (VAL @executionId)))
 		      )))
 	 
-	 (IF(?(@reportName (VAL @id) @report))   ;if we have a report
-	    (~>(@reportName (VAL @id) (VAL @report)))
+     (IF(?(@reportName (VAL @id) @report))   ;if we have a report
+        (!(ReportManager.unsub @reportName @id))
+
 	    (IF(?(~(EQUAL @report "OK")))   ; if we have a negative report we quit
-	       (!(PRINT @report))
-	       (=> (ExecutionManager.report (VAL @executionId) FAILURE))
-	       (~>(ExecutionManager.isExecutingAction (VAL @executionId)))
+           (!(PRINT @report))
+           (!(ReportManager.publish ExecutionManager.report @executionId FAILURE))
+           (~>(ExecutionManager.isExecutingAction (VAL @executionId)))
 	       (!(ExecutionManager.cleanModuleRequestes))
-	       (IF(?(~(NULL @failureConditions)))
-		  (!(= @failureConditions (. @addConditions @removeConditions .)))
-		  (WHILE(?(~(NULL @addConditions)))
-			(!(= @condition (CAR @addConditions)))
-			(!(= @addConditions (CDR @addConditions)))
-			(!(DatabaseInterface.add @condition @result))
-			)
-		  (WHILE(?(~(NULL @removeConditions)))
-			(!(= @condition (CAR @removeConditions)))
-			(!(= @removeConditions (CDR @removeConditions)))
-			(!(DatabaseInterface.remove @condition @result))
-			)
-	       )
+           (IF(?(~(NULL @failureConditions)))
+              (!(== (VAL @failureConditions) (. @addConditions @removeConditions .)))
+
+
+              (WHILE(?(~(NULL @addConditions)))
+                    (!(= @condition (CAR @addConditions)))
+                    (!(= @addConditions (CDR @addConditions)))
+                    (!(DatabaseInterface.add @condition @result))
+                    )
+              (WHILE(?(~(NULL @removeConditions)))
+                    (!(= @condition (CAR @removeConditions)))
+                    (!(= @removeConditions (CDR @removeConditions)))
+                    (!(DatabaseInterface.remove @condition @result))
+                    )
+              )
 	       (!(SEM-V ExecutionManager.sem))
 	       (!(FAILED))
 	       )
@@ -222,9 +236,11 @@
 	       (=>(BaseActions.stop @id))
 	       )       
 	    
-	    (^(@reportName (VAL @id) @report))
-	    (~>(@reportName (VAL @id) (VAL @report)))
-	    (=>(ExecutionManager.report @executionId STOPPED))
+        (^(@reportName (VAL @id) @report))
+        (!(ReportManager.unsub @reportName @id))
+
+        (!(ReportManager.publish ExecutionManager.report @executionId STOPPED))
+
 	    (!(ExecutionManager.cleanModuleRequestes))
 	    (!(SEM-V ExecutionManager.sem))
 	    (!(FAILED))
@@ -239,30 +255,43 @@
    :invocation(ExecutionManager.execute take @object @arm @executionId)
    :documentation "this procedure takes the object @object. @arm can be setted to one of the two arms (RIGHT or LEFT) or to NO_NAME. In that case the robot chooses the arm to compute the action"
    :body (	  
-	  (!(SEM-P ExecutionManager.sem))
-	  	 
-	  ;;check if the action has already been realized
-	  (IF(?(~(EQUAL @arm NO_NAME)))
-	     (IF(?(Robot.hasObject (VAL @arm) (VAL @object)))
-		(=>(ExecutionManager.report (VAL @executionId) OK))
-		(!(SEM-V ExecutionManager.sem))
-		(!(FAILED))
-		)
-	     ELSEIF(?(Robot.hasObject @anyArm (VAL @object)))
-	     (=>(ExecutionManager.report (VAL @executionId) OK))
+
+          (IF(?(Supervisor.sim TRUE))
+             (^(ELAPSED-TIME (TIME) 1))
+             (!(ReportManager.publish ExecutionManager.report @executionId OK))
+             (!(FAILED))
+             )
+          (!(SEM-P ExecutionManager.sem))
+
+
+          ;;check if the action has already been realized
+          (IF(?(~(EQUAL @arm NO_NAME)))
+             (IF(?(Robot.hasObject (VAL @arm) (VAL @object)))
+                (!(ReportManager.publish ExecutionManager.report @executionId OK))
+
+                (!(SEM-V ExecutionManager.sem))
+                (!(FAILED))
+                )
+             ELSEIF(?(Robot.hasObject @anyArm (VAL @object)))
+             (!(ReportManager.publish ExecutionManager.report @executionId OK))
+
 	     (!(SEM-V ExecutionManager.sem))
 	     (!(FAILED))
 	     )
 	  
 	  ;;check if the robot has both hands full (or one hand if @arm was specified)
 	  (IF(?(~(EQUAL @arm NO_NAME)))
-	     (IF(?(Robot.hasObject (VAL @arm) @anyObject))
-		(=>(ExecutionManager.report (VAL @executionId) FAILURE))
+         (IF(?(Robot.hasObject (VAL @arm) @anyObject))
+            (!(ReportManager.publish ExecutionManager.report @executionId FAILURE))
+
+
 		(!(SEM-V ExecutionManager.sem))
 		(!(FAILED))
 		)
-	     ELSEIF(?(|| (Robot.hasObject RIGHT  @anyObject) (Robot.hasObject LEFT  @anyObject)))
-	     (=>(ExecutionManager.report (VAL @executionId) FAILURE))
+         ELSEIF(?(|| (Robot.hasObject RIGHT  @anyObject) (Robot.hasObject LEFT  @anyObject)))
+         (!(ReportManager.publish ExecutionManager.report @executionId FAILURE))
+
+
 	     (!(SEM-V ExecutionManager.sem))
 	     (!(FAILED))
 	     )
@@ -272,7 +301,8 @@
 	  (!(= @successConditions (. (. (ExecutionManager.report (VAL @executionId) OK) .)  (. .) .) ))     ; look at the item until execution is completed
 	  
 
-	  (!(MonitorManager.getFreeId @monitorId))
+      (!(MonitorManager.getFreeId @monitorId))
+      (!(MonitorManager.sub ExecutionManager.report @executionId @monitorId))
 	  
 	  
 	  ;;start the monitoring
@@ -284,15 +314,18 @@
 		(IF(?(MonitorManager.report (VAL @monitorId) @report)) ;;there's an error (like object not present) or the monitoring has being stopped or canceled
 		   (~>(MonitorManager.report (VAL @monitorId) @report))
 		   (IF(?(EQUAL @report STOPPED))
-		      (=>(ExecutionManager.report (VAL @executionId) STOPPED)) ;pause the execution and go back to the loop
-		      ELSEIF(?(EQUAL @report CANCELED))
-		      (=> (ExecutionManager.report (VAL @executionId) FAILURE))  ;we fail
+
+              (!(ReportManager.publish ExecutionManager.report  (VAL @executionId) STOPPED)) ;pause the execution and go back to the loop
+              ELSEIF(?(EQUAL @report CANCELED))
+              (!(ReportManager.publish ExecutionManager.report @executionId FAILURE))
+
 		      (!(SEM-V ExecutionManager.sem))
 		      (~>(ExecutionManager.isExecutingAction (VAL @executionId)))
 		      (!(FAILED))
 		      
-		      ELSE  ;unhandled report
-		      (=> (ExecutionManager.report (VAL @executionId) @report)) 
+              ELSE  ;unhandled report
+              (!(ReportManager.publish ExecutionManager.report @executionId @report))
+
 		      (!(SEM-V ExecutionManager.sem))
 		      (~>(ExecutionManager.isExecutingAction (VAL @executionId)))
 		      (!(FAILED))
@@ -339,8 +372,18 @@
 	   (!(ExecutionManager.handleReport ArmActions @actionId @executionId FALSE FALSE NO_NAME))
 
 	   )
-	  (=>(ExecutionManager.report (VAL @executionId) OK))
-	  (~>(ExecutionManager.isExecutingAction (VAL @executionId)))
+      (!(ReportManager.publish ExecutionManager.report  (VAL @executionId) OK))
+      (~>(ExecutionManager.isExecutingAction (VAL @executionId)))
+
+      (!(DatabaseInterface.remove (AGENT-STATEMENT PR2_ROBOT ROBOT_AREA supports @object) @result))
+      (!(DatabaseInterface.remove (AGENT-STATEMENT PR2_ROBOT @object isOn ROBOT_AREA) @result))
+      (!(DatabaseInterface.add (AGENT-STATEMENT PR2_ROBOT PR2_ROBOT hasInHand @object) @result))
+
+      (IF(?(Spark.sim TRUE))
+         (!(DatabaseInterface.remove (AGENT-STATEMENT PR2_ROBOT @object isOn PLACEMAT_GREEN) @result))
+         (!(DatabaseInterface.remove (AGENT-STATEMENT PR2_ROBOT PLACEMAT_GREEN supports @object) @result))
+
+         )
 
 	  (!(SEM-V ExecutionManager.sem))
 	  )
@@ -442,11 +485,12 @@
 	 (?(Spark.humanTorso @hTorso))
 	 (?(Robot.position TORSO @robotTorsoX @robotTorsoY @robotTorsoZ @robotTorsoYaw @robotTorsoPitch @robotTorsoRoll))
 	 ;;get the human position
-	 (!(Spark.getFreeId @sparkId))
+     (!(Spark.getFreeId @sparkId))
+     (!(ReportManager.sub Spark.report @sparkId))
 	 (=>(Spark.request getJointAbsPose (VAL @agent) (VAL @hTorso) (VAL @sparkId)))
 	 (^(Spark.report (VAL @sparkId) @report))
-	 
-	 (~>(Spark.report (VAL @sparkId) (VAL @report)))
+     (!(ReportManager.unsub Spark.report @sparkId))
+
 	 
 	 (^(Spark.result (VAL @sparkId) @humanTorsoX @humanTorsoY @humanTorsoZ @humanTorsoYaw @humanTorsoPitch @humanTorsoRoll))
 	 (~>(Spark.result (VAL @sparkId) (VAL @humanTorsoX) (VAL @humanTorsoY) (VAL @humanTorsoZ) (VAL @humanTorsoYaw) (VAL @humanTorsoPitch) (VAL @humanTorsoRoll)))
@@ -469,6 +513,13 @@
   :invocation(ExecutionManager.execute handover @type @object @agent @executionId)
   :documentation "this procedure gives the object @object to the agent @agent. If the robot doesn't have the @item it fails"
   :body (
+         (IF(?(Supervisor.sim TRUE))
+            (^(ELAPSED-TIME (TIME) 1))
+            (!(ReportManager.publish ExecutionManager.report @executionId OK))
+            (!(FAILED))
+            )
+
+
 	 (!(SEM-P ExecutionManager.sem))
 	 (!(= @observationWaitTime 0)) ;time to wait to get new observations
 	 (!(= @maxEngage 3))           ;number of times the robot will try to re-engage the user before understanding he's not interested
@@ -486,7 +537,7 @@
 	 (IF(?(EQUAL @type GIVE))
 	    (IF(?(Robot.hasObject @arm  (VAL @object)))  ;if the robot doesn't have the object fail
 	       ELSE 
-	       (=>(ExecutionManager.report (VAL @executionId) FAILURE))
+           (!(ReportManager.publish ExecutionManager.report  (VAL @executionId) FAILURE))
 	       (!(SEM-V ExecutionManager.sem))
 	       (!(FAILED))
 	       )
@@ -645,17 +696,20 @@
 	       
 	       (IF(?(EQUAL @task waitingGrasp)) ;if we are waiting a grasp and detecting pressure we open or close the gripper depending on the kind of handover
 		  (IF(?(Robot.gripperStatus (VAL @arm) DETECTED_PRESSION))
-		     (~>(Robot.gripperStatus (VAL @arm) DETECTED_PRESSION))
-		     (~>(ArmActions.report @detectPressionId @report))
+             (~>(Robot.gripperStatus (VAL @arm) DETECTED_PRESSION))
+             (!(ReportManager.unsub ArmActions.report @detectPressionId))
+
 		     
 		     (IF(?(EQUAL @type GIVE))
 			(!(ArmActions.getFreeId @actionId))
-			(=>(ArmActions.action openGripper @arm @actionId))
+            (!(ReportManager.sub ArmActions.report @actionId))
+            (=>(ArmActions.action openGripper @arm @actionId))
+
 			(!(ExecutionManager.handleReport ArmActions @actionId @executionId FALSE FALSE (. .)))
 					     	     
 			ELSEIF(?(EQUAL @type GRAB))
-			(!(ArmActions.getFreeId @actionId))
-			(=>(ArmActions.action closeGripper @arm @actionId))
+            (!(ArmActions.getFreeId @actionId))
+            (=>(ArmActions.action closeGripper @arm @actionId))
 			(!(ExecutionManager.handleReport ArmActions @actionId @executionId FALSE FALSE (. .)))
 			)
 		     (!(= @task completed))
@@ -718,10 +772,10 @@
 	 (IF(?(EQUAL @task completed))
 	    (!(Acapela.say "Good! Thank you!"))
 	    
-	    (=>(ExecutionManager.report @executionId OK))
+        (!(ReportManager.publish ExecutionManager.report  @executionId OK))
 	   
 	    ELSE
-	    (=>(ExecutionManager.report @executionId FAILURE))
+        (!(ReportManager.publish ExecutionManager.report  @executionId FAILURE))
 	    )
 	 (IF(?(Timer.isRunning (VAL @timerId)))
 	    (=>(Timer.stopTimer @timerId))
@@ -877,7 +931,7 @@ $distance , $info, $orientation, $speed, $inRange  the output observations"
 	  (!(SEM-P ExecutionManager.sem))
 
 	  (IF(?(&(~(Robot.hasObject @arm (VAL @object))) (~(Robot.hasObjectForThrow @arm (VAL @object)))))
-	     (=>(ExecutionManager.report (VAL @executionId) FAILURE))
+         (!(ReportManager.publish ExecutionManager.report  (VAL @executionId) FAILURE))
 	     (!(SEM-V ExecutionManager.sem))
 	     (!(FAILED))
 	     )
@@ -893,10 +947,11 @@ $distance , $info, $orientation, $speed, $inRange  the output observations"
 	  (!(= @failureConditions (. (. .)   (. (ExecutionManager.report (VAL @executionId) FAILURE) (ExecutionManager.report (VAL @executionId) STOPPED) .) .) )) 	 ; item not there 
 	  (!(= @successConditions (. (. (ExecutionManager.report (VAL @executionId) OK) .)  (. .) .) ))     ; when the execution starts the robot is free to monitor something else
 	  
-	  (!(MonitorManager.getFreeId @monitorId))
+      (!(MonitorManager.getFreeId @monitorId))
+      (!(MonitorManager.sub ExecutionManager.report @executionId @monitorId))
 					;start the monitoring
 	  (!(MonitorManager.monitorTarget (VAL @placement) "NO_NAME" (VAL @successConditions) (VAL @failureConditions) HIGH (VAL @monitorId)))	   
-	  (^(MonitorManager.isMonitoringTarget (VAL @monitorId)))
+      (^(MonitorManager.isMonitoringTarget (VAL @monitorId)))
 
 
 					;get coordinates of the placement
@@ -907,7 +962,7 @@ $distance , $info, $orientation, $speed, $inRange  the output observations"
 	  (~>(Spark.result (VAL @sparkId) (VAL @xp) (VAL @yp) (VAL @zp) (VAL @yawp) (VAL @pitchp) (VAL @rollp)))
 
 
-	  ;;get the actual position for the throw
+      ;;get the actual position for the throw
 	  (!(= @zf (+ @zp 0.60)))
 	 
 
@@ -915,10 +970,7 @@ $distance , $info, $orientation, $speed, $inRange  the output observations"
 	  
 	  (!(Softmotion.getFreeId @smId))
 	  (=>(Softmotion.request moveArmWithoutMhp -1.2 0 0 0 0 0 0  @smId))
-	  (!(ExecutionManager.handleReport Softmotion @smId @executionId FALSE FALSE @placement))
-
-
-
+      (!(ExecutionManager.handleReport Softmotion @smId @executionId FALSE FALSE @placement))
 	  
 	  
 	  ;;execute the throw
@@ -926,7 +978,7 @@ $distance , $info, $orientation, $speed, $inRange  the output observations"
 	  (=>(ArmActions.action openGripper @arm @actionId))
 	  (!(ExecutionManager.handleReport ArmActions @actionId @executionId FALSE FALSE @placement))
 
-	  (=>(ExecutionManager.report @executionId OK))
+      (!(ReportManager.publish ExecutionManager.report  @executionId OK))
 	  (~>(Robot.hasObject (VAL @arm) (VAL @object)))
 	  (~>(Robot.hasObjectForThrow (VAL @arm) (VAL @object)))
 
@@ -939,6 +991,7 @@ $distance , $info, $orientation, $speed, $inRange  the output observations"
 	  (=>(Spark.request getJointAbsPose @placement NO_NAME @sparkId))
 	  (!(ExecutionManager.handleReport Spark @sparkId @executionId FALSE FALSE (. .)))
 	  (^(Spark.result (VAL @sparkId) @x @y @z @yaw @pitch @roll))
+      (~>(Spark.result (VAL @sparkId) (VAL @x) (VAL @y) (VAL @z) (VAL @yaw) (VAL @pitch) (VAL @roll)))
 
 	  (!(Spark.getFreeId @sparkId))
 	  (=>(Spark.request setInferrenceForObject @object 1 @placement 0 SPARK_IS_IN 1.0 @sparkId))
@@ -946,16 +999,24 @@ $distance , $info, $orientation, $speed, $inRange  the output observations"
 	  (!(DatabaseInterface.remove (AGENT-STATEMENT PR2_ROBOT PR2_ROBOT hasInHand (VAL @object)) @result))
 
 
-	  (!(Mhp.getfreeId @mhpId))
-	  (=>(Mhp.request removeGtpAttachments @mhpId))
-	  (!(ExecutionManager.handleReport Mhp @mhpId @executionId FALSE FALSE (. .)))
+      (!(Mhp.getFreeId @mhpId))
+      (=>(Mhp.request removeGtpAttachments @mhpId))
+      (!(ExecutionManager.handleReport Mhp @mhpId @executionId FALSE FALSE (. .)))
  
-	  (!(Mhp.getfreeId @mhpId))
+      (!(Mhp.getFreeId @mhpId))
 	  (=>(Mhp.request fetchEnvironment @mhpId))
-	  (!(ExecutionManager.handleReport Mhp @mhpId @executionId FALSE FALSE (. .)))	 
- 
-	  (!(SEM-V ExecutionManager.sem))
-	  
+      (!(ExecutionManager.handleReport Mhp @mhpId @executionId FALSE FALSE (. .)))
+
+      (IF(?(Spark.sim TRUE))
+         (!(DatabaseInterface.add (AGENT-STATEMENT PR2_ROBOT @object isIn @placement) @result))
+         )
+      (!(DatabaseInterface.remove (AGENT-STATEMENT PR2_ROBOT PR2_ROBOT hasInHand @object) @result))
+
+      (=>(Robot.pose @arm NO_NAME NO_NAME OTHER))
+
+
+      (!(SEM-V ExecutionManager.sem))
+
 	  (~>(ExecutionManager.isExecutingAction (VAL @executionId)))
 	  )
    
@@ -965,11 +1026,16 @@ $distance , $info, $orientation, $speed, $inRange  the output observations"
   :invocation(ExecutionManager.execute place @object @support @placement @executionId)
   :documentation "Places an object on a support in a specific placement or a casual one if placement is NO_NAME. For now the casual version is not implemented"
   :body (
-	 (!(SEM-P ExecutionManager.sem))
+         (IF(?(Supervisor.sim TRUE))
+            (^(ELAPSED-TIME (TIME) 1))
+            (!(ReportManager.publish ExecutionManager.report @executionId OK))
+            (!(FAILED))
+            )
+         (!(SEM-P ExecutionManager.sem))
 
 
 	 (IF(?(~(Robot.hasObject @arm  (VAL @object))))
-	    (=>(ExecutionManager.report (VAL @executionId) FAILURE))
+        (!(ReportManager.publish ExecutionManager.report  (VAL @executionId) FAILURE))
 	    (!(SEM-V ExecutionManager.sem))
 	    (!(FAILED))
 	    )
@@ -983,7 +1049,8 @@ $distance , $info, $orientation, $speed, $inRange  the output observations"
 	  (!(= @successConditions (. (. (ExecutionManager.report (VAL @executionId) OK) .)  (. .) .) ))     ; when the execution starts the robot is free to monitor something else
 	  
 
-	  (!(MonitorManager.getFreeId @monitorId))
+      (!(MonitorManager.getFreeId @monitorId))
+      (!(MonitorManager.sub ExecutionManager.report @executionId @monitorId))
 	  ;;start the monitoring
 	  (!(MonitorManager.monitorTarget (VAL @placement) "NO_NAME" (VAL @successConditions) (VAL @failureConditions) HIGH (VAL @monitorId)))	   
 	  (^(MonitorManager.isMonitoringTarget (VAL @monitorId)))
@@ -991,7 +1058,7 @@ $distance , $info, $orientation, $speed, $inRange  the output observations"
 
 
 	 (!(GtpActions.getFreeId @gtpId))
-	 (=>(GtpActions.action place @object @support @placement (. .) @arm @id ))
+     (=>(GtpActions.action place @object @support @placement (. .) @arm @gtpId ))
 	 (!(ExecutionManager.handleReport GtpActions @gtpId @executionId TRUE TRUE (. .)))
 
 	 (!(Mhp.getFreeId @mhpId))
@@ -1003,11 +1070,18 @@ $distance , $info, $orientation, $speed, $inRange  the output observations"
 	 (!(ExecutionManager.handleReport Mhp @mhpId @executionId FALSE FALSE (. .)))
 
 
-	 (=>(ExecutionManager.report @executionId OK))
+     (!(DatabaseInterface.remove (AGENT-STATEMENT PR2_ROBOT PR2_ROBOT hasInHand (VAL @object)) @result))
+     (!(DatabaseInterface.add (AGENT-STATEMENT PR2_ROBOT @placement supports @object) @result))
+     (IF(?(Spark.sim TRUE))
+        (!(DatabaseInterface.add (AGENT-STATEMENT PR2_ROBOT @object isOn @placement) @result))
+        )
+
+
+     (!(ReportManager.publish ExecutionManager.report  @executionId OK))
 
 	  (~>(ExecutionManager.isExecutingAction (VAL @executionId)))
 		  
-	 (!(SEM-V ExecutionManager.sem))	 
+     (!(SEM-V ExecutionManager.sem))
 	 )
   )
 
@@ -1024,7 +1098,7 @@ $distance , $info, $orientation, $speed, $inRange  the output observations"
 	 (=>(ArmActions.action closeGripper @gripper @id))
 	 (!(ExecutionManager.handleReport ArmActions @id @executionId FALSE FALSE (. .)))
 	 (~>(ExecutionManager.isExecuting @executionId))
-	 (=>(ExecutionManager.report (VAL @executionId) OK))
+     (!(ReportManager.publish ExecutionManager.report  (VAL @executionId) OK))
 	 )
   )
 
@@ -1037,7 +1111,7 @@ $distance , $info, $orientation, $speed, $inRange  the output observations"
 	 (=>(ArmActions.action openGripper @gripper @id))
 	 (!(ExecutionManager.handleReport ArmActions @id @executionId FALSE FALSE (. .)))
 	 (~>(ExecutionManager.isExecuting @executionId))
-	 (=>(ExecutionManager.report (VAL @executionId) OK))
+     (!(ReportManager.publish ExecutionManager.report  (VAL @executionId) OK))
 	 )
 )
 
@@ -1050,14 +1124,20 @@ $distance , $info, $orientation, $speed, $inRange  the output observations"
 	 (=>(ArmActions.action moveToPose @pose @arm @q0 @id))
 	 (!(ExecutionManager.handleReport ArmActions @id @executionId TRUE TRUE (. .)))
 	 (~>(ExecutionManager.isExecuting @executionId))
-	 (=>(ExecutionManager.report (VAL @executionId) OK))
+     (!(ReportManager.publish ExecutionManager.report  (VAL @executionId) OK))
 	 )
   )
 (defop |go| 
   :invocation (ExecutionManager.execute go @goal @subgoal @executionId)
   :documentation "Operation to make the robot reach a destination. @goal is the node in the map the should be reached, @subgoal the item"
   :body (
-	 (!(SEM-P ExecutionManager.sem))
+
+         (IF(?(Supervisor.sim TRUE))
+            (^(ELAPSED-TIME (TIME) 1))
+            (!(ReportManager.publish ExecutionManager.report @executionId OK))
+            (!(FAILED))
+            )
+         (!(SEM-P ExecutionManager.sem))
 	 (=>(ExecutionManager.isExecutingAction @executionId))
 	 
 	 ;;get list of nodes in semantic map
@@ -1108,11 +1188,12 @@ $distance , $info, $orientation, $speed, $inRange  the output observations"
 
 	 ;;start moving
 	 (!(BaseActions.getFreeId @goId))
-	 (=>(BaseActions.action move @goal @goId))
+     (=>(BaseActions.action move @goal @goId))
+     (!(ReportManager.sub BaseActions.report @goId))
 	 (^(|| (BaseActions.report (VAL @goId) @report) (Monitor.humanNotFollowing)))
 	 (!(DatabaseInterface.removeMonitor (AGENT-STATEMENT (VAL @robotName) (VAL @agentToGuide) isPresent FALSE) @result))
 	 (IF(?(BaseActions.report (VAL @goId) @report))
-	    (=>(ExecutionManager.report @executionId OK))
+        (!(ReportManager.publish ExecutionManager.report  @executionId OK))
 	    
 	    ELSE
 	    (IF(?(Monitor.humanNotFollowing))
@@ -1122,8 +1203,9 @@ $distance , $info, $orientation, $speed, $inRange  the output observations"
 	       (!(BaseActions.getFreeId @stopId))
 	       (=>(BaseActions.action stop @stopId))
 	       (!(ExecutionManager.handleReport BaseActions (VAL @stopId) @executionId FALSE FALSE (. .)))
-	       (^(BaseActions.report (VAL @goId) @report))
-	       (~>(BaseActions.report (VAL @goId) @report))
+           (^(BaseActions.report (VAL @goId) @report))
+           (!(ReportManager.unsub BaseActions.report @goId))
+
 	       )
 	    
 	    ;;go back to base
@@ -1131,7 +1213,7 @@ $distance , $info, $orientation, $speed, $inRange  the output observations"
 	    (=>(BaseActions.action move @start @backToBaseId))
 	    (!(ExecutionManager.handleReport BaseActions (VAL @backToBaseId) @executionId FALSE FALSE (. .)))
 	    
-	    (=>(ExecutionManager.report @executionId FAILED))
+        (!(ReportManager.publish ExecutionManager.report  @executionId FAILED))
 	    
 	    )
 
@@ -1153,7 +1235,8 @@ $distance , $info, $orientation, $speed, $inRange  the output observations"
 
 	 (!(DatabaseInterface.addMonitor (AGENT-STATEMENT (VAL @robotName) (VAL @person) distance CLOSE) (Monitor.isCloseToPerson) @result))
 
-	 (!(BaseActions.getFreeId @goId))
+     (!(BaseActions.getFreeId @goId))
+     (!(ReportManager.sub BaseActions.report @goId))
 	 (=>(BaseActions.action move @location @goId))
 	 (^ (|| (BaseActions.report (VAL @goId) @report) (Monitor.isCloseToPerson) (ExecutionManager.stop (VAL @executionId))))
 
@@ -1162,14 +1245,15 @@ $distance , $info, $orientation, $speed, $inRange  the output observations"
 	    (=>(BaseActions.action stop @stopId))
 	    (!(ExecutionManager.handleReport BaseActions @stopId @executionId FALSE FALSE (. .)))
 	    
-	    ELSE
-	    (~>(BaseActions.report (VAL @goId)  @report))
+        ELSE
+        (!(ReportManager.unsub BaseActions.report @goId))
+
 	    )
 	 (IF(?(Monitor.isCloseToPerson))
 	    (~>(Monitor.isCloseToPerson))
-	    (=>(ExecutionManager.report @executionId OK))
+        (!(ReportManager.publish ExecutionManager.report  @executionId OK))
 	    ELSE
-	    (=>(ExecutionManager.report @executionId FAILED))
+        (!(ReportManager.publish ExecutionManager.report  @executionId FAILED))
 	    
 	    )
 	 (!(DatabaseInterface.removeMonitor (AGENT-STATEMENT (VAL @robotName) (VAL @person) distance CLOSE) @result))
