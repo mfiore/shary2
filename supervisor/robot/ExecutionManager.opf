@@ -509,6 +509,139 @@
   
   )
 
+(defop |simpleHandover|
+  :invocation(ExecutionManager.execute simpleHandover @type @object @agent @executionId)
+  :body (
+   (IF(?(Supervisor.sim TRUE))
+            (^(ELAPSED-TIME (TIME) 1))
+            (!(ReportManager.publish ExecutionManager.report @executionId OK))
+            (!(FAILED))
+            )
+
+
+     (!(SEM-P ExecutionManager.sem))
+
+     (?(Spark.robotTorso @rTorso))
+     (?(Spark.humanHead @humanHead))
+
+     (!(= @monitorSuccessConditions (. (. (ExecutionManager.report (VAL @executionId) OK) .) (. .) .)))
+     (!(= @monitorFailureConditions  (. (. .) (. (ExecutionManager.report (VAL @executionId) FAILURE) (ExecutionManager.report (VAL @executionId) STOPPED) .) .)))
+
+
+
+     (IF(?(EQUAL @type GIVE))
+        (IF(?(Robot.hasObject @arm  (VAL @object)))  ;if the robot doesn't have the object fail
+           ELSE
+           (!(ReportManager.publish ExecutionManager.report  (VAL @executionId) FAILURE))
+           (!(SEM-V ExecutionManager.sem))
+           (!(FAILED))
+           )
+
+        ELSEIF(?(EQUAL @type GRAB)) ;select an arm for the grab or fail if there are free arms
+        (IF(?(Robot.hasObject RIGHT  @anyObject))
+           (IF(?(Robot.hasObject LEFT  @anyObject))
+          (!(SEM-V ExecutionManager.sem))
+          (!(FAILED))
+
+          ELSE
+          (!(= @arm LEFT))
+          (!(= @armJoint LEFT_ARM))
+          (!(ArmActions.getFreeId @actionId))
+          (=>(ArmActions.action openGripper @arm @actionId))
+          (!(ExecutionManager.handleReport ArmActions @actionId @executionId FALSE FALSE (. .)))
+          )
+
+           ELSE
+           (!(= @arm RIGHT))
+           (!(= @armJoint RIGHT_ARM))
+           (!(ArmActions.getFreeId @actionId))
+           (=>(ArmActions.action openGripper @arm @actionId))
+
+           (!(ExecutionManager.handleReport ArmActions @actionId @executionId FALSE FALSE (. .)))
+           )
+        )
+
+     (=>(ExecutionManager.isExecutingAction (VAL @executionId)))
+     (?(Spark.robotName @sparkRobotName))
+
+
+     (!(GtpActions.getFreeId @gtpId))
+     (=>(GtpActions.action  moveTo take @gtpId))
+     (!(ExecutionManager.handleReport GtpActions @gtpId @executionId FALSE TRUE (. .)))
+
+     (!(ArmActions.getFreeId @detectPressionId))
+     (=>(ArmActions.action detectPression @arm @type @detectPressionId))
+     (!(ExecutionManager.handleReport ArmActions @actionId @executionId FALSE TRUE (. .)))
+
+
+     (IF(?(EQUAL @type GIVE))
+        (!(ArmActions.getFreeId @actionId))
+        (!(ReportManager.sub ArmActions.report @actionId))
+        (=>(ArmActions.action openGripper @arm @actionId))
+
+        (!(ExecutionManager.handleReport ArmActions @actionId @executionId FALSE FALSE (. .)))
+
+        ELSEIF(?(EQUAL @type GRAB))
+        (!(ArmActions.getFreeId @actionId))
+        (=>(ArmActions.action closeGripper @arm @actionId))
+        (!(ExecutionManager.handleReport ArmActions @actionId @executionId FALSE FALSE (. .)))
+        )
+
+     (IF(?(EQUAL @type GIVE))
+        (~>(Robot.hasObject (VAL @arm) (VAL @object)))
+
+        (!(Spark.getFreeId @sparkId))
+        (=>(Spark.request placeObjectForSimu (VAL @object) 0 0 0 0 0 0 1 @sparkId))
+        (!(ExecutionManager.handleReport Spark @sparkId @executionId FALSE FALSE (. .)))
+
+        (!(Spark.getFreeId @sparkId))
+        (=>(Spark.request setObjectInHand (VAL @sparkRobotName) (VAL @object) (VAL @arm) FALSE (VAL @sparkId)))
+        (!(ExecutionManager.handleReport Spark @sparkId @executionId FALSE FALSE (. .)))
+
+        (!(Spark.getFreeId @sparkId))
+        (=>(Spark.request setObjectInHand (VAL @agent) (VAL @object) (VAL @arm) TRUE (VAL @sparkId)))
+        (!(ExecutionManager.handleReport Spark @sparkId @executionId FALSE FALSE (. .)))
+
+        (=>(Agent.hasObject (VAL @agent) (VAL @object)))
+        (!(DatabaseInterface.remove (AGENT-STATEMENT PR2_ROBOT PR2_ROBOT hasInHand (VAL @object)) @result))
+        (!(DatabaseInterface.add (AGENT-STATEMENT PR2_ROBOT (VAL @agent) hasInHand (VAL @object)) @result))
+        ELSEIF(?(EQUAL @type GRAB))
+                                        ;	       (=>(Robot.hasObject (VAL @arm)  (VAL @object)))  ;explanation in the next comment
+        (=>(Robot.hasObjectForThrow (VAL @arm) (VAL @object)))
+        (!(Spark.getFreeId @sparkId))
+        (=>(Spark.request placeObjectForSimu (VAL @object) 0 0 0 0 0 0 1 @sparkId))
+        (!(ExecutionManager.handleReport Spark @sparkId @executionId FALSE FALSE (. .)))
+
+        (!(Spark.getFreeId @sparkId))
+        (=>(Spark.request setObjectInHand (VAL @agent) (VAL @object) (VAL @arm) FALSE (VAL @sparkId)))
+        (!(ExecutionManager.handleReport Spark @sparkId @executionId FALSE FALSE (. .)))
+
+        (~>(Agent.hasObject (VAL @agent) (VAL @object)))
+        (!(DatabaseInterface.add (AGENT-STATEMENT PR2_ROBOT PR2_ROBOT hasInHand (VAL @object)) @result))
+        (!(DatabaseInterface.remove (AGENT-STATEMENT PR2_ROBOT (VAL @agent) hasInHand (VAL @object)) @result))
+        ;;At this point we should put an inference to tell spark that the robot has an object. The problem is that with handover the robot usually doesn't see the object so it would be attached in the wrong
+        ;;position. At the moment we just act like if the robot doesn't have the object.
+        )
+
+     (!(ExecutionManager.cleanModuleRequestes))
+
+
+     (!(ReportManager.publish ExecutionManager.report  @executionId OK))
+
+
+     (~>(ExecutionManager.isExecutingAction (VAL @executionId)))
+     (!(SEM-V ExecutionManager.sem))
+
+
+     )
+
+                                        ;task is over. We go to rest state
+
+
+  )
+
+
+
 (defop |give|
   :invocation(ExecutionManager.execute handover @type @object @agent @executionId)
   :documentation "this procedure gives the object @object to the agent @agent. If the robot doesn't have the @item it fails"

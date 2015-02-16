@@ -24,7 +24,7 @@
 ;;SIMULATION OPTIONS
 ;;we can set this options true to simulate single components of the system
 (Mhp.sim FALSE)  
-(Softmotion.sim TRUE)
+(Softmotion.sim FALSE)
 (Spark.sim TRUE)
-(Supervisor.sim TRUE)  
+(Supervisor.sim FALSE)  
 )

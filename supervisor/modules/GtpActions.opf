@@ -192,7 +192,7 @@
   )
 
 (defop |moveTo|
-  :invocation(GtpActions.action moveTo @gtpId @configurationName @gtpId) 
+  :invocation(GtpActions.action moveTo @configurationName @gtpId)
   :body (
 	  (?(Robot.name @robotName))
 	  

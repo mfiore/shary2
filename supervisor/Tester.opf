@@ -6,7 +6,21 @@
 
 
 
+
+
 (
+
+ (defop |testPickGive|
+   :invocation(!(Tester.testPickGive))
+   :body (
+          (!(Controller.initAll))
+          (=>(ExecutionManager.execute take LOTR_TAPE RIGHT 0))
+          (^(ExecutionManager.report 0 @report))
+
+          (=>(ExecutionManager.execute simpleHandover GIVE LOTR_TAPE HERAKLES_HUMAN1 1))
+          (^(ExecutionManager.report 1 @report))
+          )
+)
 
  (defop |testSendMessage|
    :invocation(!(Tester.testSendMessage))

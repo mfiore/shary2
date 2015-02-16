@@ -46,6 +46,7 @@ include "supervisor/robot/PlannerInterface.sym"
 include "supervisor/robot/AgentActionMonitor.sym"
 include "supervisor/robot/ReportManager.sym"
 
+
 include "supervisor/robot/Monitors.sym"
 include "supervisor/robot/Robot.sym"
 include "supervisor/robot/PathPlanner.sym"
@@ -67,6 +68,8 @@ load opf "supervisor/robot/ArmActions.opf"
 load opf "supervisor/robot/HeadActions.opf"
 load opf "supervisor/robot/PlannerInterface.opf"
 load opf "supervisor/robot/AgentActionMonitor.opf"
+load opf "supervisor/robot/FakeExecution.opf"
+
 
 load opf "supervisor/robot/PathPlanner.opf"
 load opf "supervisor/robot/BaseActions.opf"
