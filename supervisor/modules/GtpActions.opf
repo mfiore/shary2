@@ -12,7 +12,7 @@
 	  (=>(GtpActions.freeId 0))
       (!(Mhp.getFreeId @id))
       (=>(Mhp.request fetchEnvironment @id))
-	  (!(GtpActions.handleReport Mhp @id @gtpId))
+      (!(GtpActions.handleReport Mhp @id 0))
 	  ) 
    )
  (defop |getFreeId|
@@ -286,7 +286,7 @@
 			 (=>(Spark.request setObjectInHand PR2_ROBOT (VAL @object) (VAL @arm) FALSE (VAL @sparkId)))
 			 (!(ExecutionManager.handleReport Spark @sparkId @executionId FALSE FALSE NO_NAME))
 			 
-			 (!(DatabaseInterface.remove (AGENT-STATEMENT PR2_ROBOT hasInHand (VAL @object)) @result))
+             (!(DatabaseInterface.remove (AGENT-STATEMENT PR2_ROBOT PR2_ROBOT hasInHand (VAL @object)) @result))
 
 			 (!(Spark.getFreeId @sparkId))
 			 (?(Spark.robotFinger (VAL @arm) @sparkHand))

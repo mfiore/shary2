@@ -5,7 +5,7 @@
 (Module.isActive gtp TRUE)
 (Module.isActive viman TRUE)
 (Module.isActive spark TRUE)
-(Module.isActive acapela TRUE)
+(Module.isActive acapela FALSE)
 (Module.isActive navigation TRUE)
 
 (Robot.joints HEAD)

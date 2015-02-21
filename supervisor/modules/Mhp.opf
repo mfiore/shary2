@@ -162,9 +162,13 @@
      (!(SEM-P Mhp.sem))
      (!(= @parameters
          (INTEGER (VAL @trajId))
-        ));  $RQST-ID))
+         ));  $RQST-ID))
+     (IF(?(Mhp.sim FALSE))
      (!(GenomInterface.handleRequest MHP MHP_ARMSELECTTRAJ (Mhp.stop (VAL @id)) (FALSE) (FALSE) 300 (VAL @parameters) @report @result))
 
+     ELSE
+     (!(= @report "OK"))
+     )
      (!(ReportManager.publish Mhp.report (VAL @id) (VAL @report)))
 
      (!(SEM-V Mhp.sem))
@@ -225,8 +229,14 @@
 		   (VAL @objGoto)
 		   )
 		  )
-	       )
+           )
+
+         (IF(?(Mhp.sim FALSE))
 	     (!(GenomInterface.handleRequest MHP MHP_ARMPLANTASK (Mhp.stop (VAL @id)) (FALSE) (FALSE) 300 (VAL @parameters) @report @result))
+
+         ELSE
+         (!(= @report "OK"))
+         )
          (!(ReportManager.publish Mhp.report (VAL @id) (VAL @report)))
 
 
@@ -288,8 +298,13 @@
   :invocation(Mhp.request initGtp @id)
   :documentation "inits the geometrical task planner module"
   :body (
-	 (!(GenomInterface.handleRequest MHP MHP_INITGTP (Mhp.stop (VAL @id)) (FALSE) (FALSE) 300 nil @report @result))
-     (!(ReportManager.publish Mhp.report (VAL @id) (VAL @report)))
+
+         (IF(?(Mhp.sim FALSE))
+            (!(GenomInterface.handleRequest MHP MHP_INITGTP (Mhp.stop (VAL @id)) (FALSE) (FALSE) 300 nil @report @result))
+            ELSE
+            (!(= @report "OK"))
+            )
+         (!(ReportManager.publish Mhp.report (VAL @id) (VAL @report)))
 	 
 	 )
   )
@@ -298,7 +313,11 @@
   :invocation(Mhp.request fetchEnvironment @id)
   :documentation ""
   :body (
-	 (!(GenomInterface.handleRequest MHP MHP_FETCHENVIRONMENT (Mhp.stop (VAL @id)) (FALSE) (FALSE) 300 nil @report @result))
+         (IF(?(Mhp.sim FALSE))
+         (!(GenomInterface.handleRequest MHP MHP_FETCHENVIRONMENT (Mhp.stop (VAL @id)) (FALSE) (FALSE) 300 nil @report @result))
+         ELSE
+         (!(= @report "OK"))
+         )
      (!(ReportManager.publish Mhp.report (VAL @id) (VAL @report)))
 	 )
   )
@@ -318,31 +337,34 @@
 	       (previousTaskAlternativeId  @previousTaskAlternativeId)
 	       (computeMotionPlan  GEN_TRUE)
 	       (dummy  GEN_TRUE))	      
-       ))
+          ))
 
 
-
-	 (!(GenomInterface.handleRequest MHP MHP_PLANGTPTASK (Mhp.stop (VAL @id)) (FALSE) (FALSE) 300 @params @report @result))
+     (IF(?(Mhp.sim FALSE))
+        (!(GenomInterface.handleRequest MHP MHP_PLANGTPTASK (Mhp.stop (VAL @id)) (FALSE) (FALSE) 300 @params @report @result))
+        ELSE
+        (!(= @report "OK"))
+        )
      (!(ReportManager.publish Mhp.report (VAL @id) (VAL @report)))
 	 (IF(?(EQUAL @report "OK"))
         (IF(?(Mhp.sim FALSE))
 	       (!(== (VAL @result) (STRUCT_TASK_OUTPUT 
-				 (taskId  @newTaskId)
-				 (taskAlternativeId  @newTaskAId)
-				 (cost @cost)
-				 (return_report (name @reportName))
-				 
-				 )))
+                                (taskId  @newTaskId)
+                                (taskAlternativeId  @newTaskAId)
+                                (cost @cost)
+                                (return_report (name @reportName))
+
+                                )))
 	       
 	       ELSE
 	       (!(= @newTaskId 0))
 	       (!(= @newTaskAId 0))
 	       (!(= @cost 0))
-	    )
+           )
 	    (~>(Mhp.previousTask @a @b))
 	    (=>(Mhp.previousTask @newTaskId @newTaskAId))
 	    )
-	  
+
 	 )
   )
 (defop |smoothGtpTraj|
@@ -354,8 +376,12 @@
 			       (taskId  @taskId)
 			       (alternativeId  @alternativeId))
 	      )
-	   )
-	 (!(GenomInterface.handleRequest MHP MHP_SMOOTHGTPTRAJ (Mhp.stop (VAL @id)) (FALSE) (FALSE) 300 @params @report @result))
+       )
+     (IF(?(Mhp.sim FALSE))
+     (!(GenomInterface.handleRequest MHP MHP_SMOOTHGTPTRAJ (Mhp.stop (VAL @id)) (FALSE) (FALSE) 300 @params @report @result))
+     ELSE
+     (!(= @report "OK"))
+     )
      (!(ReportManager.publish Mhp.report @id @report))
 	 )
   )
@@ -368,8 +394,12 @@
 			       (taskId  @taskId)
 			       (alternativeId  @alternativeId))
 	      )
-	   )
-	 (!(GenomInterface.handleRequest MHP MHP_GETGTPTASKDETAILS (Mhp.stop (VAL @id)) (FALSE) (FALSE) 300 @params @report @result))
+       )
+     (IF(?(Mhp.sim FALSE))
+     (!(GenomInterface.handleRequest MHP MHP_GETGTPTASKDETAILS (Mhp.stop (VAL @id)) (FALSE) (FALSE) 300 @params @report @result))
+     ELSE
+     (!(= @report "OK"))
+     )
      (!(ReportManager.publish Mhp.report @id @report))
 	 (IF(?(EQUAL @report "OK"))
         (IF(?(Mhp.sim FALSE))
@@ -512,7 +542,11 @@
            (value 
               (name  (TERM-STRING-CAT @name))))))
 
-	 (!(GenomInterface.handleRequest MHP MHP_ADDGTPAGENT (Mhp.stop (VAL @id)) (FALSE) (FALSE) 300 @params @report @result))
+     (IF(?(Mhp.sim FALSE))
+     (!(GenomInterface.handleRequest MHP MHP_ADDGTPAGENT (Mhp.stop (VAL @id)) (FALSE) (FALSE) 300 @params @report @result))
+     ELSE
+     (!(= @report "OK"))
+     )
      (!(ReportManager.publish Mhp.report (VAL @id) (VAL @report)))
 	 
 	 )
@@ -531,7 +565,11 @@
            (value 
               (name  (TERM-STRING-CAT @name))))))
 
-	 (!(GenomInterface.handleRequest MHP MHP_ADDGTPOBJECT (Mhp.stop (VAL @id)) (FALSE) (FALSE) 300 @params @report @result))
+     (IF(?(Mhp.sim FALSE))
+     (!(GenomInterface.handleRequest MHP MHP_ADDGTPOBJECT (Mhp.stop (VAL @id)) (FALSE) (FALSE) 300 @params @report @result))
+     ELSE
+     (!(= @report "OK"))
+     )
      (!(ReportManager.publish Mhp.report (VAL @id) (VAL @report)))
 	 
 	 )
@@ -549,7 +587,11 @@
            (value 
               (name  (TERM-STRING-CAT @name))))))
 
-	 (!(GenomInterface.handleRequest MHP MHP_ADDGTPDATA (Mhp.stop (VAL @id)) (FALSE) (FALSE) 300 @params @report @result))
+     (IF(?(Mhp.sim FALSE))
+     (!(GenomInterface.handleRequest MHP MHP_ADDGTPDATA (Mhp.stop (VAL @id)) (FALSE) (FALSE) 300 @params @report @result))
+     ELSE
+     (!(= @report "OK"))
+     )
      (!(ReportManager.publish Mhp.report (VAL @id) (VAL @report)))
 	 
 	 )
@@ -570,7 +612,11 @@
 	    (z  @z))
 	   )))
 
-	 (!(GenomInterface.handleRequest MHP MHP_ADDGTPPOINT (Mhp.stop (VAL @id)) (FALSE) (FALSE) 300 @params @report @result))
+     (IF(?(Mhp.sim FALSE))
+     (!(GenomInterface.handleRequest MHP MHP_ADDGTPPOINT (Mhp.stop (VAL @id)) (FALSE) (FALSE) 300 @params @report @result))
+     ELSE
+     (!(= @report "OK"))
+     )
      (!(ReportManager.publish Mhp.report (VAL @id) (VAL @report)))
 	 
 	 )
@@ -598,7 +644,11 @@
            (valueType  @valueType)
            (dummy  0)
            (specificValue  @specific))))
-	 (!(GenomInterface.handleRequest MHP MHP_ADDGTPCONSTRAINTFACT (Mhp.stop (VAL @id)) (FALSE) (FALSE) 300 @params @report @result))
+     (IF(?(Mhp.sim FALSE))
+     (!(GenomInterface.handleRequest MHP MHP_ADDGTPCONSTRAINTFACT (Mhp.stop (VAL @id)) (FALSE) (FALSE) 300 @params @report @result))
+     ELSE
+     (!(= @report "OK"))
+     )
      (!(ReportManager.publish Mhp.report (VAL @id) (VAL @report)))
 	 
 	 )
@@ -615,7 +665,11 @@
            (value 
               (name  (TERM-STRING-CAT @name))))))
 
-	 (!(GenomInterface.handleRequest MHP MHP_ADDGTPCONSTRAINTRESSOURCE (Mhp.stop (VAL @id)) (FALSE) (FALSE) 300 @params @report @result))
+     (IF(?(Mhp.sim FALSE))
+     (!(GenomInterface.handleRequest MHP MHP_ADDGTPCONSTRAINTRESSOURCE (Mhp.stop (VAL @id)) (FALSE) (FALSE) 300 @params @report @result))
+     ELSE
+     (!(= @report "OK"))
+     )
      (!(ReportManager.publish Mhp.report (VAL @id) (VAL @report)))
 	 
 	 )
@@ -624,7 +678,11 @@
 (defop |clearGtpInputs|
   :invocation(Mhp.request clearGtpInputs @id)
   :body (
-	 (!(GenomInterface.handleRequest MHP MHP_CLEARGTPINPUTS (Mhp.stop (VAL @id)) (FALSE) (FALSE) 300 nil @report @result))
+         (IF(?(Mhp.sim FALSE))
+         (!(GenomInterface.handleRequest MHP MHP_CLEARGTPINPUTS (Mhp.stop (VAL @id)) (FALSE) (FALSE) 300 nil @report @result))
+         ELSE
+         (!(= @report "OK"))
+         )
      (!(ReportManager.publish Mhp.report (VAL @id) (VAL @report)))
 
 	 )
@@ -662,8 +720,12 @@
 		(x  @dx)
 		(y  @dy)
 		(z  @dz))
-	       )))
-	 (!(GenomInterface.handleRequest MHP MHP_ADDGTPCONSTRAINTREGION (Mhp.stop (VAL @id)) (FALSE) (FALSE) 300 @params @report @result))
+           )))
+     (IF(?(Mhp.sim FALSE))
+     (!(GenomInterface.handleRequest MHP MHP_ADDGTPCONSTRAINTREGION (Mhp.stop (VAL @id)) (FALSE) (FALSE) 300 @params @report @result))
+     ELSE
+     (!(= @report "OK"))
+     )
      (!(ReportManager.publish Mhp.report (VAL @id) (VAL @report)))
 	 )
   )
@@ -677,8 +739,12 @@
 			      (alternativeId  @alternativeId)
 			      (subTrajId  @subTrajId)
 			      (follow  @follow))
-	      ))
-	 (!(GenomInterface.handleRequest MHP MHP_LOADGTPTASKTRAJ (Mhp.stop (VAL @id)) (FALSE) (FALSE) 300 @params @report @result))
+          ))
+     (IF(?(Mhp.sim FALSE))
+     (!(GenomInterface.handleRequest MHP MHP_LOADGTPTASKTRAJ (Mhp.stop (VAL @id)) (FALSE) (FALSE) 300 @params @report @result))
+     ELSE
+     (!(= @report "OK"))
+     )
      (!(ReportManager.publish Mhp.report (VAL @id) (VAL @report)))
 	 )
   )
@@ -691,8 +757,12 @@
 			      (alternativeId  @alternativeId)
 			      (subTrajId  @subTrajId)
 			      (follow  @follow))
-	      ))
-	 (!(GenomInterface.handleRequest MHP MHP_LOADGTPTASKTRAJFORNAV (Mhp.stop (VAL @id)) (FALSE) (FALSE) 300 @params @report @result))
+          ))
+     (IF(?(Mhp.sim FALSE))
+     (!(GenomInterface.handleRequest MHP MHP_LOADGTPTASKTRAJFORNAV (Mhp.stop (VAL @id)) (FALSE) (FALSE) 300 @params @report @result))
+     ELSE
+     (!(= @report "OK"))
+     )
      (!(ReportManager.publish Mhp.report (VAL @id) (VAL @report)))
 	 (IF(?(EQUAL @report "OK"))
         (IF(?(Mhp.sim FALSE))
@@ -802,7 +872,11 @@
   :invocation(Mhp.request removeGtpAttachments @id)
   :body (
 
-	 (!(GenomInterface.handleRequest MHP MHP_REMOVEGTPATTACHEMENTS (FALSE) (FALSE) (FALSE) 300 nil @report @result))
+         (IF(?(Mhp.sim FALSE))
+         (!(GenomInterface.handleRequest MHP MHP_REMOVEGTPATTACHEMENTS (FALSE) (FALSE) (FALSE) 300 nil @report @result))
+         ELSE
+         (!(= @report "OK"))
+         )
      (!(ReportManager.publish Mhp.report (VAL @id) (VAL @report)))
 	 )
   )

@@ -258,9 +258,49 @@
 		   ;;depending on the action type the action will have different parameters. If we add new classes of actions we should have an edit here.
 		   (IF(?(Action.type (VAL @actionName) MANIPULATION))
 		      (!(== (VAL @actionParameters) (. @object .)))
-		      ELSEIF(?(Action.type (VAL @actionName) PLACEMENT))
-		      (!(== (VAL @actionParameters) (. @object @placement .)))
-		      ) 
+              ELSEIF(?(Action.type (VAL @actionName) PLACEMENT))
+              (!(== (VAL @actionParameters) (. @object @placement .)))
+              (!(DatabaseInterface.findList (AGENT-STATEMENT PR2_ROBOT (VAL @placement) isOn @s) (. @s .) @result))
+              (!(= @support (CAR(CAR @result))))
+              (!(= @actionParameters (. @object @support @placement .)))
+
+
+              ELSEIF(?(Action.type (VAL @actionName) SURFACE))
+
+              (!(== (VAL @actionParameters) (. @placement .)))
+              ELSEIF(?(Action.type (VAL @actionName) MOVEMENT))
+              (!(== (VAL @actionParameters) (. @location .)))
+              ELSEIF(?(Action.type (VAL @actionName) PLACEHERE))
+              (!(== (VAL @actionParameters) (. @object .)))
+              (?(Object.type (VAL @object) @type @class))
+              (!(DatabaseInterface.findList (AGENT-STATEMENT PR2_ROBOT (VAL @agent)  isAt @l) (. @l .) @result))
+              (IF(?(~(NULL @result)))
+                 (!(= @support (CAR(CAR @result))))
+                 (!(DatabaseInterface.findList (AGENT-STATEMENT PR2_ROBOT @objectOnSupport isOn (VAL @support)) (. @objectOnSupport .) @result))
+                 (!(= @placement NO_NAME))
+                 (WHILE(?(~(NULL @result)))
+                       (!(= @anObject (CAR(CAR @result))))
+                       (!(= @result (CDR @result)))
+                       (IF(?(Object.link (VAL @anObject) (VAL @type)))
+                             (!(= @placement @anObject))
+                             )
+                       )
+                 (IF(?(~(EQUAL @placement NO_NAME)))
+                    (!(= @actionParameters (. (VAL @object) (VAL @placement) .)))
+                    )
+                 ELSE
+                 (=>(PlanManager.agentReport @agent FAILURE))
+                 (~>(PlanManager.isManagingAgent @agent))
+                 (!(FAILED))
+                 )
+              ELSE
+              (=>(PlanManager.agentReport robot FAILURE))
+              (~>(PlanManager.isManagingAgent robot))
+              (!(FAILED))
+              )
+           ;;usually the actionId is enough for the agentActionMonitor module to add the postconditions. Sometimes this is not true (ex. when the monitor sphere is related to a position and not to
+           ;;a parameter) and so we put the action in the db along with its parameters
+           (=>(PlanManager.humanAction @actionId @agent @actionName @actionParameters))
 		   (!(PlanManager.getActionString @actionName @actionParameters " " 0 @oldObject @followsHandover @actionString))		   
 		   (IF(?(PlanManager.planningModality (VAL @agents) ROBOT))  ;if robot plans then he says the human he should execute the action
 
@@ -269,7 +309,13 @@
 		   (!(PRINT "HUMAN: "))
 		   (!(PRINT @actionString))
 		   (!(PRINT @actionId))
-		   
+
+           (IF(?(Action.type (VAL @actionName) MOVEMENT))
+              (=>(AgentActionMonitor.monitorMove @agent @location @actionId)) ;monitor the action
+
+
+
+              ELSE
 ;;if we haven't activated a monitor sphere activate it. Associate a monitor sphere id
 		   ;; with the id of the action to monitor  
 		   (?(Spark.monitorParameter (VAL @actionName) @parameterType))
@@ -282,12 +328,14 @@
 		   ;;if we haven't activated a monitor sphere activate it. Associate a monitor sphere id
 		   ;; with the id of the action to monitor
 		   (IF(?(~(AgentActionMonitor.sphere (VAL @agent) (VAL @target) @sphereId)))
-		      (!(AgentActionMonitor.activateMonitorSpheres (. @target .) @agent))
+              (!(AgentActionMonitor.activateMonitorSpheres (. @target .) @actionName @agent))
 		      )
 		   (?(AgentActionMonitor.sphere (VAL @agent) (VAL @target) @sphereId))
-		   (=>(AgentActionMonitor.monitorAction @agent @actionId @sphereId)) ;monitor the action
+           (=>(AgentActionMonitor.monitorAction @agent @actionId @actionName @actionParameters @sphereId)) ;monitor the action
+           )
 		   (^(|| (AgentActionMonitor.actionCompleted (VAL @agent) (VAL @actionId)) 
-		      (PlanManager.stopAgent (VAL @agent))))  ;wait until we complete the action or we have a stopAgent (unexpectedAction is handled in planmanager)
+              (PlanManager.stopAgent (VAL @agent))))  ;wait until we complete the action or we have a stopAgent (unexpectedAction is handled in planmanager)
+
 		   (IF(?(AgentActionMonitor.actionCompleted (VAL @agent) (VAL @actionId)))
 		      (~>(AgentActionMonitor.actionCompleted (VAL @agent) (VAL @actionId)))
 		      (=>(PlanManager.actionReport @actionId OK))
@@ -341,7 +389,38 @@
 			 )
 		      (!(= @actionLinks (CDR @actionLinks)))
 		      )
-		(!(== (VAL @actionToExecute) (. @actionName @actionParameters .)))
+        (!(== (VAL @actionToExecute) (. @actionName @actionParameters .)))
+        (IF(?(Action.type (VAL @actionName) PLACEHERE))
+           (!(== (VAL @actionParameters) (. @object .)))
+           (?(Object.type (VAL @object) @type @class))
+           (!(DatabaseInterface.findList (AGENT-STATEMENT PR2_ROBOT PR2_ROBOT isAt @l) (. @l .) @result))
+           (IF(?(~(NULL @result)))
+              (!(= @support (CAR(CAR @result))))
+
+              (!(DatabaseInterface.findList (AGENT-STATEMENT PR2_ROBOT @o isOn (VAL @support)) (. @o .) @result))
+              (!(= @placement NO_NAME))
+              (WHILE(?(~(NULL @result)))
+                    (!(= @anObject (CAR(CAR @result))))
+                    (!(= @result (CDR @result)))
+                    (IF(?(Object.link (VAL @anObject) (VAL @type)))
+                       (!(= @placement @anObject))
+                       )
+                    )
+              (IF(?(~(EQUAL @placement NO_NAME)))
+
+                 (!(= @actionParameters (. (VAL @object) (VAL @support) (VAL @placement) .)))
+
+              ELSE
+              (=>(PlanManager.agentReport robot FAILURE))
+              (~>(PlanManager.isManagingAgent robot))
+              (!(FAILED))
+              )
+           ELSE
+           (=>(PlanManager.agentReport robot FAILURE))
+           (~>(PlanManager.isManagingAgent robot))
+           (!(FAILED))
+           )
+           )
 
 		;verbalize action
 		(!(PlanManager.getActionString @actionName @actionParameters "I " 0 @oldObject @followsHandover @actionString))
@@ -361,6 +440,7 @@
 		      (!(FAILED))
               )
            (=>( PlanManager.actionReport @actionId OK))
+           (!(AgentActionMonitor.calculateInferencesForAgents (. HERAKLES_HUMAN1 .)))
 
 		   
 		   ELSE
@@ -490,7 +570,12 @@
 	       (!(= @message (TERM-STRING-CAT @message @subject)))
 	       )
 	    (!(= @message (TERM-STRING-CAT @message @actionName " " @translatedObject)))
-			
+
+        ELSEIF(?(EQUAL @type SURFACE))
+
+        (!(== (VAL @actionParameters) (. @placement .)))
+        (?(Acapela.translation (VAL @placement) @translatedSurface))
+        (!(= @message (TERM-STRING-CAT @message @actionName " " @translatedSurface)))
 	    ELSEIF(?(EQUAL @type HANDOVER))
 	    (!(== (VAL @actionParameters) (. @object @agent1 @agent2 .)))  
 	    (IF(?(EQUAL @agent1 PR2_ROBOT))
@@ -513,9 +598,13 @@
 	       )
 	    (!(= $oldObject @object))
 	    (!(= $followsHandover TRUE))
-	    
+
+        ELSEIF(?(EQUAL @type MOVEMENT))
+        (!(== (VAL @actionParameters) (. @location .)))
+        (?(Acapela.translation (VAL @location) @translatedLocation))
+        (!(= @message (TERM-STRING-CAT @message @subject " go to " @translatedLocation)))
 	    ELSEIF(?(EQUAL @type PLACEMENT))
-	    (!(== (VAL @actionParameters) (. @object @placement .)))
+        (!(== (VAL @actionParameters) (. @object @support @placement .)))
 	    (?(Acapela.translation (VAL @object) @translatedObject))
 	    (?(Acapela.translation (VAL @placement) @translatedPlacement))
 	    (IF(?(EQUAL @object $oldObject))
@@ -654,7 +743,18 @@
 	    (!(PRINT @message))
 	    
 	    )
-	 )
+
+
+
+
+
+
+
+
+
+
+
+     )
   
   )
 )

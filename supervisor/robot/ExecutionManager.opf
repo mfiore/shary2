@@ -34,7 +34,7 @@
   :invocation(ExecutionManager.executeAction @actionName @actionParameters @executionId)
   :documentation "Launching point to allow other modules to launch actions in a generic way"
   :body (
-     (IF(?(Supervisor.sim FALSE))
+   ;  (IF(?(Supervisor.sim FALSE))
 	    (?(Action.type (VAL @actionName) @type))
 	    (IF(?(EQUAL @type MANIPULATION))
 	       (!(== (VAL @actionParameters) (. @object .)))
@@ -43,13 +43,16 @@
 	       (!(== (VAL @actionParameters) (. @object @agent1 @agent2 .)))
 
 	       ELSEIF(?(EQUAL @type PLACEMENT))
-	       (!(== (VAL @actionParameters) (. @object @placement .)))
-	       
+           (!(== (VAL @actionParameters) (. @object @support @placement .)))
+           ELSEIF(?(EQUAL @type PLACEHERE))
+           (!(== (VAL @actionParameters) (. @object @support @placement .)))
 	       ELSEIF(?(EQUAL @type POSE))
 	       (!(== (VAL @actionParameters) (. @pose @arm @q0 .)))
 
 	       ELSEIF(?(EQUAL @type GRIPPER))
-	       (!(== (VAL @actionParameters) (. @gripper .)))
+           (!(== (VAL @actionParameters) (. @gripper .)))
+           ELSEIF(?(EQUAL @type MOVEMENT))
+           (!(== (VAL @actionParameters) (. @location .)))
 
 	       )
 
@@ -63,13 +66,16 @@
 	       (=>(ExecutionManager.execute moveToPose @pose @arm @q0 @executionId))
 	       
 	       ELSEIF(?(EQUAL @actionName take))
-	       (=>(ExecutionManager.execute take @object NO_NAME @executionId))
+           (=>(ExecutionManager.execute take @object RIGHT @executionId))
 	       
 	       ELSEIF(?(EQUAL @actionName throw))
 	       (=>(ExecutionManager.execute throw @object @placement @executionId))
 
 	       ELSEIF(?(EQUAL @actionName place))
-	       (=>(ExecutionManager.execute place @object TABLE_4 @placement @executionId))
+           (=>(ExecutionManager.execute place @object @support @placement @executionId))
+
+           ELSEIF(?(EQUAL @actionName go))
+           (=>(ExecutionManager.execute go @location NO_NAME @executionId))
 	       
 	       ELSEIF(?(EQUAL @actionName handover))
 	       (IF(?(EQUAL @agent2 PR2_ROBOT))
@@ -82,11 +88,11 @@
 
 	       
 	       )				
-	    ELSE
-        (^(ELAPSED-TIME (TIME) 1))
-        (!(ReportManager.publish ExecutionManager.report @executionId OK))
+    ;    ELSE
+     ;   (^(ELAPSED-TIME (TIME) 1))
+      ;  (!(ReportManager.publish ExecutionManager.report @executionId OK))
 
-	    )
+       ; )
 	 
 	 )
   )
@@ -258,6 +264,16 @@
 
           (IF(?(Supervisor.sim TRUE))
              (^(ELAPSED-TIME (TIME) 1))
+
+             (=> (Robot.hasObject (VAL @arm) (VAL @object))) ;if we arrive here with no FAILED than we've got the item (hopefully XD)
+             (!(Spark.getFreeId @sparkId))
+             (=>(Spark.request setObjectInHand PR2_ROBOT (VAL @object) (VAL @arm) TRUE (VAL @sparkId)))
+
+             (!(ExecutionManager.handleReport Spark @sparkId @executionId FALSE FALSE NO_NAME))
+
+             (!(DatabaseInterface.add (AGENT-STATEMENT PR2_ROBOT PR2_ROBOT hasInHand (VAL @object)) @result))
+             (!(AgentActionMonitor.cleanObjectMonitorSpheres (VAL @object)))
+
              (!(ReportManager.publish ExecutionManager.report @executionId OK))
              (!(FAILED))
              )
@@ -375,17 +391,17 @@
       (!(ReportManager.publish ExecutionManager.report  (VAL @executionId) OK))
       (~>(ExecutionManager.isExecutingAction (VAL @executionId)))
 
-      (!(DatabaseInterface.remove (AGENT-STATEMENT PR2_ROBOT ROBOT_AREA supports @object) @result))
-      (!(DatabaseInterface.remove (AGENT-STATEMENT PR2_ROBOT @object isOn ROBOT_AREA) @result))
-      (!(DatabaseInterface.add (AGENT-STATEMENT PR2_ROBOT PR2_ROBOT hasInHand @object) @result))
+      (!(= @removeFacts (. (AGENT-STATEMENT PR2_ROBOT ROBOT_AREA supports @object) (AGENT-STATEMENT PR2_ROBOT @object isOn ROBOT_AREA) .)))
+      (!(= @addFacts (. (AGENT-STATEMENT PR2_ROBOT PR2_ROBOT hasInHand @object) .)))
+
+      (!(DatabaseInterface.addSetRemoveFacts @addFacts (. .) @removeFacts @result))
 
       (IF(?(Spark.sim TRUE))
-         (!(DatabaseInterface.remove (AGENT-STATEMENT PR2_ROBOT @object isOn PLACEMAT_GREEN) @result))
-         (!(DatabaseInterface.remove (AGENT-STATEMENT PR2_ROBOT PLACEMAT_GREEN supports @object) @result))
+         (!(= @removeFacts (.  (AGENT-STATEMENT PR2_ROBOT @object isOn PLACEMAT_GREEN) (AGENT-STATEMENT PR2_ROBOT PLACEMAT_GREEN supports @object) .)))
+           (!(DatabaseInterface.addSetRemoveFacts (. .) (. .) @removeFacts @result))
 
          )
-
-	  (!(SEM-V ExecutionManager.sem))
+      (!(SEM-V ExecutionManager.sem))
 	  )
    
    )
@@ -648,6 +664,49 @@
   :body (
          (IF(?(Supervisor.sim TRUE))
             (^(ELAPSED-TIME (TIME) 1))
+
+            (IF(?(EQUAL @type GIVE))
+                (~>(Robot.hasObject (VAL @arm) (VAL @object)))
+
+            (!(Spark.getFreeId @sparkId))
+            (=>(Spark.request placeObjectForSimu (VAL @object) 0 0 0 0 0 0 1 @sparkId))
+            (!(ExecutionManager.handleReport Spark @sparkId @executionId FALSE FALSE (. .)))
+
+            (!(Spark.getFreeId @sparkId))
+            (=>(Spark.request setObjectInHand (VAL @sparkRobotName) (VAL @object) (VAL @arm) FALSE (VAL @sparkId)))
+            (!(ExecutionManager.handleReport Spark @sparkId @executionId FALSE FALSE (. .)))
+
+            (!(Spark.getFreeId @sparkId))
+            (=>(Spark.request setObjectInHand (VAL @agent) (VAL @object) (VAL @arm) TRUE (VAL @sparkId)))
+            (!(ExecutionManager.handleReport Spark @sparkId @executionId FALSE FALSE (. .)))
+
+            (=>(Agent.hasObject (VAL @agent) (VAL @object)))
+            (!(DatabaseInterface.remove (AGENT-STATEMENT PR2_ROBOT PR2_ROBOT hasInHand (VAL @object)) @result))
+            (!(DatabaseInterface.add (AGENT-STATEMENT PR2_ROBOT (VAL @agent) hasInHand (VAL @object)) @result))
+            (!(Spark.getFreeId @sparkId))
+            (=>(Spark.request placeObjectForSimu (VAL @object) 0 0 0 0 0 0 1 @sparkId))
+            (!(ExecutionManager.handleReport Spark @sparkId @executionId FALSE FALSE (. .)))
+            ELSEIF(?(EQUAL @type GRAB))
+                    ;	       (=>(Robot.hasObject (VAL @arm)  (VAL @object)))  ;explanation in the next comment
+            (=>(Robot.hasObjectForThrow (VAL @arm) (VAL @object)))
+            (!(Spark.getFreeId @sparkId))
+            (=>(Spark.request placeObjectForSimu (VAL @object) 0 0 0 0 0 0 0 @sparkId))
+            (!(ExecutionManager.handleReport Spark @sparkId @executionId FALSE FALSE (. .)))
+
+            (!(Spark.getFreeId @sparkId))
+            (=>(Spark.request setObjectInHand (VAL @agent) (VAL @object) (VAL @arm) FALSE (VAL @sparkId)))
+            (!(ExecutionManager.handleReport Spark @sparkId @executionId FALSE FALSE (. .)))
+
+            (~>(Agent.hasObject (VAL @agent) (VAL @object)))
+            (!(DatabaseInterface.add (AGENT-STATEMENT PR2_ROBOT PR2_ROBOT hasInHand (VAL @object)) @result))
+            (!(DatabaseInterface.remove (AGENT-STATEMENT PR2_ROBOT (VAL @agent) hasInHand (VAL @object)) @result))
+            ;;At this point we should put an inference to tell spark that the robot has an object. The problem is that with handover the robot usually doesn't see the object so it would be attached in the wrong
+            ;;position. At the moment we just act like if the robot doesn't have the object.
+            (!(Spark.getFreeId @sparkId))
+            (=>(Spark.request placeObjectForSimu (VAL @object) 0 0 0 0 0 0 1 @sparkId))
+            (!(ExecutionManager.handleReport Spark @sparkId @executionId FALSE FALSE (. .)))
+            )
+
             (!(ReportManager.publish ExecutionManager.report @executionId OK))
             (!(FAILED))
             )
@@ -880,9 +939,9 @@
 			(!(DatabaseInterface.remove (AGENT-STATEMENT PR2_ROBOT (VAL @agent) hasInHand (VAL @object)) @result))
 			;;At this point we should put an inference to tell spark that the robot has an object. The problem is that with handover the robot usually doesn't see the object so it would be attached in the wrong
 			;;position. At the moment we just act like if the robot doesn't have the object.
-			)
-		     )
-		  )
+            )
+             )
+          )
 	       (IF(?(&(Timer.elapsedTime (VAL @timerId)) (~(EQUAL @task completed))))  ;check the timer
 		  (!(= @time expired))
 		  (~>(Timer.elapsedTime (VAL @timer)))
@@ -954,7 +1013,7 @@ $distance , $info, $orientation, $speed, $inRange  the output observations"
 		
 		(!(= $distance outOfRange))
 	     )
-	     (!(Database.findList (AGENT-STATEMENT PR2_ROBOT HERAKLES_HUMAN1 orientation @orientation) (. @orientation .) @result))
+         (!(DatabaseInterface.findList (AGENT-STATEMENT PR2_ROBOT HERAKLES_HUMAN1 orientation @orientation) (. @orientation .) @result))
 	     (IF(?(~(NULL @result)))
 		(!(= @actualOrientation (CAR(CAR @result))))
 		(IF(?(EQUAL @actualOrientation TOWARD_ROBOT))
@@ -966,7 +1025,7 @@ $distance , $info, $orientation, $speed, $inRange  the output observations"
 		
 		(!(= $orientation unknown))
 	     )
-	     (!(Database.findList (AGENT-STATEMENT PR2_ROBOT HERAKLES_HUMAN1 speed @speed) (. @speed .) @result))
+         (!(DatabaseInterface.findList (AGENT-STATEMENT PR2_ROBOT HERAKLES_HUMAN1 speed @speed) (. @speed .) @result))
 	     (IF(?(~(NULL @result)))
 		(!(= @actualSpeed (CAR(CAR @result))))
 		(IF(?(EQUAL @actualSpeed NOT_MOVING))
@@ -1161,6 +1220,38 @@ $distance , $info, $orientation, $speed, $inRange  the output observations"
   :body (
          (IF(?(Supervisor.sim TRUE))
             (^(ELAPSED-TIME (TIME) 1))
+
+            (~>(Robot.hasObject (VAL @arm) (VAL @object)))
+             (!(Spark.getFreeId @sparkId))
+             (=>(Spark.request setObjectInHand PR2_ROBOT (VAL @object) (VAL @arm) FALSE (VAL @sparkId)))
+             (!(ExecutionManager.handleReport Spark @sparkId @executionId FALSE FALSE NO_NAME))
+
+             (!(DatabaseInterface.remove (AGENT-STATEMENT PR2_ROBOT PR2_ROBOT hasInHand (VAL @object)) @result))
+
+
+             (!(Spark.getFreeId @sparkId))
+             (=>(Spark.request getJointAbsPose @placement NO_NAME @sparkId))
+             (!(ExecutionManager.handleReport Spark @sparkId @executionId FALSE FALSE NO_NAME))
+             (^(Spark.result (VAL @sparkId) @tx @ty @tz @ttx @tty @ttz))
+             (~>(Spark.result (VAL @sparkId) (VAL @tx) (VAL @ty) (VAL @tz) (VAL @ttx) (VAL @tty) (VAL @ttz)))
+
+
+             (!(Spark.getFreeId @sparkId))
+             (=>(Spark.request placeObjectForSimu @object @tx @ty @tz 0 0 0 0 @sparkId))
+             (!(ExecutionManager.handleReport Spark @sparkId @executionId FALSE FALSE NO_NAME))
+
+             (!(DatabaseInterface.findList (AGENT-STATEMENT PR2_ROBOT (VAL @placement) isOn @location) (. @location .) @result))
+             (IF(?(~(NULL @result)))
+                (!(= @location (CAR(CAR @result))))
+                (!(DatabaseInterface.add (AGENT-STATEMENT PR2_ROBOT @object isOn @location) @result))
+                )
+
+             (IF(?(Facts.sim TRUE))
+
+                (!(DatabaseInterface.add (AGENT-STATEMENT PR2_ROBOT @object isOn @placement) @result))
+                )
+             ;(!(AgentActionMonitor.cleanAgentMonitorSpheres HERAKLES_HUMAN1))
+             (!(AgentActionMonitor.calculateInferencesForAgents (. HERAKLES_HUMAN1 .)))
             (!(ReportManager.publish ExecutionManager.report @executionId OK))
             (!(FAILED))
             )
@@ -1203,12 +1294,12 @@ $distance , $info, $orientation, $speed, $inRange  the output observations"
 	 (!(ExecutionManager.handleReport Mhp @mhpId @executionId FALSE FALSE (. .)))
 
 
-     (!(DatabaseInterface.remove (AGENT-STATEMENT PR2_ROBOT PR2_ROBOT hasInHand (VAL @object)) @result))
-     (!(DatabaseInterface.add (AGENT-STATEMENT PR2_ROBOT @placement supports @object) @result))
+     (!(= @removeFacts (. (AGENT-STATEMENT PR2_ROBOT PR2_ROBOT hasInHand (VAL @object)) .)))
+     (!(= @addFacts (. (AGENT-STATEMENT PR2_ROBOT @placement supports @object) .)))
+     (!(DatabaseInterface.addSetRemoveFacts @addFacts (. .) @removeFacts @result))
      (IF(?(Spark.sim TRUE))
         (!(DatabaseInterface.add (AGENT-STATEMENT PR2_ROBOT @object isOn @placement) @result))
         )
-
 
      (!(ReportManager.publish ExecutionManager.report  @executionId OK))
 
@@ -1267,6 +1358,7 @@ $distance , $info, $orientation, $speed, $inRange  the output observations"
 
          (IF(?(Supervisor.sim TRUE))
             (^(ELAPSED-TIME (TIME) 1))
+            (!(DatabaseInterface.set (AGENT-STATEMENT PR2_ROBOT PR2_ROBOT isAt @goal) @result))
             (!(ReportManager.publish ExecutionManager.report @executionId OK))
             (!(FAILED))
             )
@@ -1286,6 +1378,8 @@ $distance , $info, $orientation, $speed, $inRange  the output observations"
 	 (!(BaseActions.getFreeId @id))
 	 (=>(BaseActions.action move @waypoints @id))
 	 (!(ExecutionManager.handleReport BaseActions @baseActionsId @executionId FALSE TRUE (. .)))
+
+     (!(DatabaseInterface.add (AGENT-STATEMENT PR2_ROBOT PR2_ROBOT isAt @goal) @result))
 
 	 (~>(ExecutionManager.isExecutingAction @executionId))	 
 	 (!(SEM-V ExecutionManager.sem))

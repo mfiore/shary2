@@ -1,0 +1,24 @@
+(
+;Action.type ACTION_NAME ACTION_TYPE
+;This predicate is then used in the ExecutionManager to execute an action. Different parameters are associated in the procedure with the kind of action, as shown in the next lines, where for each class I list the parameters associated (the order of the parameters must be respected)
+;MANIPULATION:  OBJECT_NAME
+;HANDOVER:  OBJECT_NAME AGENT_1 AGENT_2
+;PLACEMENT: OBJECT PLACEMENT
+;POSE: POSE_NAME ARM Q0  (this is actually temporary and will be changed. One day. Maybe.)
+;UNDEFINED: nothing (it's just a placeholder for actions that we haven't implemented and are not executed but return an OK)
+;GRIPPER: WHICH_GRIPPER  (RIGHT or LEFT)
+
+;;when adding a new class the parameters must be coded in the function ExecutionManager.executeAction (found in the ExecutionManager.opf file)  and in the PlanManager.manageHumanActions file (found in PlanManager.opf)
+
+
+(Action.type take MANIPULATION)
+(Action.type handover HANDOVER)
+(Action.type undefined UNDEFINED)
+
+(Action.type clean SURFACE)
+(Action.type glue SURFACE)
+(Action.type place PLACEHERE)
+(Action.type installBracket PLACEMENT)
+(Action.type go MOVEMENT)
+
+)

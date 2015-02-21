@@ -15,6 +15,8 @@
           )
    )
 
+
+
  (defop |sendWorldState|
    :invocation(!(Database.sendWorldState @name))
    :body (
@@ -204,6 +206,13 @@ $unboundVariables= lisp-list containing the variables for which we want to find 
     )
    
    )
+
+
+
+
+
+
+
  
  (defop |addLocal|
    :invocation (!(Database.add @fact))
@@ -219,7 +228,11 @@ $unboundVariables= lisp-list containing the variables for which we want to find 
 		   (IF(? (toMonitor (VAL @newFact) @event))
 		      (! (SEND-MESSAGE @supName @event))
 		      )
-		   )
+           )
+         (!(== (VAL @fact) (AGENT-STATEMENT @agent @subject @predicate @value)))
+         (IF(?(Database.checkChanges (AGENT-STATEMENT (VAL @agent) (VAL @subject) (VAL @predicate)) @event @caller))
+            (!(SEND-MESSAGE @caller (Database.valueChange @event @value)))
+            )
 	     
 	     (IF (? (toMonitor (VAL @fact) @event))
 		 (! (SEND-MESSAGE @supName @event))
@@ -235,6 +248,28 @@ $unboundVariables= lisp-list containing the variables for which we want to find 
    )
 
 
+
+(defop |set|
+  :invocation(Database.set @fact @caller)
+  :body (
+         (!(== (VAL @fact) (AGENT-STATEMENT PR2_ROBOT @subject @predicate @value)))
+         (IF(?(AGENT-STATEMENT PR2_ROBOT (VAL @subject) (VAL @predicate) @oldValue))
+            (!(Database.remove (AGENT-STATEMENT PR2_ROBOT @subject @predicate @oldValue)))
+            )
+         (=>(Database.add @fact @caller))
+         )
+  )
+(defop |setLocal|
+  :invocation(!(Database.set @fact))
+  :body (
+         (!(== (VAL @fact) (AGENT-STATEMENT PR2_ROBOT @subject @predicate @value)))
+         (IF(?(AGENT-STATEMENT PR2_ROBOT (VAL @subject) (VAL @predicate) @oldValue))
+            (!(Database.remove (AGENT-STATEMENT PR2_ROBOT @subject @predicate @oldValue)))
+            )
+         (!(Database.add @fact))
+         )
+
+  )
    
  (defop |add|
    :invocation (Database.add @fact @caller)
@@ -243,9 +278,6 @@ $unboundVariables= lisp-list containing the variables for which we want to find 
           (!(Database.add @fact))
 
          (!(SEND-MESSAGE @caller (Database.result (. OK .))))
-
-	  
-
 
 	     )
    )
@@ -288,6 +320,22 @@ $unboundVariables= lisp-list containing the variables for which we want to find 
 	   
 	  )
    )
+
+
+(defop |cancelRegisterToChanges|
+  :invocation (Database.cancelRegisterToChanges @fact @event @caller)
+  :body (
+         (~>(Database.checkChanges (VAL @fact) (VAL @event) (VAL @caller)))
+         (!(SEND-MESSAGE @caller (Database.result (. OK .))))
+         )
+  )
+(defop |registerToChanges|
+  :invocation (Database.registerToChanges @fact @event @caller)
+  :body (
+         (=>(Database.checkChanges (VAL @fact) (VAL @event) (VAL @caller)))
+         (!(SEND-MESSAGE @caller (Database.result (. OK .))))
+         )
+  )
  (defop |monitorFact|
    :invocation (Database.addMonitor @factToMonitor @event @caller)
    :documentation "this procedure sets up a monitor for a given fact. When this fact is first added to the Database it returns $eventName to the current kernel. $fact and $event are both composed terms"
@@ -407,6 +455,30 @@ $unboundVariables= lisp-list containing the variables for which we want to find 
 		)
 	) 
 
+(defop |addSetRemoveFactsLocal|
+  :invocation(Database.addSetRemoveFacts @addFacts @setFacts @removeFacts @caller)
+  :body (
+         (WHILE(?(~(NULL @addFacts)))
+               (!(= @fact (CAR @addFacts)))
+               (!(= @addFacts (CDR @addFacts)))
+
+               (!(Database.add @fact))
+               )
+         (WHILE(?(~(NULL @setFacts)))
+               (!(= @fact (CAR @setFacts)))
+               (!(= @setFacts (CDR @setFacts)))
+
+               (!(Database.set @fact))
+               )
+         (WHILE(?(~(NULL @removeFacts)))
+               (!(= @fact (CAR @removeFacts)))
+               (!(= @removeFacts (CDR @removeFacts)))
+
+               (!(Database.remove @fact))
+               )
+         (!(SEND-MESSAGE @caller (Database.result (. OK .) )))
+         )
+  )
 (defop |addPredicates|
   :invocation (!(Database.addPredicates @subjectList @predicateList @valueList))
   :body (

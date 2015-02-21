@@ -23,6 +23,20 @@
 (Acapela.translation PLACEMAT_GREEN "placemat green")
 
 
+(Acapela.translation GLUE_BOTTLE "glue bottle")
+(Acapela.translation BRACKET_1 "bracket one")
+(Acapela.translation BRACKET_2 "bracket two")
+(Acapela.translation BRACKET_3 "bracket three")
+(Acapela.translation WORK_LOCATION_1 "work location one")
+(Acapela.translation WORK_LOCATION_2 "work location two")
+(Acapela.translation WORK_LOCATION_3 "work location three")
+(Acapela.translation ASSEMBLY_SURFACE_1 "assembly surface one")
+(Acapela.translation ASSEMBLY_SURFACE_2 "assembly surface two")
+(Acapela.translation ASSEMBLY_SURFACE_3 "assembly surface three")
+(Acapela.translation STOCK_TABLE "stock_table")
+(Acapela.translation PLACEMAT_RED_2 "placemat red two")
+(Acapela.translation PLACEMAT_BLUE_2 "placemat blue two")
+(Acapela.translation PLACEMAT_GREEN_2 "placemat green two")
 
 (Acapela.sentence startSentence 0 "First, ")
 (Acapela.sentence startSentence 1 "So, ")

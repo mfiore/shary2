@@ -141,7 +141,7 @@
                    (l_gripper  @l_gripper)
                    (l_gripper_false  @l_gripper_false))))
 
-         (!(GenomInterface.handleRequest  PR2SOFTMOTION PR2SOFTMOTION_GOTOQ (Softmotion.stop (VAL @id)) (FALSE) (FALSE) 5 (VAL @parameters) @report @result))
+         (!(GenomInterface.handleRequest  PR2SOFTMOTION PR2SOFTMOTION_GOTOQ (Softmotion.stop (VAL @id)) (FALSE) (FALSE) 10 (VAL @parameters) @report @result))
          (!(ReportManager.publish Softmotion.report (VAL @id) (VAL @report)))
 
          )
@@ -386,7 +386,7 @@
       (IF (?(Softmotion.sim FALSE)) ;;the gripper doesn't seem to work in simulation
 	      (!(= @parameters (PR2SM_gripperGrabRelease (VAL @state))))	     
 
-          (!(GenomInterface.handleRequest PR2SOFTMOTION PR2SOFTMOTION_GRIPPERGRABRELEASE (Softmotion.stop (VAL @id)) (VAL @irAddFact) (VAL @stopFact) 5 @parameters @report @result))
+          (!(GenomInterface.handleRequest PR2SOFTMOTION PR2SOFTMOTION_GRIPPERGRABRELEASE (Softmotion.stop (VAL @id)) (VAL @irAddFact) (VAL @stopFact) @waitTime @parameters @report @result))
           (!(ReportManager.publish Softmotion.report (VAL @id) (VAL @report)))
 	      
 	      ELSEIF(?(EQUAL @state RRELEASE))

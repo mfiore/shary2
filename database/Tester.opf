@@ -1,4 +1,10 @@
 (
+(defop |testFindList|
+  :invocation (!(Tester.testFindList))
+  :body (
+         (!(Database.findListLocal (AGENT-STATEMENT PR2_ROBOT BLUE_CUBE isOn ROBOTAB_AREA) (. .) @result))
+         )
+)
 
  (defop |testSendMessage|
    :invocation(!(Tester.testSendMessage))

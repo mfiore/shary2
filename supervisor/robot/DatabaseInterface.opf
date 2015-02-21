@@ -69,6 +69,32 @@ $unboundVariables= lisp-list containing the variables for which we want to find 
 	)	
    )
 
+(defop |addSetRemoveFacts|
+  :invocation (!(DatabaseInterface.addSetRemoveFacts @addFacts @setFacts @removeFacts $result))
+  :documentation "this procedure adds $fact into the database and returns $result. $fact= a composed term like (isOn cup_0 table_0)."
+  :body (
+         (!(SEM-P DatabaseInterface.sem))
+         (? (ONTO_NAME $ONTO_NAME))
+         (? (SUP_NAME $SUP_NAME))
+         (!(SEND-MESSAGE $ONTO_NAME (Database.addSetRemoveFacts @addFacts @setFacts @removeFacts $SUP_NAME)))
+         (!(DatabaseInterface.getResult $result))
+         (!(SEM-V DatabaseInterface.sem))
+         )
+  )
+(defop |set|
+  :invocation (!(DatabaseInterface.set @fact $result))
+  :body (
+         (!(SEM-P DatabaseInterface.sem))
+         (? (ONTO_NAME $ONTO_NAME))
+         (? (SUP_NAME $SUP_NAME))
+         (!(SEND-MESSAGE $ONTO_NAME (Database.set @fact $SUP_NAME)))
+         (!(DatabaseInterface.getResult $result))
+         (!(SEM-V DatabaseInterface.sem))
+         )
+  )
+
+
+
  (defop |remove|
    :invocation (!(DatabaseInterface.remove $fact $result))
    :documentation "this procedure removes $fact from the database. $fact= a composed termi like (isOn cup_0 table_0)"
@@ -108,13 +134,38 @@ $unboundVariables= lisp-list containing the variables for which we want to find 
 	  
 	)	
    )
+
+(defop |cancelRegisterToChanges|
+  :invocation(!(DatabaseInterface.cancelRegisterToChanges $fact $event $result))
+  :body (
+         (!(SEM-P DatabaseInterface.sem))
+         (? (ONTO_NAME $ONTO_NAME))
+         (? (SUP_NAME $SUP_NAME))
+         (!(SEND-MESSAGE $ONTO_NAME (Database.cancelRegisterToChanges $fact $event  $SUP_NAME)))
+         (!(DatabaseInterface.getResult $result))
+         (!(SEM-V DatabaseInterface.sem))
+         )
+
+  )
+(defop |registerToChanges|
+  :invocation(!(DatabaseInterface.registerToChanges $fact $event $result))
+  :documentation ""
+  :body (
+         (!(SEM-P DatabaseInterface.sem))
+         (? (ONTO_NAME $ONTO_NAME))
+         (? (SUP_NAME $SUP_NAME))
+         (!(SEND-MESSAGE $ONTO_NAME (Database.registerToChanges $fact $event  $SUP_NAME)))
+         (!(DatabaseInterface.getResult $result))
+         (!(SEM-V DatabaseInterface.sem))
+         )
+  )
  (defop |getResult|
    :invocation(!(DatabaseInterface.getResult $result))
    :documentation "this procedure handles the return message of the DB"
    :body (
 
 	  (? (TIME_TO_WAIT_DB $TIME_TO_WAIT_DB))
-	  (^ (|| (Database.result $result)));(ELAPSED-TIME (TIME) $TIME_TO_WAIT_DB)))
+      (^ (Database.result $result));(ELAPSED-TIME (TIME) $TIME_TO_WAIT_DB)))
 	  (IF(?(Database.result $result))
 	     (~>(Database.result $result))
 	     ELSE

@@ -26,13 +26,20 @@
 
  (Spark.sphereParameters PLACEMAT 0.25 1.0)
  (Spark.sphereParameters TAPE 1.0 1.2)
- (Spark.sphereParameters TRASHBIN 1 1.0)
+(Spark.sphereParameters BOTTLE 1.0 0.5)
+(Spark.sphereParameters BRACKET 1.0 1.2)
+(Spark.sphereParameters TRASHBIN 1 1.0)
  (Spark.sphereParameters CUBE 1.0 1.5)
 
 ;;Spark.monitorParameter actionName PARAMETER_CLASS  this is used at the moment only in the PlanManager.manageHumanActions op to understand what condition triggers completing the action. For example, if the robot wants to monitor when the human takes a take, the action will be completed when the monitor sphere associated to the object is triggered.
 
  (Spark.monitorParameter take PICKABLE)
  (Spark.monitorParameter throw PLACEMENT)
- (Spark.monitorParameter place PLACEMENT)			
+ (Spark.monitorParameter place PLACEMENT)
+  (Spark.monitorParameter clean PLACEMENT)
+    (Spark.monitorParameter glue PLACEMENT)
+      (Spark.monitorParameter installBracket PLACEMENT)
+        
+
 )
 

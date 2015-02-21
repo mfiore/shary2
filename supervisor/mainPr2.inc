@@ -82,8 +82,8 @@ load opf "supervisor/robot/ReportManager.opf"
 
 include "supervisor/domains/Actions.sym"
 
-load db "supervisor/domains/Object.db"
-load db "supervisor/domains/Actions.db"
+load db "supervisor/domains/saphariObjects.db"
+load db "supervisor/domains/SaphariActions.db"
 
 
 load db "supervisor/utilities/POMDP.db"
@@ -99,3 +99,4 @@ load opf "supervisor/utilities/Timer.opf"
 load opf "supervisor/utilities/POMDP.opf"
 
 
+add (!(Tester.testPlan))

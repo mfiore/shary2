@@ -75,7 +75,46 @@
 				  )
 			       )
 			    )
-		      (!(= @actionParameters (. (VAL @object)  .)))
+              (!(= @actionParameters (. (VAL @object)  .)))
+              ELSEIF(?(Action.type (VAL @actionName) SURFACE))
+
+              (!(= @object NO_NAME))
+              (WHILE(?(~(NULL @parameters)))
+                    (!(= @currentParameter (CAR @parameters)))
+                    (!(= @parameters (CDR @parameters)))
+                    (IF(?(Object.type (VAL @currentParameter) @class @type))    ;;depending on the type of the parameter in the supervisor domain we update the correct variable
+                       (IF(?(EQUAL @type PLACEMENT))
+                          (!(= @placement (VAL @currentParameter)))
+                          )
+                       )
+                    )
+              (!(= @actionParameters (. (VAL @placement) .)))
+
+              ELSEIF(?(Action.type (VAL @actionName) PLACEHERE))
+              (!(= @object NO_NAME))
+              (WHILE(?(~(NULL @parameters)))
+                    (!(= @currentParameter (CAR @parameters)))
+                    (!(= @parameters (CDR @parameters)))
+                    (IF(?(Object.type (VAL @currentParameter) @class @type))    ;;depending on the type of the parameter in the supervisor domain we update the correct variable
+                       (IF(?(EQUAL @type PICKABLE))
+                          (!(= @object (VAL @currentParameter)))
+                          )
+                       )
+                    )
+              (!(= @actionParameters (. (VAL @object)  .)))
+              ELSEIF(?(Action.type (VAL @actionName) MOVEMENT))
+
+              (!(= @object NO_NAME))
+              (WHILE(?(~(NULL @parameters)))
+                    (!(= @currentParameter (CAR @parameters)))
+                    (!(= @parameters (CDR @parameters)))
+                    (IF(?(Object.type (VAL @currentParameter) @class @type))    ;;depending on the type of the parameter in the supervisor domain we update the correct variable
+                       (IF(?(EQUAL @type SUPPORT))
+                          (!(= @object (VAL @currentParameter)))
+                          )
+                       )
+                    )
+              (!(= @actionParameters (. (VAL @object)  .)))
 		      ELSEIF(?(Action.type (VAL @actionName) PLACEMENT))
 ;		      (!(= @object NO_NAME))
 ;		      (!(= @placement NO_NAME))
@@ -105,7 +144,7 @@
 			    (!(= @parameters (CDR @parameters)))
 
 			    (IF(?(Object.type (VAL @currentParameter) @class @type))    ;;depending on the type of the parameter in the supervisor domain we update the correct variable
-			       (IF(?(EQUAL @type PARAMETER))
+                   (IF(?(EQUAL @type PICKABLE))
 				  (!(= @object (VAL @currentParameter)))  
 				  
 			       

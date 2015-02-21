@@ -13,5 +13,14 @@
 (PlannerInterface.action hatp GiveInformationAbout undefined)
 (PlannerInterface.action hatp AskForInformation undefined)
 
-
+(PlannerInterface.action hatp TravelTo go)  
+(PlannerInterface.action hatp HandOver handover) 
+(PlannerInterface.action hatp Pick take)  
+(PlannerInterface.action hatp Place place) 
+(PlannerInterface.action hatp Clean clean) 
+(PlannerInterface.action hatp Glue glue) 
+(PlannerInterface.action hatp AttachBracket installBracket) 
+(PlannerInterface.action hatp StartPointing undefined) 
+(PlannerInterface.action hatp StopPointing undefined) 
+(PlannerInterface.action hatp CarryTo go) 
 )

@@ -80,8 +80,15 @@
 		  
 	     )
 	  (=>(Robot.position TORSO @x @y @z @yaw @pitch @roll))
-	  
-	  
+
+      (!(DatabaseInterface.findList (AGENT-STATEMENT (VAL @robotName) (VAL @robotName) isAt @location) (. @location .) @result))
+      (IF(?(~(NULL @result)))
+         (!(= @location (CAR(CAR @result))))
+         ELSE
+         (!(= @location UNKNOWN))
+         )
+      (=>(Robot.location @location))
+
 	  )
    )
 )

@@ -38,7 +38,9 @@
          (!(MonitorManager.sub PlanManager.agentReport @agent @monitorId))
          ;;start the monitoring
 	     (!(MonitorManager.monitorTarget @agent @sparkHumanHead @successConditions @failureConditions MEDIUM @monitorId))
-	     (=>(AgentActionMonitor.isMonitoringAgent @agent @monitorId))
+         (!(DatabaseInterface.registerToChanges (AGENT-STATEMENT PR2_ROBOT (VAL @agent) isAt) (humanLocation (VAL @agent)) @result))
+         (=>(AgentActionMonitor.isMonitoringAgent @agent @monitorId))
+
 	     )
 	  
 	  )
@@ -47,8 +49,8 @@
  (defop |cancelActions|
    :invocation (!(AgentActionMonitor.cancelActions @agent))
    :body (
-          (WHILE(?(AgentActionMonitor.monitorAction (VAL @agent) @action @sphere))   ;;since we are not monitoring the agent anymore we are not monitoring his actions anymore
-                (~>(AgentActionMonitor.monitorAction (VAL @agent) (VAL @action) (VAL @sphere)))
+          (WHILE(?(AgentActionMonitor.monitorAction (VAL @agent) @actionId @actionName @actionParameters @sphere))   ;;since we are not monitoring the agent anymore we are not monitoring his actions anymore
+                (~>(AgentActionMonitor.monitorAction (VAL @agent) (VAL @actionId) (VAL @actionName) (VAL @actionParameters) (VAL @sphere)))
                 )
           )
    )
@@ -61,6 +63,8 @@
 	     (=>(MonitorManager.cancelMonitoring (VAL @monitorId)))
 	     (~>(AgentActionMonitor.isMonitoringAgent (VAL @agent) (VAL @monitorId)))
          (!(AgentActionMonitor.cancelActions @agent))
+         (!(DatabaseInterface.cancelRegisterToChanges (AGENT-STATEMENT PR2_ROBOT (VAL @agent) isAt) (humanLocation (VAL @agent)) @result))
+
 	     )
 	  )
    )
@@ -90,16 +94,19 @@
    :body (
 	  (!(SEM-P AgentActionMonitor.sem))
 	  (!(= @sphereId 0))        
+      (?(Object.pickable @objectList))
+      (!(= @object (CAR @objectList)))
 	  (WHILE(?(< @sphereId 10))   ;from 0 to 10 (indexes of the monitor spheres in spark)
             (!(Spark.getFreeId @sparkId))
             (!(ReportManager.sub Spark.report @sparkId))
                                         ;we use a fake item and agent
-            (=>(Spark.request updateSphereMonitor (VAL @sphereId) GEN_FALSE BLUE_CUBE 0 HERAKLES_HUMAN1 0 0 0 SPARK_PICK_OBJECT (VAL @sparkId)))
+            (=>(Spark.request updateSphereMonitor (VAL @sphereId) GEN_FALSE @object 0 HERAKLES_HUMAN1 0 0 0 SPARK_PICK_OBJECT (VAL @sparkId)))
             (^(Spark.report (VAL @sparkId) @report))
             (!(ReportManager.unsub Spark.report @sparkId))
 
 		(IF(?(AgentActionMonitor.sphere @agent @object (VAL @sphereId)))  ;we erase the spheres from the db
-		   (~>(AgentActionMonitor.sphere (VAL @agent) (VAL @object) (VAL @sphereId)))
+           (~>(AgentActionMonitor.sphere (VAL @agent) (VAL @object) (VAL @sphereId)))
+           (~>(AgentActionMonitor.sphereType (VAL @sphereId) @actionName ))
 		   )
 		(!(= @sphereId (+ @sphereId 1)))
 		)
@@ -113,7 +120,8 @@
    :documentation "Erase the monitor spheres of a particular agent"
    :body (
 	  (!(SEM-P AgentActionMonitor.sem))
-	  (!(= @sphereId 0))
+      (!(= @sphereId 0))
+
 	  (WHILE(?(< @sphereId 10))  ;from 0 to 9 (index of the monitor spheres in spark)
 		(IF(?(AgentActionMonitor.sphere (VAL @agent) @object (VAL @sphereId)))  ;if there is a sphere for an agent if we cancel it
            (!(Spark.getFreeId @sparkId))
@@ -122,7 +130,8 @@
            (^(Spark.report (VAL @sparkId) @report))
            (!(ReportManager.unsub Spark.report @sparkId))
 
-		   (~>(AgentActionMonitor.sphere (VAL @agent) (VAL @object) (VAL @sphereId)))
+           (~>(AgentActionMonitor.sphere (VAL @agent) (VAL @object) (VAL @sphereId)))
+           (~>(AgentActionMonitor.sphereType (VAL @sphereId) @action))
 		   )
 		(!(= @sphereId (+ @sphereId 1)))
 		)
@@ -136,23 +145,61 @@
    :invocation (!(AgentActionMonitor.cleanMonitorSphere @sphereId))
    :documentation "Erase a particular monitor sphere"
    :body (
-	  (!(SEM-P AgentActionMonitor.sem))
-	  (!(Spark.getFreeId @sparkId))
-      (!(ReportManager.sub Spark.report @sparkId))
-	  (=>(Spark.request updateSphereMonitor (VAL @sphereId) GEN_FALSE GREY_TAPE 0 HERAKLES_HUMAN1 0 0 0 SPARK_PICK_OBJECT (VAL @sparkId)))
-	  (^(Spark.report (VAL @sparkId) @report))
-      (!(ReportManager.unsub Spark.report @sparkId))
+          (!(SEM-P AgentActionMonitor.sem))
 
-	  (IF(?(AgentActionMonitor.sphere @agent @object (VAL @sphereId)))
-	     (~>(AgentActionMonitor.sphere @agent @object (VAL @sphereId)))
+          (?(Object.pickable @objectList))
+          (!(= @object (CAR @objectList)))
+          (!(Spark.getFreeId @sparkId))
+          (!(ReportManager.sub Spark.report @sparkId))
+          (=>(Spark.request updateSphereMonitor (VAL @sphereId) GEN_FALSE @object 0 HERAKLES_HUMAN1 0 0 0 SPARK_PICK_OBJECT (VAL @sparkId)))
+          (^(Spark.report (VAL @sparkId) @report))
+          (!(ReportManager.unsub Spark.report @sparkId))
+
+          (IF(?(AgentActionMonitor.sphere @agent @object (VAL @sphereId)))
+             (~>(AgentActionMonitor.sphere @agent @object (VAL @sphereId)))
+             (~>(AgentActionMonitor.sphereType (VAL @sphereId) @action))
 	     )
 
-	  (!(SEM-V AgentActionMonitor.sem))
+          (!(SEM-V AgentActionMonitor.sem))
 	  )
    )
 
+ (defop |activateMonitorSpheresCoord|
+   :invocation(!(AgentActionMonitor.activateMonitorSpheresCoord @coordList @actionName @agent))
+   :body (
+  (!(SEM-P AgentActionMonitor.sem))
+      (WHILE(?(~(NULL @coordList)))
+        (!(= @currentCoord (CAR @coordList)))
+        (!(= @coordList (CDR @coordList)))
+        (!(== (VAL @currentCoord) (. @currentObject @x @y @z .)))
+        (IF(?(~(AgentActionMonitor.sphere (VAL @agent) (VAL @currentObject) @sphereId))) ;if the sphere is not already activated
+
+           ;;activate a monitor sphere
+           (!(Spark.getFreeId @sparkId))
+           (!(Spark.getFreeSphereId @sphereId))
+           (?(Spark.humanHand RIGHT @sparkHand))
+           ;;different objects have different affordances associated to them, which translate to different kinds of monitor spheres.
+           (?(Object.type (VAL @currentObject) @class @type))
+
+           (!(ReportManager.sub Spark.report @sparkId))
+           (=>(Spark.request updateSphereMonitor (VAL @sphereId) GEN_TRUE (VAL @currentObject) (VAL @sparkHand)
+                             (VAL @agent) (VAL @x) (VAL @y) (VAL @z) SPARK_SIMPLE_ENTRY (VAL @sparkId)))
+           (^(Spark.report (VAL @sparkId) @report))
+           (!(ReportManager.unsub Spark.report @sparkId))
+
+
+
+           (=>(AgentActionMonitor.sphere @agent @currentObject @sphereId))
+           (=>(AgentActionMonitor.sphereType @sphereId @actionName))
+           )
+        )
+      (!(SEM-V AgentActionMonitor.sem))
+
+          )
+   )
+
  (defop |activateMonitorSpheres|
-   :invocation (!(AgentActionMonitor.activateMonitorSpheres @objectList @agent))
+   :invocation (!(AgentActionMonitor.activateMonitorSpheres @objectList @actionName @agent))
    :documentation "Activate monitor spheres for an agent on the objects present in objectList"
    :body (
 
@@ -171,21 +218,22 @@
 
 		   (~>(Spark.result (VAL @sparkId) (VAL @x) (VAL @y) (VAL @z) (VAL @yaw) (VAL @pitch) (VAL @roll)))		
 		   ;;activate a monitor sphere
-		   (!(Spark.getFreeId @sparkId))
+           (!(Spark.getFreeId @sparkId))
 		   (!(Spark.getFreeSphereId @sphereId))
 		   (?(Spark.humanHand RIGHT @sparkHand))
 		   ;;different objects have different affordances associated to them, which translate to different kinds of monitor spheres.
 		   (?(Object.type (VAL @currentObject) @class @type))
-		   (?(Spark.typeMonitorSphere (VAL @type) @sphereType))
+
            (!(ReportManager.sub Spark.report @sparkId))
 		   (=>(Spark.request updateSphereMonitor (VAL @sphereId) GEN_TRUE (VAL @currentObject) (VAL @sparkHand)
-                             (VAL @agent) (VAL @x) (VAL @y) (VAL @z) (VAL @sphereType) (VAL @sparkId)))
+                             (VAL @agent) (VAL @x) (VAL @y) (VAL @z) SPARK_SIMPLE_ENTRY (VAL @sparkId)))
 		   (^(Spark.report (VAL @sparkId) @report))
            (!(ReportManager.unsub Spark.report @sparkId))
 
 		   
 		   
-		   (=>(AgentActionMonitor.sphere @agent @currentObject @sphereId))
+           (=>(AgentActionMonitor.sphere @agent @currentObject @sphereId))
+           (=>(AgentActionMonitor.sphereType @sphereId @actionName))
 		   )
 		)
 	  (!(SEM-V AgentActionMonitor.sem))	  
@@ -214,7 +262,7 @@
 	 (IF(?(~(EQUAL @agent @robotName)))
 	    (!(AgentActionMonitor.calculateInferencesForAgents (. @agent .)))
 	    )
-	 )
+     )
   )
 
 
@@ -223,93 +271,117 @@
   :documentation "adds inferences for all agents for objects already present in the scene. We duplicate code here but we save some time since if we looped on the calculateInferencesForAgent op we would have done again
  the requestes to the DB"
   :body (	 
- 
-	 ;;First we will calculate inferences for every pickable and placemat object on tables, for every agent in @agentList
-	 (?(Object.table @tableList))
-	 (WHILE(?(~(NULL @tableList)))
-	       (!(= @aTable (CAR @tableList)))
-	       (!(= @tableList (CDR @tableList)))
 
-	       (!(DatabaseInterface.findList (AGENT-STATEMENT PR2_ROBOT @object isOn (VAL @aTable)) (. @object .) @result)) ;;get the objects on the table
-	       (IF(?(NULL @result))
-		  (!(= @objects (. .)))
-		  ELSE
-		  (!(= @objects @result))
-		  )
-	       (!(= @pickableList (. .)))
-	       (!(= @placementList (. .)))
-	       
-	       ;we separate objects in pickables and placements (and ignore bins for now)
-	       (WHILE(?(~(NULL @objects)))
-		     (!(= @anObject (CAR(CAR @objects))))
-		     (!(= @objects (CDR @objects)))
+         ;;First we will calculate inferences for every pickable and placemat object on tables, for every agent in @agentList
 
-		     (IF(?(Object.type (VAL @anObject) @class PICKABLE))
-			(!(= @pickableList (CONS-TAIL @anObject @pickableList)))
+         (!(= @agent (CAR @agentList)))
+         (!(DatabaseInterface.findList (AGENT-STATEMENT PR2_ROBOT (VAL @agent) isAt @l) (. @l .) @result))
+         (!(= @table (CAR(CAR @result))))
+                                        ;(?(Object.table @tableList))
+         (!(= @tableList (. @table .)))
+         (WHILE(?(~(NULL @tableList)))
+               (!(= @aTable (CAR @tableList)))
+               (!(= @tableList (CDR @tableList)))
 
-			ELSEIF(?(Object.type (VAL @anObject) @class PLACEMENT))
-			(!(= @placementList (CONS-TAIL @anObject @placementList)))
-			)
-		     )
-	       
-	       (!(= @agents @agentList))  ;;copy of agent list since we will need to scan it for every table
-	       (WHILE(?(~(NULL @agents)))
-		     (!(= @anAgent (CAR @agents)))
-		     (!(= @agents (CDR @agents)))
+               (!(DatabaseInterface.findList (AGENT-STATEMENT PR2_ROBOT @object isOn (VAL @aTable)) (. @object .) @result)) ;;get the objects on the table
+               (IF(?(NULL @result))
+                  (!(= @objects (. .)))
+                  ELSE
+                  (!(= @objects @result))
+                  )
+               (!(= @pickableList (. .)))
+               (!(= @placementList (. .)))
 
-		     (!(= @pickables @pickableList))  ;;we copy pickables and placements since we need to scan them for every agent
-		     (!(= @placements @placementList))
-		     
-		     (!(= @objectsToMonitor (. .))) ;;here we will place object for which we create monitor spheres
-		     (IF(?(~(Agent.hasObject (VAL @anAgent) @anyObject)))  ;;if the agent doesn't have the objects we scan the pickable list, else we scan the placement lists 
+                                        ;we separate objects in pickables and placements (and ignore bins for now)
+               (WHILE(?(~(NULL @objects)))
+                     (!(= @anObject (CAR(CAR @objects))))
+                     (!(= @objects (CDR @objects)))
 
-			(WHILE(?(~(NULL @pickables)))
-			      (!(= @anObject (CAR @pickables)))
-			      (!(= @pickables (CDR @pickables)))
-			      (IF(?(~(AgentActionMonitor.sphere (VAL @anAgent) (VAL @anObject) @sphereId))) ;;if the object is not monitored add it to the objectToMonitor list
-				 (!(= @objectsToMonitor (CONS-TAIL @anObject @objectsToMonitor)))
-				 )
-			      )
-			(IF(?(~(NULL @objectsToMonitor)))
-			   (!(AgentActionMonitor.activateMonitorSpheres @objectsToMonitor @anAgent)) ;;activate monitor spheres for the objects
-			   )
+                     (IF(?(Object.type (VAL @anObject) @class PICKABLE))
 
-			ELSE
-			(WHILE(?(~(NULL @placements))) ;;same as the previous loop
-			      (!(= @anObject (CAR @placements)))
-			      (!(= @placements (CDR @placements)))
-			      (IF(?(~(AgentActionMonitor.sphere (VAL @anAgent) (VAL @anObject) @sphereId)))
-				 (!(= @objectsToMonitor (CONS-TAIL @anObject @objectsToMonitor)))
-				 )
-			      )
-			(IF(?(~(NULL @objectsToMonitor)))
-			   (!(AgentActionMonitor.activateMonitorSpheres @objectsToMonitor @anAgent))
-			   )
-			)
-		     )
-	       )
+                        (!(= @pickableList (CONS-TAIL @anObject @pickableList)))
 
-	 ;;now we work on bins (bins may or may not be on tables so we treat them separately)
-	 (?(Object.bin @binList))
-	 (WHILE(?(~(NULL @agentList)))
-	       (!(= @anAgent (CAR @agentList)))
-	       (!(= @agentList (CDR @agentList)))
-	       (!(= @bins @binList))
-	       (!(= @objectsToMonitor (. .)))
-	       (IF(?(Agent.hasObject (VAL @anAgent) @anyObject))
-		  (WHILE(?(~(NULL @bins)))
-		    (!(= @aBin (CAR @bins)))
-		    (!(= @bins (CDR @bins)))
-		    (IF(?(~(AgentActionMonitor.sphere (VAL @anAgent) (VAL @aBin) @sphere)))
-		       (!(= @objectsToMonitor (CONS-TAIL @aBin @objectsToMonitor)))
-		       )
-		    )
-		  (IF(?(~(NULL @objectsToMonitor)))
-		     (!(AgentActionMonitor.activateMonitorSpheres @objectsToMonitor @anAgent))
-		     )	
-		  )
-	       )	 
-	 )
+                        ELSEIF(?(Object.type (VAL @anObject) @class PLACEMENT))
+                        (!(DatabaseInterface.findList (AGENT-STATEMENT PR2_ROBOT @object isOn (VAL @anObject)) (. @object .) @result))
+                        (IF(?(NULL @result))
+                           (!(= @placementList (CONS-TAIL @anObject @placementList)))
+                           )
+                        )
+                     )
+
+               (!(= @agents @agentList))  ;;copy of agent list since we will need to scan it for every table
+               (WHILE(?(~(NULL @agents)))
+                     (!(= @anAgent (CAR @agents)))
+                     (!(= @agents (CDR @agents)))
+
+                     (!(= @pickables @pickableList))  ;;we copy pickables and placements since we need to scan them for every agent
+                     (!(= @placements @placementList))
+
+                     (!(= @objectsToMonitor (. .))) ;;here we will place object for which we create monitor spheres
+                     (IF(?(~(Agent.hasObject (VAL @anAgent) @anyObject)))  ;;if the agent doesn't have the objects we scan the pickable list, else we scan the placement lists
+
+                        (WHILE(?(~(NULL @pickables)))
+                              (!(= @anObject (CAR @pickables)))
+                              (!(= @pickables (CDR @pickables)))
+                              (IF(?(~(AgentActionMonitor.sphere (VAL @anAgent) (VAL @anObject) @sphereId))) ;;if the object is not monitored add it to the objectToMonitor list
+
+                                 ;;we can pick bracket only if they haven't been installed yet
+                                 (IF(?(Object.type (VAL @anObject) BRACKET PICKABLE))
+                                    (!(DatabaseInterface.find (AGENT-STATEMEMENT PR2_ROBOT (VAL @anObject) isInstalled 1) @result))
+                                    (IF(?(EQUAL @result (. FALSE .)))
+                                       (!(= @objectsToMonitor (CONS-TAIL @anObject @objectsToMonitor)))
+                                       )
+
+                                    ELSE
+                                    (!(= @objectsToMonitor (CONS-TAIL @anObject @objectsToMonitor)))
+                                    )
+                                 )
+                              )
+                        (IF(?(~(NULL @objectsToMonitor)))
+                           (!(AgentActionMonitor.activateMonitorSpheres @objectsToMonitor take @anAgent)) ;;activate monitor spheres for the objects
+                           )
+
+                        ELSE
+                        (?(Agent.hasObject (VAL @anAgent) @heldObject))
+                        (?(Object.type (VAL @heldObject) @type @class))
+
+                        (WHILE(?(~(NULL @placements))) ;;same as the previous loop
+                              (!(= @anObject (CAR @placements)))
+                              (!(= @placements (CDR @placements)))
+                              (IF(?(Object.link (VAL @anObject) (VAL @type)))
+                                 (IF(?(~(AgentActionMonitor.sphere (VAL @anAgent) (VAL @anObject) @sphereId)))
+                                    (!(= @objectsToMonitor (CONS-TAIL @anObject @objectsToMonitor)))
+                                    )
+                                 )
+                              )
+                        (IF(?(~(NULL @objectsToMonitor)))
+                           (!(AgentActionMonitor.activateMonitorSpheres @objectsToMonitor place @anAgent))
+                           )
+                        )
+                     )
+               )
+
+         ;;now we work on bins (bins may or may not be on tables so we treat them separately)
+         (?(Object.bin @binList))
+         (WHILE(?(~(NULL @agentList)))
+               (!(= @anAgent (CAR @agentList)))
+               (!(= @agentList (CDR @agentList)))
+               (!(= @bins @binList))
+               (!(= @objectsToMonitor (. .)))
+               (IF(?(Agent.hasObject (VAL @anAgent) @anyObject))
+                  (WHILE(?(~(NULL @bins)))
+                        (!(= @aBin (CAR @bins)))
+                        (!(= @bins (CDR @bins)))
+                        (IF(?(~(AgentActionMonitor.sphere (VAL @anAgent) (VAL @aBin) @sphere)))
+                           (!(= @objectsToMonitor (CONS-TAIL @aBin @objectsToMonitor)))
+                           )
+                        )
+                  (IF(?(~(NULL @objectsToMonitor)))
+                     (!(AgentActionMonitor.activateMonitorSpheres @objectsToMonitor throw @anAgent))
+                     )
+                  )
+               )
+         )
   )
 
 
@@ -318,7 +390,7 @@
    :invocation(AgentActionMonitor.startMonitorSphereLoop) 
    :documentation "Loop to read the poster of the monitor spheres"
    :body (
-      (IF(?(Spark.sim FALSE))
+      (IF(?(MonitorSpheres.sim FALSE))
 	     (WHILE(?(~(AgentActionMonitor.stopMonitorSphereLoop)))
 		   (!(AgentActionMonitor.readMonitorSpheresPoster))
 		   (^ (ELAPSED-TIME (TIME) 1))
@@ -334,7 +406,7 @@
    :invocation(!(AgentActionMonitor.readMonitorSpheresPoster))
    :documentation "Reads the monitor sphere poster and updates knowledge"
    :body (
-      (IF(?(Spark.sim FALSE))
+      (IF(?(MonitorSpheres.sim FALSE))
 	     (!(READ-POSTER-INTERNAL SPARK_MONITORINGSPHERES @poster))
 	     (IF(! (==  (VAL @poster) (SPARK_MONITORINGSPHERES_POSTER_STR (monitoringSpheres @spheres (modifIndex @currentSpheresModifIndex)))))
 		(!(= @sphereId 0))
@@ -391,99 +463,16 @@
 		      (!(= @agentName (MAKE-ATOM @agentFactName)))
 		      (!(= @objectName (MAKE-ATOM @objectFactName)))	   
 		      ;;if this sphere is active
-		      
-		      (IF(?(|| (EQUAL @isSphereActive 1) (AgentActionMonitor.isSphereActive (VAL @sphereId) TRUE)))
-			 (IF(?(|| (EQUAL @monitorGetOutResult 1) (AgentActionMonitor.isSphereActive (VAL @sphereId) TRUE))) ;if the target has exited the sphere
-                (~>(AgentActionMonitor.isSphereActive (VAL @sphereId) TRUE))
-			    (IF(?(EQUAL @sphereType SPARK_SIMPLE_ENTRY))   ;;we use this for placements
 
-			       (IF(?(Agent.hasObject (VAL @agentName) @heldObject))
+              (IF(?(EQUAL @isSphereActive 1))
+                 (!(AgentActionMonitor.checkPick @agentName @objectName @sphereId @monitorGetOutResult))
+                 (!(AgentActionMonitor.checkPlace @agentName @x @y @z @sphereId @monitorGetOutResult))
+                 (!(AgentActionMonitor.checkThrow @agentName @objectName @sphereId @monitorEnterInResult))
+                 (!(AgentActionMonitor.checkGlue @agentName @sphereId @monitorGetOutResult))
+                 (!(AgentActionMonitor.checkClean @agentName @sphereId @monitorGetOutResult))
+                 (!(AgentActionMonitor.checkInstallBracket @agentName @x @y @z @sphereId @monitorGetOutResult))
+                 )
 
-				  (!(AgentActionMonitor.checkActionMonitoring @agentName @sphereId))  ;;checks if we were monitoring this action. If not will issue an unexpectedAction command
-				  
-				  ;;recalculate monitor spheres and update world state
-				  (!(AgentActionMonitor.cleanMonitorSpheresForAgent @agentName)) 
-				  
-				  
-                  (!(Spark.getFreeId @sparkId))
-                  (!(ReportManager.sub Spark.report @sparkId))
-				  (?(Spark.humanHand RIGHT @sparkHand))
-				  (=>(Spark.request setInferrenceForObject @heldObject 0 @agentName @sparkHand SPARK_HUMAN_HAND 1.0 @sparkId))
-                  (^(Spark.report (VAL @sparkId) @report))
-                  (!(ReportManager.unsub Spark.report @sparkId))
-				  
-				  ;;we place the object in the center of the sphere (possibly placeholder)
-                  (!(Spark.getFreeId @sparkId))
-                  (!(ReportManager.sub Spark.report @sparkId))
-				  (=>(Spark.request placeObject @heldObject @x @y @z 0 0 0 @sparkId))
-                  (^(Spark.report (VAL @sparkId) @report))
-                  (!(ReportManager.unsub Spark.report @sparkId))
-				  
-				  (~>(Agent.hasObject (VAL @agentName) (VAL @heldObject)))
-				  (!(DatabaseInterface.remove (AGENT-STATEMENT PR2_ROBOT @agentName hasInHand (VAL @heldObject)) @result))				  
-				  ;;should make a better calculation of inferences.
-				  (!(AgentActionMonitor.calculateInferencesForAgents (. @agentName .)))  
-			
-				  ) 
-			       ELSEIF(?(EQUAL @sphereType SPARK_PICK_OBJECT))  
-			       
-			       (IF(?(~(Agent.hasObject (VAL @agentName) @object)))
-				  ;;if we were monitoring this action then we say it was completed, else it was an unexpected action
-				  (!(AgentActionMonitor.checkActionMonitoring @agentName @sphereId))
-				  
-				  ;;recalculate monitor spheres and update world state
-				  (!(AgentActionMonitor.cleanAgentMonitorSpheres @agentName))
-
-				  (!(Spark.getFreeId @sparkId))
-				  (?(Spark.humanHand RIGHT @sparkHand))
-                  (=>(Spark.request setInferrenceForObject @objectName 1 @agentName @sparkHand SPARK_HUMAN_HAND 1.0 @sparkId))
-                  (!(ReportManager.sub Spark.report @sparkId))
-                  (^(Spark.report (VAL @sparkId) @report))
-                  (!(ReportManager.unsub Spark.report @sparkId))
-				  (=>(Agent.hasObject @agentName @objectName))
-
-				  (!(DatabaseInterface.add (AGENT-STATEMENT PR2_ROBOT @agentName hasInHand (VAL @objectName)) @result))
-				  (!(AgentActionMonitor.calculateInferencesForAgents (. @agentName .)))
-
-				  
-				  )			 
-			       )
-			    )
-			 ;;same as for pick
-			 (IF(?(|| (EQUAL @monitorEnterInResult 1) (AgentActionMonitor.isSphereActive (VAL @sphereId) TRUE)))		
-			    (~>(AgentActionMonitor.isSphereActive (VAL @sphereId) TRUE))
-
-			    (IF(?(EQUAL @sphereType SPARK_THROW_IN_CONTAINER))
-			       (IF(?(Agent.hasObject (VAL @agentName) @heldObject))
-				  ;;same as the two cases before
-
-				  (!(AgentActionMonitor.checkActionMonitoring @agentName @sphereId))			       
-				  
-				  ;;erase this monitor sphere
-				  (!(AgentActionMonitor.cleanAgentMonitorSpheres @agentName))
-
-				  
-
-				  (!(Spark.getFreeId @sparkId))
-				  (?(Spark.humanHand RIGHT @sparkHand))
-                  (=>(Spark.request setInferrenceForObject @heldObject 0 @agentName @sparkHand SPARK_HUMAN_HAND 1.0 @sparkId))
-                  (!(ReportManager.sub Spark.report @sparkId))
-                  (^(Spark.report (VAL @sparkId) @report))
-                  (!(ReportManager.unsub Spark.report @sparkId))
-				  
-				  (!(Spark.getFreeId @sparkId))
-                  (=>(Spark.request setInferrenceForObject @heldObject 1 @objectName 0 SPARK_IS_IN 1.0 @sparkId))
-                  (!(ReportManager.sub Spark.report @sparkId))
-                  (^(Spark.report (VAL @sparkId) @report))
-                  (!(ReportManager.unsub Spark.report @sparkId))
-				  
-				  (~>(Agent.hasObject (VAL @agentName) (VAL @heldObject)))
-				  (!(DatabaseInterface.remove (AGENT-STATEMENT PR2_ROBOT @agentName hasInHand (VAL @heldObject)) @result))				  
-				  (!(AgentActionMonitor.calculateInferencesForAgents (. @agentName .)))
-				  )
-			       )
-			    )
-			 )
 		      (!(= @sphereId (+ @sphereId 1)))	 
 		      )
 		
@@ -496,9 +485,9 @@
   :invocation (!(AgentActionMonitor.checkActionMonitoring @agentName @sphereId))
   :documentation "Checks if the action associated to the @sphereId is monitored for @agentName. If yes will issue an actionCompleted report, if not an unexpectedAction report."
   :body (
-	 (IF(?(AgentActionMonitor.isMonitoringAgent (VAL @agentName) @monitorId))
-	    (IF(?(AgentActionMonitor.monitorAction (VAL @agentName) @actionId (VAL @sphereId)))
-	       (~>(AgentActionMonitor.monitorAction (VAL @agentName) (VAL @actionId) (VAL @sphereId)))
+     (IF(?(AgentActionMonitor.isMonitoringAgent (VAL @agentName) @monitorId))
+        (IF(?(AgentActionMonitor.monitorAction (VAL @agentName) @actionId @actionName @actionParameters(VAL @sphereId)))
+           (~>(AgentActionMonitor.monitorAction (VAL @agentName) (VAL @actionId) (VAL @actionName) (VAL @actionParameters) (VAL @sphereId)))
 	       (=>(AgentActionMonitor.actionCompleted (VAL @agentName) (VAL @actionId)))
 	       ELSE
 	       (=>(AgentActionMonitor.unexpectedAction (VAL @agentName)))
@@ -511,7 +500,8 @@
 (defop |simulateNextAction|
 :invocation (!(AgentActionMonitor.simulateNextAction))
 :body (
-       (?(AgentActionMonitor.sphere @agentName @target  @sphereId))
+       ;(?(AgentActionMonitor.sphere @agentName @target  @sphereId))
+       (?(AgentActionMonitor.monitorAction @agentName @n  @actionName @parameters @sphereId))
        (!(AgentActionMonitor.simulateAgentAction @sphereId))
 
        )
@@ -519,8 +509,8 @@
 (defop |simulateAgentAction|
   :invocation(!(AgentActionMonitor.simulateAgentAction @sphereId))
   :body (
-         (IF(?(Spark.sim FALSE))
-            (=>(AgentActionMonitor.isSphereActive (VAL @sphereId) TRUE))
+         (IF(?(MonitorSpheres.sim FALSE))
+            (=>(AgentActionMonitor.simulateSphere (VAL @sphereId) TRUE))
 
             ELSE
             (?(AgentActionMonitor.sphere  @agentName @target (VAL @sphereId)))
@@ -642,4 +632,263 @@
             )
          )
   )
+(defop |checkPlace|
+  :invocation(!(AgentActionMonitor.checkPlace @agentName @x @y @z @sphereId @monitorGetOutResult))
+  :body (
+         (IF(?(|| (EQUAL @monitorGetOutResult 1) (AgentActionMonitor.simulateSphere (VAL @sphereId) TRUE))) ;if the target has exited the sphere
+            (IF(?(AgentActionMonitor.sphereType (VAL @sphereId) place))   ;;we use this for placements
+               (?(AgentActionMonitor.sphere (VAL @agentName) @placement (VAL @sphereId)))
+            (~>(AgentActionMonitor.simulateSphere (VAL @sphereId) TRUE))
+
+               (IF(?(Agent.hasObject (VAL @agentName) @heldObject))
+
+
+                  ;;recalculate monitor spheres and update world state
+                  (!(AgentActionMonitor.cleanAgentMonitorSpheres @agentName))
+
+                  (!(Spark.getFreeId @sparkId))
+                  (!(ReportManager.sub Spark.report @sparkId))
+                  (?(Spark.humanHand RIGHT @sparkHand))
+                  (=>(Spark.request setInferrenceForObject @heldObject 0 @agentName @sparkHand SPARK_HUMAN_HAND 1.0 @sparkId))
+                  (^(Spark.report (VAL @sparkId) @report))
+                  (!(ReportManager.unsub Spark.report @sparkId))
+
+                  ;;we place the object in the center of the sphere (possibly placeholder)
+                  (!(Spark.getFreeId @sparkId))
+                  (!(ReportManager.sub Spark.report @sparkId))
+                  (IF(?(Spark.sim TRUE))
+                     (=>(Spark.request placeObjectForSimu @heldObject @x @y @z 0 0 0 0 @sparkId))
+
+                     ELSE
+                     (=>(Spark.request placeObject @heldObject @x @y @z 0 0 0 @sparkId))
+                     )
+                  (^(Spark.report (VAL @sparkId) @report))
+                  (!(ReportManager.unsub Spark.report @sparkId))
+
+                  (!(DatabaseInterface.findList (AGENT-STATEMENT PR2_ROBOT (VAL @placement) isOn @location) (. @location .) @result))
+                  (IF(?(~(NULL @result)))
+                     (!(= @location (CAR(CAR @result))))
+                     (!(DatabaseInterface.add (AGENT-STATEMENT PR2_ROBOT @heldObject isOn @location) @result))
+                     )
+
+
+
+                  (~>(Agent.hasObject (VAL @agentName) (VAL @heldObject)))
+                  (!(DatabaseInterface.remove (AGENT-STATEMENT PR2_ROBOT @agentName hasInHand (VAL @heldObject)) @result))
+                  ;;should make a better calculation of inferences.
+                  (!(AgentActionMonitor.calculateInferencesForAgents (. @agentName .)))
+
+                  (IF(?(Facts.sim TRUE))
+
+                     (!(DatabaseInterface.add (AGENT-STATEMENT PR2_ROBOT @heldObject isOn @placement) @result))
+                     )
+                  (!(AgentActionMonitor.checkActionMonitoring @agentName @sphereId))  ;;checks if we were monitoring this action. If not will issue an unexpectedAction command
+
+                  )
+               )
+            )
+         )
+  )
+(defop |checkPick|
+  :invocation(!(AgentActionMonitor.checkPick @agentName @objectName @sphereId @monitorGetOutResult))
+  :body (
+                     (IF(?(|| (EQUAL @monitorGetOutResult 1) (AgentActionMonitor.simulateSphere (VAL @sphereId) TRUE))) ;if the target has exited the sphere
+                        (IF(?(AgentActionMonitor.sphereType (VAL @sphereId) take))
+
+                           (~>(AgentActionMonitor.simulateSphere (VAL @sphereId) TRUE))
+
+
+                           (IF(?(~(Agent.hasObject (VAL @agentName) @object)))
+                              ;;if we were monitoring this action then we say it was completed, else it was an unexpected action
+
+
+                              ;;recalculate monitor spheres and update world state
+                              (!(AgentActionMonitor.cleanAgentMonitorSpheres @agentName))
+
+                              (!(Spark.getFreeId @sparkId))
+                              (?(Spark.humanHand RIGHT @sparkHand))
+                              (=>(Spark.request setObjectInHand @agentName @objectName RIGHT TRUE @sparkId))
+                              ;(=>(Spark.request setInferrenceForObject @objectName 1 @agentName @sparkHand SPARK_HUMAN_HAND 1.0 @sparkId))
+                              (!(ReportManager.sub Spark.report @sparkId))
+                              (^(Spark.report (VAL @sparkId) @report))
+                              (!(ReportManager.unsub Spark.report @sparkId))
+                              (=>(Agent.hasObject @agentName @objectName))
+
+                              (!(DatabaseInterface.add (AGENT-STATEMENT PR2_ROBOT @agentName hasInHand (VAL @objectName)) @result))
+                              (!(AgentActionMonitor.calculateInferencesForAgents (. @agentName .)))
+                              (!(AgentActionMonitor.checkActionMonitoring @agentName @sphereId))
+                                 )
+                           )
+                        )
+                     )
+  )
+(defop |checkThrow|
+  :invocation(!(AgentActionMonitor.checkThrow @agentName @objectName @sphereId @monitorEnterInResult))
+  :body (
+         ;;same as for pick
+         (IF(?(|| (EQUAL @monitorEnterInResult 1) (AgentActionMonitor.simulateSphere (VAL @sphereId) TRUE)))
+            (IF(?(AgentActionMonitor.sphereType (VAL @sphereId) throw))
+
+            (~>(AgentActionMonitor.simulateSphere (VAL @sphereId) TRUE))
+
+
+               (IF(?(Agent.hasObject (VAL @agentName) @heldObject))
+                  ;;same as the two cases before
+
+
+
+                  ;;erase this monitor sphere
+                  (!(AgentActionMonitor.cleanAgentMonitorSpheres @agentName))
+
+
+
+                  (!(Spark.getFreeId @sparkId))
+                  (?(Spark.humanHand RIGHT @sparkHand))
+                  (=>(Spark.request setInferrenceForObject @heldObject 0 @agentName @sparkHand SPARK_HUMAN_HAND 1.0 @sparkId))
+                  (!(ReportManager.sub Spark.report @sparkId))
+                  (^(Spark.report (VAL @sparkId) @report))
+                  (!(ReportManager.unsub Spark.report @sparkId))
+
+                  (!(Spark.getFreeId @sparkId))
+                  (=>(Spark.request setInferrenceForObject @heldObject 1 @objectName 0 SPARK_IS_IN 1.0 @sparkId))
+                  (!(ReportManager.sub Spark.report @sparkId))
+                  (^(Spark.report (VAL @sparkId) @report))
+                  (!(ReportManager.unsub Spark.report @sparkId))
+
+                  (~>(Agent.hasObject (VAL @agentName) (VAL @heldObject)))
+                  (!(DatabaseInterface.remove (AGENT-STATEMENT PR2_ROBOT @agentName hasInHand (VAL @heldObject)) @result))
+                  (!(AgentActionMonitor.calculateInferencesForAgents (. @agentName .)))
+                  (!(AgentActionMonitor.checkActionMonitoring @agentName @sphereId))
+                  )
+               )
+            )
+         )
+  )
+
+(defop |checkGlue|
+  :invocation(!(AgentActionMonitor.checkGlue @agentName @sphereId @monitorGetOutResult))
+  :body (
+         (IF(?(|| (EQUAL @monitorGetOutResult 1) (AgentActionMonitor.simulateSphere (VAL @sphereId) TRUE))) ;if the target has exited the sphere
+            (IF(?(AgentActionMonitor.sphereType (VAL @sphereId) glue))   ;;we use this for placements
+
+            (~>(AgentActionMonitor.simulateSphere (VAL @sphereId) TRUE))
+               (IF(?(Agent.hasObject (VAL @agentName) GLUE_BOTTLE))
+
+                  (?(AgentActionMonitor.sphere (VAL @agentName) @surface (VAL @sphereId)))
+
+
+
+                  ;;recalculate monitor spheres and update world state
+                  (!(AgentActionMonitor.cleanAgentMonitorSpheres @agentName))
+
+
+
+                  (!(DatabaseInterface.set (AGENT-STATEMENT PR2_ROBOT @surface state GLUE) @result))
+
+                  ;;should make a better calculation of inferences.
+                  (!(AgentActionMonitor.calculateInferencesForAgents (. @agentName .)))
+                  (!(AgentActionMonitor.checkActionMonitoring @agentName @sphereId))  ;;checks if we were monitoring this action. If not will issue an unexpectedAction command
+                  )
+               )
+            )
+         )
+  )
+
+(defop |checkClean|
+  :invocation(!(AgentActionMonitor.checkClean @agentName @sphereId @monitorGetOutResult))
+  :body (
+         (IF(?(|| (EQUAL @monitorGetOutResult 1) (AgentActionMonitor.simulateSphere (VAL @sphereId) TRUE))) ;if the target has exited the sphere
+            (IF(?(AgentActionMonitor.sphereType (VAL @sphereId) clean))   ;;we use this for placements
+            (~>(AgentActionMonitor.simulateSphere (VAL @sphereId) TRUE))
+                  (?(AgentActionMonitor.sphere (VAL @agentName) @surface (VAL @sphereId)))
+
+
+
+                  ;;recalculate monitor spheres and update world state
+                  (!(AgentActionMonitor.cleanAgentMonitorSpheres @agentName))
+
+
+                  (!(DatabaseInterface.set (AGENT-STATEMENT PR2_ROBOT @surface state CLEAN) @result))
+                  ;;should make a better calculation of inferences.
+                  (!(AgentActionMonitor.calculateInferencesForAgents (. @agentName .)))
+
+                  (!(AgentActionMonitor.checkActionMonitoring @agentName @sphereId))  ;;checks if we were monitoring this action. If not will issue an unexpectedAction command
+
+               )
+            )
+         )
+  )
+
+(defop |checkInstallBracket|
+  :invocation(!(AgentActionMonitor.checkInstallBracket @agentName @x @y @z @sphereId @monitorGetOutResult))
+  :body (
+         (IF(?(|| (EQUAL @monitorGetOutResult 1) (AgentActionMonitor.simulateSphere (VAL @sphereId) TRUE))) ;if the target has exited the sphere
+            (IF(?(AgentActionMonitor.sphereType (VAL @sphereId) installBracket))
+            (~>(AgentActionMonitor.simulateSphere (VAL @sphereId) TRUE))
+               (IF(?(Agent.hasObject (VAL @agentName) @heldObject))
+                  (IF(?(Object.type (VAL @heldObject) BRACKET PICKABLE))
+                     (?(AgentActionMonitor.sphere (VAL @agentName) @surface (VAL @sphereId)))
+
+
+
+                     ;;recalculate monitor spheres and update world state
+                     (!(AgentActionMonitor.cleanAgentMonitorSpheres @agentName))
+
+                     (!(Spark.getFreeId @sparkId))
+                     (!(ReportManager.sub Spark.report @sparkId))
+                     (?(Spark.humanHand RIGHT @sparkHand))
+                     (=>(Spark.request setInferrenceForObject @heldObject 0 @agentName @sparkHand SPARK_HUMAN_HAND 1.0 @sparkId))
+                     (^(Spark.report (VAL @sparkId) @report))
+                     (!(ReportManager.unsub Spark.report @sparkId))
+                     ;;we place the object in the center of the sphere (possibly placeholder)
+                     (!(Spark.getFreeId @sparkId))
+                     (!(ReportManager.sub Spark.report @sparkId))
+                     (IF(?(Spark.sim FALSE))
+                        (=>(Spark.request placeObject @heldObject @x @y @z 0 0 0 @sparkId))
+
+                        ELSE
+                        (=>(Spark.request placeObjectForSimu @heldObject @x @y @z 0 0 0 0 @sparkId))
+                        )
+                     (^(Spark.report (VAL @sparkId) @report))
+                     (!(ReportManager.unsub Spark.report @sparkId))
+
+                     (~>(Agent.hasObject (VAL @agentName) (VAL @heldObject)))
+
+                     (!(= @removeFacts (. (AGENT-STATEMENT PR2_ROBOT @agentName hasInHand (VAL @heldObject)) .)))
+                     (!(= @setFacts (. (AGENT-STATEMENT PR2_ROBOT @heldObject glued true)  (AGENT-STATEMENT PR2_ROBOT @surface state COMPLETE) .)))
+
+                     (!(DatabaseInterface.addSetRemoveFacts (. .) @setFacts @removeFacts @result))
+                     
+                     ;;should make a better calculation of inferences.
+                     (!(AgentActionMonitor.calculateInferencesForAgents (. @agentName .)))
+                     (!(AgentActionMonitor.checkActionMonitoring @agentName @sphereId))  ;;checks if we were monitoring this action. If not will issue an unexpectedAction command
+                     )
+                  )
+               )
+            )
+         )
+  )
+
+(defop |simulateMovement|
+  :invocation(!(AgentActionMonitor.simulateMovement @location))
+  :body (
+         (!(DatabaseInterface.set (AGENT-STATEMENT PR2_ROBOT HERAKLES_HUMAN1 isAt @location) @result))
+         (!(AgentActionMonitor.calculateInferencesForAgents (. HERAKLES_HUMAN1 .)))
+         )
+  )
+(defop |agentHasMoved|
+  :invocation(Database.valueChange (humanLocation @agent) @location)
+  :body (
+         (IF(?(AgentActionMonitor.monitorMove (VAL @agent) (VAL @location) @actionId))
+            (~>(AgentActionMonitor.monitorMove (VAL @agent) (VAL @location) (VAL @actionId)))
+            (=>(AgentActionMonitor.actionCompleted (VAL @agent) (VAL @actionId)))
+
+            ELSE
+            (=>(AgentActionMonitor.unexpectedAction (VAL @agent)))
+            )
+
+         )
+
+  )
+
 )

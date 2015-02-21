@@ -1,10 +1,14 @@
 ;This file includes the entity and fact rules of HATP's domain. It
 ;could be nice (and probably easy) to make it automatically generated from the domain file
 (
- (DbRule.type PLACEMAT_GREEN EXCHANGE_ZONE)
- (DbRule.type PLACEMAT_BLUE  EXCHANGE_ZONE)
- (DbRule.rule PICKABLE isOn EXCHANGE_ZONE PICKABLE isOnExchangeZone true 0)
- (DbRule.rule PICKABLE isOn PLACEMENT PLACEMENT supports PICKABLE 0)
- (DbRule.rule PICKABLE isOn SUPPORT SUPPORT supports PICKABLE 0)
+ (DbRule.type WORK_LOCATION_1 LOCATION)
+ (DbRule.type WORK_LOCATION_2 LOCATION)
+ (DbRule.type WORK_LOCATION_3 LOCATION)
+ (DbRule.type STOCK_TABLE LOCATION)
+
+
+ (DbRule.rule PICKABLE isOn LOCATION PICKABLE isAt LOCATION 0)
+ (DbRule.rule AGENT hasInHand PICKABLE AGENT holds PICKABLE 0)
+ 
 
 )
