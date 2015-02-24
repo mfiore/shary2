@@ -3,10 +3,10 @@
 
 ;(Object.bin (. GREEN_TRASHBIN BLUE_TRASHBIN .))
                                         ;(Object.pickable (. RED_CUBE RED_CUBE2 GREEN_CUBE GREEN_CUBE2 BLUE_CUBE BLUE_CUBE2 .))
-(Object.pickable (. GLUE_BOTTLE BRACKET_1 BRACKET_2 BRACKET_3 .))
+(Object.pickable (. BRACKET_1 BRACKET_2 BRACKET_3 .))
 (Object.table (. STOCK_TABLE WORK_LOCATION_1 WORK_LOCATION_2 WORK_LOCATION_3 .))
 (Object.bin (. .))
-(Object.placement (. PLACEMAT_RED_2 PLACEMAT_GREEN_2 PLACEMAT_BLUE_2 .))
+(Object.placement (. PLACEMAT_RED PLACEMAT_GREEN PLACEMAT_BLUE .))
 
 ;;Object.type NAME TYPE CLASS 
 ;NAME is the name of the object
@@ -42,14 +42,11 @@
 (Object.type PLACEMAT_GREEN_2 PLACEMAT PLACEMENT)
 (Object.type PLACEMAT_BLUE_2 PLACEMAT PLACEMENT)
 
-(Object.link PLACEMAT_RED BOTTLE)
-(Object.link PLACEMAT_RED_2 BRACKET)
+(Object.link PLACEMAT_RED BRACKET)
 
-(Object.link PLACEMAT_BLUE BOTTLE)
-(Object.link PLACEMAT_BLUE_2 BRACKET)
+(Object.link PLACEMAT_BLUE BRACKET)
 
-(Object.link PLACEMAT_GREEN BOTTLE)
-(Object.link PLACEMAT_GREEN_2 BRACKET)
+(Object.link PLACEMAT_GREEN BRACKET)
 
 
 (Object.type PR2_ROBOT ROBOT AGENT)

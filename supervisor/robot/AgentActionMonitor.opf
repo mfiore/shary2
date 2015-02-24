@@ -873,7 +873,8 @@
   :invocation(!(AgentActionMonitor.simulateMovement @location))
   :body (
          (!(DatabaseInterface.set (AGENT-STATEMENT PR2_ROBOT HERAKLES_HUMAN1 isAt @location) @result))
-         (!(AgentActionMonitor.calculateInferencesForAgents (. HERAKLES_HUMAN1 .)))
+
+
          )
   )
 (defop |agentHasMoved|
@@ -886,6 +887,8 @@
             ELSE
             (=>(AgentActionMonitor.unexpectedAction (VAL @agent)))
             )
+         (!(AgentActionMonitor.cleanAgentMonitorSpheres (VAL @agent)))
+         (!(AgentActionMonitor.calculateInferencesForAgents (. @agent .)))
 
          )
 

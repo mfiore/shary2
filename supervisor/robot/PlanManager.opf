@@ -4,6 +4,77 @@
 
 (
 
+ (defop |getSurface|
+   :invocation(!(PlanManager.getSurface @state1 @state2 @state3 $surface))
+   :body (
+          (IF(?(~(EQUAL @state1 COMPLETE)))
+             (!(= $surface ASSEMBLY_SURFACE_1))
+
+             ELSEIF(?(~(EQUAL @state2 COMPLETE)))
+             (!(= $surface ASSEMBLY_SURFACE_2))
+
+             ELSE(?(~(EQUAL @state3 COMPLETE)))
+             (!(= $surface ASSEMBLY_SURFACE_3))
+             )
+          )
+   )
+ (defop |getSurfaceFromLocation|
+   :invocation(!(PlanManager.getSurfaceFromLocation @acState @acSur @state1 @state2 @state3 $surface))
+   :body (
+          (IF(?(~(EQUAL @state COMPLETE)))
+             (!(= $surface @acSur))
+
+             ELSE
+             (!(PlanManager.getSurface @state1 @state2 @state3 @surface))
+             )
+          )
+   )
+
+ (defop |chooseGoal|
+   :invocation(!(PlanManager.chooseGoal $goal $params))
+   :body (
+          (!(DatabaseInterface.findList (AGENT-STATEMENT PR2_ROBOT ASSEMBLY_SURFACE_1 state @s) (. @s .) @result))
+          (!(= @state1 (CAR(CAR @result))))
+          (!(DatabaseInterface.findList (AGENT-STATEMENT PR2_ROBOT ASSEMBLY_SURFACE_2 state @s) (. @s .) @result))
+          (!(= @state2 (CAR(CAR @result))))
+          (!(DatabaseInterface.findList (AGENT-STATEMENT PR2_ROBOT ASSEMBLY_SURFACE_3 state @s) (. @s .) @result))
+          (!(= @state3 (CAR(CAR @result))))
+          (!(DatabaseInterface.findList (AGENT-STATEMENT PR2_ROBOT HERAKLES_HUMAN1 isAt @l) (. @l .) @result))
+          (IF(?(~(NULL @result)))
+             (!(= @humanLoc (CAR(CAR @result))))
+
+             ELSE
+             (!(= @humanLoc OTHER))
+             )
+
+          (IF(?(EQUAL @humanLoc OTHER))
+          (!(PlanManager.getSurface @state1 @state2 @state3 @choosenSurface))
+
+          ELSE
+          (IF(?(EQUAL @humanLoc WORK_LOCATION_1))
+             (!(PlanManager.getSurfaceFromLocation @state1 ASSEMBLY_SURFACE_1 @state1 @state2 @state3 @choosenSurface))
+
+             ELSEIF(?(EQUAL @humanLoc WORK_LOCATION_2))
+             (!(PlanManager.getSurfaceFromLocation @state2 ASSEMBLY_SURFACE_2 @state1 @state2 @state3 @choosenSurface))
+
+             ELSE
+             (!(PlanManager.getSurfaceFromLocation @state3 ASSEMBLY_SURFACE_3 @state1 @state2 @state3 @choosenSurface))
+             )
+          (!(= $goal HandleSurface))
+          (!(= $params (. @choosenSurface .)))
+          )
+          )
+   )
+
+ (defop |addGoal|
+   :invocation(!(PlanManager.addGoal @goal @parameters))
+   :body (
+          (=>(PlanManager.goal @goal @parameters))
+          (=>(PlanManager.newGoal TRUE))
+
+          )
+
+   )
  (defop |managePlans|
    :invocation(PlanManager.managePlans)
    :documentation "this is the main procedure of the Plan Manager. It's constantly running, receiving goals from the higher level, asking the planner for plans, breaking them into actions and sending those to the appropriate modules for execution"
@@ -17,7 +88,8 @@
 	  (?(PlanManager.timeToRetry @timeToRetry))
 	  (?(Robot.name @robotName))
 
-	  (!(AgentActionMonitor.startMonitoringAgent HERAKLES_HUMAN1))
+      (!(= @humanAgent HERAKLES_HUMAN1))
+      (!(AgentActionMonitor.startMonitoringAgent HERAKLES_HUMAN1))
 	  (WHILE(?(PlanManager.shouldRun TRUE))
 		;;wait for a new goal or for a stop
 		(^(|| (PlanManager.newGoal TRUE) (PlanManager.shouldRun FALSE) (AgentActionMonitor.unexpectedAction (VAL @humanAgent))))
@@ -56,7 +128,8 @@
 			       )
 			    (^(ELAPSED-TIME (TIME) 1))
 			    )
-			 
+
+
 			 (=>(PlannerInterface.getPlan (VAL @goal) (VAL @parameters)))   ;;we ask for a plan
 			 (^(PlannerInterface.report @report))
 			 (~>(PlannerInterface.report (VAL @report)))
@@ -105,7 +178,9 @@
 
                 (^(|| (PlanManager.agentReport robot @report) (PlanManager.agentReport (VAL @humanAgent) @report)  (PlanManager.stop) (AgentActionMonitor.unexpectedAction @agent)))
 			    
-			    (IF(?(AgentActionMonitor.unexpectedAction @agent))
+                (IF(?(AgentActionMonitor.unexpectedAction @agent))
+                   (!(PlanManager.chooseGoal @goal @parameters))
+
 			       (IF(?(PlanManager.planningModality (VAL @agent) ROBOT))   ;if robot was planning we switch to adapt and inform the user
 				  (!(Acapela.say "Do you want to do it in a different way? Let's see if I can help..."))
 				  (=>(PlanManager.planningModality (VAL @agent) ADAPTS))
@@ -172,8 +247,6 @@
 			    (!(PlanManager.clean))
 			    )
 			 )
-           (!(PRINT "stopping monitoring agent"))
-           (!(AgentActionMonitor.stopMonitoringAgent HERAKLES_HUMAN1))
             (IF(?(EQUAL @status completed))
                (=>(PlanManager.report OK))
 		       (!(Acapela.say "Task completed"))
@@ -181,11 +254,21 @@
 		       ELSE
 		       (!(Acapela.say "Abandoning Task"))
 		       (=>(PlanManager.report FAILED))
-		       )   
-		    )
+               )
 
-		 )
-	   (~>(PlanManager.isRunning TRUE))
+            ELSE
+            (!(PlanManager.chooseGoal @goal @parameters))
+            (=>(PlanManager.goal (VAL @goal) (VAL @parameters)))
+            (=>(PlanManager.newGoal TRUE))
+
+            (~>(AgentActionMonitor.unexpectedAction HERAKLES_HUMAN1))
+
+            )
+
+        )
+      (!(PRINT "stopping monitoring agent"))
+      (!(AgentActionMonitor.stopMonitoringAgent HERAKLES_HUMAN1))
+      (~>(PlanManager.isRunning TRUE))
        )
     )
 
@@ -367,7 +450,8 @@
 		
 		(!(== (VAL @currentAction) (. @actionToExecute @actionId @actionLinks .)))
 		;;wait for previous linked actions to be completed or to fail
-		
+
+        (!(= @toReplan FALSE)) ;;if the user takes control we execute his action and then replan (probably we should switch off right away the plan management, call another class and then call chooseGoal)
 		(WHILE(?(~(NULL @actionLinks))) 
 		      (!(= @currentLink (CAR @actionLinks)))
 		      (IF(?(~(PlanManager.actionReport (VAL @currentLink) @report)))
@@ -392,36 +476,44 @@
         (!(== (VAL @actionToExecute) (. @actionName @actionParameters .)))
         (IF(?(Action.type (VAL @actionName) PLACEHERE))
            (!(== (VAL @actionParameters) (. @object .)))
-           (?(Object.type (VAL @object) @type @class))
-           (!(DatabaseInterface.findList (AGENT-STATEMENT PR2_ROBOT PR2_ROBOT isAt @l) (. @l .) @result))
-           (IF(?(~(NULL @result)))
-              (!(= @support (CAR(CAR @result))))
 
-              (!(DatabaseInterface.findList (AGENT-STATEMENT PR2_ROBOT @o isOn (VAL @support)) (. @o .) @result))
-              (!(= @placement NO_NAME))
-              (WHILE(?(~(NULL @result)))
-                    (!(= @anObject (CAR(CAR @result))))
-                    (!(= @result (CDR @result)))
-                    (IF(?(Object.link (VAL @anObject) (VAL @type)))
-                       (!(= @placement @anObject))
-                       )
-                    )
-              (IF(?(~(EQUAL @placement NO_NAME)))
-
-                 (!(= @actionParameters (. (VAL @object) (VAL @support) (VAL @placement) .)))
+           (!(DatabaseInterface.find (AGENT-STATEMENT PR2_ROBOT HERAKLES_HUMAN1 pose GIVE) @result))
+           (IF(?(EQUAL @result (. TRUE .)))
+              (!(= @actionName handover))
+              (!(= @actionParameters (. (VAL @object) PR2_ROBOT HERAKLES_HUMAN_1 .)))
+              (!(= @toReplan TRUE))
 
               ELSE
-              (=>(PlanManager.agentReport robot FAILURE))
-              (~>(PlanManager.isManagingAgent robot))
-              (!(FAILED))
-              )
-           ELSE
-           (=>(PlanManager.agentReport robot FAILURE))
-           (~>(PlanManager.isManagingAgent robot))
-           (!(FAILED))
-           )
-           )
+              (?(Object.type (VAL @object) @type @class))
+              (!(DatabaseInterface.findList (AGENT-STATEMENT PR2_ROBOT PR2_ROBOT isAt @l) (. @l .) @result))
+              (IF(?(~(NULL @result)))
+                 (!(= @support (CAR(CAR @result))))
 
+                 (!(DatabaseInterface.findList (AGENT-STATEMENT PR2_ROBOT @o isOn (VAL @support)) (. @o .) @result))
+                 (!(= @placement NO_NAME))
+                 (WHILE(?(~(NULL @result)))
+                       (!(= @anObject (CAR(CAR @result))))
+                       (!(= @result (CDR @result)))
+                       (IF(?(Object.link (VAL @anObject) (VAL @type)))
+                          (!(= @placement @anObject))
+                          )
+                       )
+                 (IF(?(~(EQUAL @placement NO_NAME)))
+
+                    (!(= @actionParameters (. (VAL @object) (VAL @support) (VAL @placement) .)))
+
+                    ELSE
+                    (=>(PlanManager.agentReport robot FAILURE))
+                    (~>(PlanManager.isManagingAgent robot))
+                    (!(FAILED))
+                    )
+                 ELSE
+                 (=>(PlanManager.agentReport robot FAILURE))
+                 (~>(PlanManager.isManagingAgent robot))
+                 (!(FAILED))
+                 )
+              )
+           )
 		;verbalize action
 		(!(PlanManager.getActionString @actionName @actionParameters "I " 0 @oldObject @followsHandover @actionString))
 		(!(Acapela.say @actionString))
@@ -434,11 +526,12 @@
 		(^(|| (ExecutionManager.report (VAL @executionId) @report) (PlanManager.stopAgent robot)))
         (IF(?(ExecutionManager.report (VAL @executionId) @report))
            (!(ReportManager.unsub ExecutionManager.report @executionId))
-		   (IF(?(~(EQUAL @report OK)))
+           (IF(?(||(~(EQUAL @report OK)) (EQUAL @toReplan TRUE)))
 		      (=>(PlanManager.agentReport robot FAILURE))
 		      (~>(PlanManager.isManagingAgent robot))
 		      (!(FAILED))
               )
+
            (=>( PlanManager.actionReport @actionId OK))
            (!(AgentActionMonitor.calculateInferencesForAgents (. HERAKLES_HUMAN1 .)))
 
