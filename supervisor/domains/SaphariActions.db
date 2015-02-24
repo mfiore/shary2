@@ -21,4 +21,7 @@
 (Action.type installBracket PLACEMENT)
 (Action.type go MOVEMENT)
 
+(Action.param point WORK_LOCATION_1 point3)
+(Action.param point WORK_LOCATION_2 point4)
+(Action.param point WORK_LOCATION_3 point5)
 )

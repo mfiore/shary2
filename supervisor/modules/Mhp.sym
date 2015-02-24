@@ -1,6 +1,7 @@
 ;;GENERAL
 declare symbol Mhp.sem
 declare ff Mhp.freeId 0
+declare ff Mhp.previoustask 0
 declare be Mhp.request
 declare cwp Mhp.report
 declare cwp Mhp.result

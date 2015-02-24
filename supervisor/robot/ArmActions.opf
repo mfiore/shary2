@@ -14,7 +14,7 @@
 	  (=>(Robot.isMoving RIGHT_ARM FALSE))
 	  (=>(Robot.gripperStatus RIGHT CLOSE))
 	  (=>(Robot.gripperStatus LEFT CLOSE))
-	  (=>(Robot.pose RIGHT NO_NAME NO_NAME REST))
+      (=>(Robot.pose RIGHT NO_NAME NO_NAME NAV))
 	
 	  )
    )

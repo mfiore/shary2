@@ -311,7 +311,18 @@
 	     (!(SEM-V ExecutionManager.sem))
 	     (!(FAILED))
 	     )
-	  (=>(ExecutionManager.isExecutingAction (VAL @executionId)))
+      (=>(ExecutionManager.isExecutingAction (VAL @executionId)))
+
+      (IF(?(Module.isActive gtp TRUE))
+         (?(Robot.pose @a @b @c @pose))
+         (IF(?(~(EQUAL @pose MANIP)))
+            (!(GtpActions.getFreeId @gtpId))
+            (=>(GtpActions.action moveTo sManipPose @gtpId))
+            (!(ExecutionManager.handleReport GtpActions @gtpId @executionId TRUE TRUE (. .) ))
+            (=>(Robot.pose NO_NAME NO_NAME NO_NAME MANIP))
+            )
+         )
+
 	  ;;set the parameters for the monitor manager
 	   (!(= @failureConditions (. (. .)  (. (ExecutionManager.report (VAL @executionId) FAILURE) (ExecutionManager.report (VAL @executionId) STOPPED) .) .) )) 	 ; stops monitoring if we fail or if we are stopped
 	  (!(= @successConditions (. (. (ExecutionManager.report (VAL @executionId) OK) .)  (. .) .) ))     ; look at the item until execution is completed
@@ -370,10 +381,12 @@
 ;	  (!(ArmActions.getFreeId @actionId))
 ;	  (=>(ArmActions.action moveToObject @armForPick @object @actionId))
 
-	  (IF(?(Module.isActive gtp TRUE)) 
+      (IF(?(Module.isActive gtp TRUE))
+
+
 	     (!(GtpActions.getFreeId @gtpId))
 	     (=>(GtpActions.action pick @object @armForPick @gtpId))
-	     (!(ExecutionManager.handleReport GtpActions @gtpId @executionId TRUE TRUE (. (. (AGENT-STATEMENT PR2_ROBOT (VAL @object) isReachableBy PR2_ROBOT false) (AGENT-STATEMENT PR2_ROBOT (VAL @object) isReachable false) .) (. (AGENT-STATEMENT PR2_ROBOT (VAL @object) isReachableBy PR2_ROBOT true) (AGENT-STATEMENT PR2_ROBOT (VAL @object) isReachable true) .) .)))
+         (!(ExecutionManager.handleReport GtpActions @gtpId @executionId TRUE TRUE (. (. (AGENT-STATEMENT PR2_ROBOT (VAL @object) isReachable false) .) (. (AGENT-STATEMENT PR2_ROBOT (VAL @object) isReachableBy PR2_ROBOT) (AGENT-STATEMENT PR2_ROBOT (VAL @object) isReachable true) .) .)))
 	  
 	   ELSE
 	   ;;plan and execute the trajectory
@@ -1281,6 +1294,15 @@ $distance , $info, $orientation, $speed, $inRange  the output observations"
 
 
 
+      (IF(?(Module.isActive gtp TRUE))
+         (?(Robot.pose @a @b @c @pose))
+         (IF(?(~(EQUAL @pose MANIP)))
+            (!(GtpActions.getFreeId @gtpId))
+            (=>(GtpActions.action moveTo sManipPose @gtpId))
+            (!(ExecutionManager.handleReport GtpActions @gtpId @executionId TRUE TRUE (. .) ))
+            (=>(Robot.pose NO_NAME NO_NAME NO_NAME MANIP))
+            )
+         )
 	 (!(GtpActions.getFreeId @gtpId))
      (=>(GtpActions.action place @object @support @placement (. .) @arm @gtpId ))
 	 (!(ExecutionManager.handleReport GtpActions @gtpId @executionId TRUE TRUE (. .)))
@@ -1364,26 +1386,49 @@ $distance , $info, $orientation, $speed, $inRange  the output observations"
             )
          (!(SEM-P ExecutionManager.sem))
 	 (=>(ExecutionManager.isExecutingAction @executionId))
-	 
-	 ;;get list of nodes in semantic map
-	 (?(Robot.location @source))
-	 (!(PathPlanner.getFreeId @pathPlannerId))
+
+     (?(Robot.pose @arm @sup @obj @pose))
+     (IF(?(~(EQUAL @pose NAV)))
+     (!(GtpActions.getFreeId @gtpId))
+     (=>(GtpActions.action moveTo sNaviPose @gtpId))
+     (!(ExecutionManager.handleReport GtpActions @gtpId @executionId TRUE TRUE (. .)))
+
+     (=>(Robot.pose NO_NAME NO_NAME NO_NAME NAV))
+     )
+     (IF(?(Module.isActive waypoints FALSE))
+     ;;get list of nodes in semantic ma3p
+     (?(Robot.location @source))
+     (IF(?(Module.isActive pathPlanner TRUE))
+     (!(PathPlanner.getFreeId @pathPlannerId))
 	 (=>(PathPlanner.plan @source @goal @pathPlannerId))
 	 (!(ExecutionManager.handleReport PathPlanner @pathPlannerId @executionId TRUE TRUE NO_NAME))
 	 (?(PathPlanner.result @pathPlannerId @path))
 	 ;;get coordinates in these nodes
 	 (!(PathPlanner.getCoordinates @path @waypoints))
- 
+
+     ELSE
+     (?(PathPlanner.coordinates (VAL @goal) @x @y @theta))
+     (!(= @waypoints (. (. @x @y @theta .) .)))
+     )
 	 ;;move to place
-	 (!(BaseActions.getFreeId @id))
-	 (=>(BaseActions.action move @waypoints @id))
+     (!(BaseActions.getFreeId @baseActionsId))
+     (=>(BaseActions.action move @waypoints @baseActionsId))
 	 (!(ExecutionManager.handleReport BaseActions @baseActionsId @executionId FALSE TRUE (. .)))
 
+     ELSE
+     (?(PathPlanner.getCoordinates (VAL @goal) @x @y @theta))
+     (!(Mhp.getFreeId @mhpId))
+     (!(ReportManager.sub Mhp.report @mhpId))
+     (=>(Mhp.request benPlanif @x @y @theta))
+     (!(ExecutionManager.handleReport BaseActions (VAL @stopId) @executionId FALSE FALSE (. .)))
+     )
      (!(DatabaseInterface.add (AGENT-STATEMENT PR2_ROBOT PR2_ROBOT isAt @goal) @result))
 
 	 (~>(ExecutionManager.isExecutingAction @executionId))	 
-	 (!(SEM-V ExecutionManager.sem))
-	 )
+
+     (!(SEM-V ExecutionManager.sem))
+     )
+
   )
 
 (defop |startGuide| 
@@ -1488,4 +1533,15 @@ $distance , $info, $orientation, $speed, $inRange  the output observations"
 	 )
   )
 
+(defop |Point|
+  :invocation(ExecutionManager.execute pointTo @location @executionId)
+  :body (
+         (?(Action.param point (VAL @location) @confName))
+         (!(GtpActions.getFreeId @gtpId))
+         (=>(GtpActions.action moveTo @confName @gtpId))
+         (!(ExecutionManager.handleReport GtpActions @gtpId @executionId TRUE TRUE (. .) (. .)))
+
+         (!(ReportManager.publish ExecutionManager.report @executionId OK))
+         )
+  )
 )

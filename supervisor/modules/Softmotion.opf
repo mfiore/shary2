@@ -48,7 +48,7 @@
 		(trackMode PR2SM_TRACK_POSTER )
 		(robotPart (VAL @armId)))))
 
-	  (!(GenomInterface.handleRequest  PR2SOFTMOTION PR2SOFTMOTION_TRACKQ (Softmotion.stop (VAL @id)) (Robot.isMoving (VAL @armJoint) TRUE) (Robot.isMovingArm (VAL @armJoint) FALSE) 300 (VAL @parameters) @report @result))
+      (!(GenomInterface.handleRequest  PR2SOFTMOTION PR2SOFTMOTION_TRACKQ (Softmotion.stop (VAL @id)) (FALSE) (FALSE) 300 (VAL @parameters) @report @result))
       (!(ReportManager.publish Softmotion.report (VAL @id) (VAL @report)))
 	  (=>(Softmotion.freeId (+ @id 1)))
 	 

@@ -7,6 +7,8 @@
 (Module.isActive spark TRUE)
 (Module.isActive acapela FALSE)
 (Module.isActive navigation TRUE)
+(Module.isActive waypoints FALSE)
+(Module.isActive pathPlanner FALSE)
 
 (Robot.joints HEAD)
 (Robot.joints BASE)

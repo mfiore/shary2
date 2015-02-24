@@ -9,6 +9,7 @@
 
  (DbRule.rule PICKABLE isOn LOCATION PICKABLE isAt LOCATION 0)
  (DbRule.rule AGENT hasInHand PICKABLE AGENT holds PICKABLE 0)
+  (DbRule.rule AGENT isInArea SUPPORT AGENT isAt SUPPORT 0)
  
 
 )

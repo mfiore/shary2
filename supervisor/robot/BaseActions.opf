@@ -24,6 +24,30 @@
 	 (!(SEM-V BaseActionsId.sem))
 	 )
   )
+
+(defop |moveWaypoints|
+  :invocation(BaseActions.action moveWaypoints @id)
+  :body (
+         (!(SEM-P BaseActions.sem))
+         (IF(?(Softmotion.sim FALSE))
+            (!(SEND-MESSAGE WaypointNavigation (move)))
+            (^(||(WaypointNavigation.report @report)(BaseActions.stop (VAL @id)) ))
+            (IF(?(WaypointNavigation.report OK))
+               (~>(WaypointNavigation.report OK))
+               (=>(BaseActions.report @id "OK"))
+
+               ELSEIF(?(BaseActions.stop (VAL @id)))
+               (!(SEND-MESSAGE WaypointNavigation (stop)))
+               (^(WaypointNavigation.stop.report @report))
+               (~>(WaypointNavigation.stop.report (VAL @report)))
+               (=>(BaseActions.report @id "STOPPED"))
+
+               ELSE
+               (=>(BaseActions.report @id "FAILURE"))
+               )
+            )
+         )
+  )
 (defop |move|
   :invocation(BaseActions.action move @waypoints @id)
   :documentation "moves the robot through a list of waypoints"
@@ -47,15 +71,20 @@
 	       
 	       (WHILE(?(EQUAL @completed FALSE))
 		     (^(|| (@reportName1 @status) (@reportName2 @status) (BaseActions.stop (VAL @id)) (ELAPSED-TIME (TIME) @time)))
-		     (IF(?(BaseActions.stop (VAL @id)))
+             (IF(?(BaseActions.stop (VAL @id)))
 			(!(BaseActions.getFreeId @stopId))
             (=>(BaseActions.action stop (VAL @stopId)))
             (!(ReportManager.sub BaseActions.report @stopId))
             (^(BaseActions.report (VAL @stopId) @report))
             (!(ReportManager.unsub BaseActions.report @stopId))
-            (!(ReportManager.sub BaseActions.report @id))
-            (^(BaseActions.report (VAL @id) @report))
-            (!(ReportManager.unsub BaseActions.report @id))
+
+            (^(@reportName1 @status))
+            (^(@reportName2 @status))
+            (~>(@reportName1 (VAL @status)))
+            (~>(@reportName2 (VAL @status)))
+                                        ;(!(ReportManager.sub BaseActions.report @id))
+            ;(^(BaseActions.report (VAL @id) @report))
+            ;(!(ReportManager.unsub BaseActions.report @id))
 
             (!(ReportManager.publish BaseActions.report @id "STOPPED"))
 
@@ -85,7 +114,7 @@
 	       (~>(@reportName2 @status)) 
 	       
 	       ELSE
-           (^(|| (@reportName1 @status) (@reportName2 @status) (BaseActions.stop (VAL@id))))
+           (^(|| (@reportName1 @status) (@reportName2 @status) (BaseActions.stop (VAL @id))))
            (!(ReportManager.publish BaseActions.report @id @status))
 
 

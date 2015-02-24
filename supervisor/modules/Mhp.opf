@@ -13,7 +13,7 @@
    :body (
 	  (!(SEM-CREATE Mhp.sem 1 SEM-FIFO))
 	  (=>(Mhp.freeId 0))
-      (=>(Mhp.previousTask -1 -1))
+      (=>(Mhp.previousTask -2 -2))
 	  )
    )
  
@@ -880,6 +880,79 @@
      (!(ReportManager.publish Mhp.report (VAL @id) (VAL @report)))
 	 )
   )
+(defop |benPlanif|
+  :invocation(Mhp.request benPlanif @x @y @theta @mhpId)
+  :body (
+         (!(= @armId MHP_BASE))
+         (!(= @cartesian GEN_FALSE))
+         (!(= @torso 0))
+         (!(= @arm 0))
+         (!(= @trajId 0))
+
+         (!(= @params  (STRUCT_MHP_BEN_PLANIF_PARAMS
+                        (trajId  0)
+                        (armId  0)
+                        (base
+                         (x  @x)
+                         (y  @y)
+                         (th  @theta))
+
+                        (torso  0)
+                        (arm_right
+                         (q1  0)
+                         (q2  0)
+                         (q3  0)
+                         (q4  0)
+                         (q5  0)
+                         (q6  0)
+                         (q7  0))
+
+                        (arm_left
+                         (q1  0)
+                         (q2  0)
+                         (q3  0)
+                         (q4  0)
+                         (q5  0)
+                         (q6  0)
+                         (q7  0))
+
+                        (cartesian  GEN_FALSE)
+                        (objGoto   0 0 0 0 0 0))))
+         (IF(?(Mhp.sim FALSE))
+            (!(GenomInterface.handleRequest MHP MHP_BENPLANIF (Mhp.stop (VAL @id)) (FALSE) (FALSE) 300 @params @report @result))
+            ELSE
+            (!(= @report "OK"))
+            )
+         (!(ReportManager.publish Mhp.report (VAL @id) (VAL @report)))
+         )
+  )
+(defop |AddGtpAttachement|
+  :invocation(Mhp.request addGtpAttachmentFromTask @taskId @alternativeId @id)
+  :body (
+         (!(= @params  (STRUCT_TASK_ID_ONLY
+                        (taskId  (VAL @taskId))
+                        (alternativeId (VAL @alternativeId)))))
+         (IF(?(Mhp.sim FALSE))
+            (!(GenomInterface.handleRequest MHP MHP_ADDGTPATTACHEMENTFROMTASK (FALSE) (FALSE) (FALSE) 300 @params @report @result))
+            ELSE
+            (!(= @report "OK"))
+            )
+         (!(ReportManager.publish Mhp.report (VAL @id) (VAL @report)))
+
+         )
+  )
+
+(defop |clearGtpAttachmentSaved|
+  :invocation(Mhp.request clearGtpAttachmentSaved @id)
+  :body (
+         (IF(?(Mhp.sim FALSE))
+            (!(GenomInterface.handleRequest MHP MHP_CLEARGTPATTACHEMENTSAVED (Mhp.stop (VAL @id)) (FALSE) (FALSE) 300 nil @report @result))
+            ELSE
+            (!(= @report "OK"))
+            )
+         (!(ReportManager.publish Mhp.report (VAL @id) (VAL @report)))
+
+         )
+  )
+
 )
-
-

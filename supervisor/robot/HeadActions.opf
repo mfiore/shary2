@@ -326,7 +326,7 @@ when we want to find something near a certain point"
    :invocation(!(HeadActions.handleReport @reportName @id @actionId))
    :documentation "Utility function to avoid some code duplication when waiting for the response of a genom module. This can't be used when we don't want to fail if the genom request fails"
    :body (
-          (!(ReportManager.sub @id @report))
+          (!(ReportManager.sub  @reportName @id))
           (^(|| ( @reportName (VAL @id) @report)  (HeadActions.stop (VAL @actionId))))
 	  
           (IF(?(HeadActions.stop (VAL @actionId)))
