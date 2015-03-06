@@ -1,0 +1,5 @@
+declare ff IntentionEstimation.freeId 0
+declare cwp EstimateIntentions.stop
+declare cwp EstimateIntentions.report
+declare cwp EstimateIntentions.rosReport
+declare cwp EstimateIntentions.rosResult

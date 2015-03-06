@@ -1,0 +1,55 @@
+;; -*-Lisp-*-
+;;author: Michelangelo Fiore
+;;this files contains procedures to monitor agent intentions and actions
+
+
+
+(
+ (defop |init|
+   :invocation(!(IntentionEstimate.init))
+   :body (
+          (=>(IntentionEstimate.freeId 0))
+          )
+   )
+ (defop |getFreeId|
+   :invocation(!(IntentionEstimation.getFreeId $id))
+   :body (
+          (?(IntentionEstimation.freeId $id))
+          (=>(IntentionEstimation.freeId (+ $id 1)))
+          )
+   )
+    (defop |EstimateIntentions|
+      :invocation(IntentionEstimation.estimateIntentions @intentionList @id)
+      :body (
+             (?(EstimateIntentions.rosName @rosName))
+
+             (!(EstimateIntentions.getActionsAndObjects @actionList @objectList))
+             (!(SEND-MESSAGE @rosName (EstimateIntentions.start @intentionList @actionList @objectList)))
+             (^(||(EstimateIntentions.rosResult @intention @action @qDiff) (EstimateIntentions.stop (VAL @freeId))))
+             (IF(?(EstimateIntentions.stop (VAL @freeId)))
+                (~>(EstimateIntentions.stop (VAL @freeId)))
+                (!(SEND-MESSAGE @rosName (EstimateIntentions.stop)))
+                (^(EstimateIntentions.rosReport @report))
+                (~>(EstimateIntentions.rosReport (VAL @report)))
+                (=>(IntentionEstimation.report (VAL @id) STOPPED))
+
+                ELSE
+                (=>(IntentionEstimation.report (VAL @id) OK))
+                (=>(IntentionEstimation.result (VAL @id) (VAL @intention) (VAL @action) (VAL @qDiff)))
+                )
+
+
+             )
+           
+    )   
+
+
+    (defop |GetActionsAndObject|
+     :invocation (!(EstimateIntentions.getActionsAndObjects @actionList @objectList))
+     :body (
+            )
+     )
+
+)
+
+

@@ -6,6 +6,15 @@
 
 
 (
+
+ (defop |testEstimateIntentions|
+   :invocation(!(Tester.testEstimate))
+   :body (
+          ;(!(SEND-MESSAGE EstimateIntentions (EstimateIntentions.start (. EatCookies DrinkWater FillCookies .) (. human_take_waterBottle human_take_glass human_open_cookieBox human_move_fridge .) (. BOTTLE GLASS COOKIE_BOX FRIDGE .) (. HotDay SnackTime .) )))
+          (!(SEND-MESSAGE EstimateIntentions (EstimateIntentions.start (. ReadBook PrepareDinner ListenToMusic UseTelephone .) (. human_move_table human_move_nightstand human_move_library human_move_sofa .) (. TABLE NIGHSTAND LIBRARY SOFA .) (. AfterWork DinnerTime .) )))
+          )
+
+   )
  (defop |testRegisterChanges|
    :invocation(!(Tester.testRegisterChanges))
    :body (

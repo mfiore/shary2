@@ -20,18 +20,21 @@
  (defop |sendWorldState|
    :invocation(!(Database.sendWorldState @name))
    :body (
-          (!(Database.findListLocal (AGENT-STATEMENT PR2_ROBOT @subject @predicate @value) (. @subject @predicate @value .) @result))
+          (!(Database.findListLocal (AGENT-STATEMENT @model @subject @predicate @value) (. @model @subject @predicate @value .) @result))
           (!(= @n (LENGTH @result)))
           (!(SEND-MESSAGE @name (Database.nfacts @n)))
           (WHILE(?(~(NULL @result)))
                 (!(= @element (CAR @result)))
                 (!(= @result (CDR @result)))
 
-                (!(== (VAL @element) (. @subject @predicate @value .)))
+                (!(== (VAL @element) (. @model @subject @predicate @value .)))
 
                 (!(SEND-MESSAGE @name (Database.operation add)))
-                (!(SEND-MESSAGE @name (AGENT-STATEMENT PR2_ROBOT @subject @predicate @value )))
+                (!(SEND-MESSAGE @name (AGENT-STATEMENT @model @subject @predicate @value )))
                 )
+
+
+
           )
    )
 
