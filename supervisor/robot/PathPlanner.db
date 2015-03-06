@@ -23,6 +23,15 @@
     (PathPlanner.coordinates WORK_LOCATION_3A 6.1 6.757 0.879)
     (PathPlanner.coordinates WORK_LOCATION_3B 5.68  6.844 0.293)
 
+    (PathPlanner.translate WORK_LOCATION_1A WORK_LOCATION_1)
+    (PathPlanner.translate WORK_LOCATION_2A WORK_LOCATION_2)
+    (PathPlanner.translate WORK_LOCATION_3A WORK_LOCATION_3)
+    (PathPlanner.translate STOCK_TABLE_1A STOCK_TABLE)
+    (PathPlanner.translate STOCK_TABLE_2A STOCK_TABLE)
+    (PathPlanner.translate STOCK_TABLE_3A STOCK_TABLE)
+    (PathPlanner.translate BASE BASE)
+
+
     (PathPlanner.coordinates BASE 3.173 7.016  0)
 
 

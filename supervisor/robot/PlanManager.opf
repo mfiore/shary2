@@ -39,7 +39,24 @@
           (!(= @state2 (CAR(CAR @result))))
           (!(DatabaseInterface.findList (AGENT-STATEMENT PR2_ROBOT ASSEMBLY_SURFACE_3 state @s) (. @s .) @result))
           (!(= @state3 (CAR(CAR @result))))
+
+          (!(DatabaseInterface.findList (AGENT-STATEMENT PR2_ROBOT PR2_ROBOT holds @i) (. @i .) @result))
+          (IF(?(~(NULL @result)))
+             (!(= @heldObject (CAR(CAR @result))))
+
+             ELSE
+             (!(DatabaseInterface.findList (AGENT-STATEMENT PR2_ROBOT HERAKLES_HUMAN1 holds @j) (. @j .) @result))
+             (IF(?(~(NULL @result)))
+                (!(= @heldObject (CAR(CAR @result))))
+
+                ELSE
+                (!(= @heldObject NONE))
+                )
+             )
+
+
           (!(DatabaseInterface.findList (AGENT-STATEMENT PR2_ROBOT HERAKLES_HUMAN1 isAt @l) (. @l .) @result))
+
           (IF(?(~(NULL @result)))
              (!(= @humanLoc (CAR(CAR @result))))
 
@@ -60,8 +77,15 @@
              ELSE
              (!(PlanManager.getSurfaceFromLocation @state3 ASSEMBLY_SURFACE_3 @state1 @state2 @state3 @choosenSurface))
              )
+          (IF(?(EQUAL @heldObject NONE))
           (!(= $goal HandleSurface))
           (!(= $params (. @choosenSurface .)))
+
+          ELSE
+          (!(= $goal AssembleOneBracket))
+          (!(= $params (. HERAKLES_HUMAN1 PR2_ROBOT @heldObject @choosenSurface .)))
+          )
+
           )
           )
    )
@@ -112,13 +136,13 @@
 			    (< @planningFailures @maxPlanningFailures)
 			    ))
 					;if we are not in rest pose (because we are replanning) we move there
-			 (IF(?(~(Robot.pose RIGHT @object @support MANIPULATION)))
-                (!(ArmActions.getFreeId @actionId))
-                (!(ReportManager.sub ArmActions.report @actionId))
-			    (=>(ArmActions.action moveToPose MANIPULATION 0 @actionId))
-			    (^(ArmActions.report (VAL @actionId) @report))
-                (!(ReportManager.unsub ArmActions.report @actionId))
-			    )
+             ;; (IF(?(~(Robot.pose RIGHT @object @support MANIPULATION)))
+             ;;    (!(ArmActions.getFreeId @actionId))
+             ;;    (!(ReportManager.sub ArmActions.report @actionId))
+             ;;    (=>(ArmActions.action moveToPose MANIPULATION 0 @actionId))
+             ;;    (^(ArmActions.report (VAL @actionId) @report))
+             ;;    (!(ReportManager.unsub ArmActions.report @actionId))
+             ;;    )
 
 			 (IF(?(PlanManager.planningModality @agent ROBOT))  ;if robot plans he warns the user that it is planning
 			    (IF(?(EQUAL @planningFailures 0))
@@ -352,7 +376,10 @@
 
               (!(== (VAL @actionParameters) (. @placement .)))
               ELSEIF(?(Action.type (VAL @actionName) MOVEMENT))
+
               (!(== (VAL @actionParameters) (. @location .)))
+
+
               ELSEIF(?(Action.type (VAL @actionName) PLACEHERE))
               (!(== (VAL @actionParameters) (. @object .)))
               (?(Object.type (VAL @object) @type @class))
@@ -474,7 +501,27 @@
 		      (!(= @actionLinks (CDR @actionLinks)))
 		      )
         (!(== (VAL @actionToExecute) (. @actionName @actionParameters .)))
-        (IF(?(Action.type (VAL @actionName) PLACEHERE))
+        (IF(?(Action.type (VAL @actionName) MOVEMENT))
+        ;;TODO
+        (!(== (VAL @actionParameters) (. @location .)))
+        (IF(?(EQUAL @location STOCK_TABLE))
+           (!(= @nextAction (CAR @actions)))
+           (!(== (VAL @nextAction) (. @nextActionToExecute @nextActionId @nextActionLinks .)))
+           (!(== (VAL @nextActionToExecute) (. @nextActionName @nextActionParameters .)))
+
+           (IF(?(EQUAL @nextActionName take))
+              (!(= @nextObject (CAR @nextActionParameters)))
+              (?(Action.param go (VAL @nextObject) @realLocation))
+
+              ELSE
+              (?(Robot.hasObject RIGHT @heldObject))
+              (?(Action.param go (VAL @heldObject) @realLocation))
+              )
+           ELSE
+           (?(Action.param go (VAL @location) @realLocation))
+           )
+        (!(= @actionParameters (. (VAL @realLocation) .)))
+        ELSEIF(?(Action.type (VAL @actionName) PLACEHERE))
            (!(== (VAL @actionParameters) (. @object .)))
 
            (!(DatabaseInterface.find (AGENT-STATEMENT PR2_ROBOT HERAKLES_HUMAN1 pose GIVE) @result))

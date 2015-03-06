@@ -152,7 +152,7 @@
 		  (!(Database.add (AGENT-STATEMENT (VAL @agentModel) (VAL @subject) (VAL @predicate) (VAL @value))))	
 
 		  (IF(?(EQUAL @predicate isOn))
-		     (!(SEND-MESSAGE OPRS_SUP (Monitor.objectAppears (VAL @subject))))
+             ;(!(SEND-MESSAGE OPRS_SUP (Monitor.objectAppears (VAL @subject))))
 		     )
  		  (IF(?(EQUAL @predicate isPresent))
 		     (IF(?(EQUAL @value true))

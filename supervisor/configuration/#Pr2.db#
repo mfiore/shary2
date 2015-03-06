@@ -1,0 +1,19 @@
+(
+(Robot.name PR2_ROBOT)
+(Module.isActive mhp TRUE)
+(Module.isActive softmotion TRUE)
+(Module.isActive gtp TRUE)
+(Module.isActive viman TRUE)
+(Module.isActive spark TRUE)
+(Module.isActive acapela FALSE)
+(Module.isActive navigation TRUE)
+(Module.isActive waypoints FALSE)
+(Module.isActive pathPlanner FALSE)
+
+(Robot.joints HEAD)
+(Robot.joints BASE)
+(Robot.joints LEFT_ARM)
+(Robot.joints RIGHT_ARM)
+
+
+)

@@ -48,6 +48,8 @@
            (!(== (VAL @actionParameters) (. @object @support @placement .)))
 	       ELSEIF(?(EQUAL @type POSE))
 	       (!(== (VAL @actionParameters) (. @pose @arm @q0 .)))
+           ELSEIF(?(EQUAL @type POINT))
+           (!(== (VAL @actionParameters) (. @placement .)))
 
 	       ELSEIF(?(EQUAL @type GRIPPER))
            (!(== (VAL @actionParameters) (. @gripper .)))
@@ -67,7 +69,9 @@
 	       
 	       ELSEIF(?(EQUAL @actionName take))
            (=>(ExecutionManager.execute take @object RIGHT @executionId))
-	       
+
+           ELSEIF(?(EQUAL @actionName pointTo))
+           (=>(ExecutionManager.execute pointTo @placement @executionId))
 	       ELSEIF(?(EQUAL @actionName throw))
 	       (=>(ExecutionManager.execute throw @object @placement @executionId))
 
@@ -600,7 +604,7 @@
 
      (!(ArmActions.getFreeId @detectPressionId))
      (=>(ArmActions.action detectPression @arm @type @detectPressionId))
-     (!(ExecutionManager.handleReport ArmActions @actionId @executionId FALSE TRUE (. .)))
+     (!(ExecutionManager.handleReport ArmActions @detectPressionId @executionId FALSE TRUE (. .)))
 
 
      (IF(?(EQUAL @type GIVE))
@@ -1422,10 +1426,14 @@ $distance , $info, $orientation, $speed, $inRange  the output observations"
      (=>(Mhp.request benPlanif @x @y @theta))
      (!(ExecutionManager.handleReport BaseActions (VAL @stopId) @executionId FALSE FALSE (. .)))
      )
-     (!(DatabaseInterface.add (AGENT-STATEMENT PR2_ROBOT PR2_ROBOT isAt @goal) @result))
+
+     (?(PathPlanner.translate (VAL @goal) @tLocation))
+     (!(DatabaseInterface.set (AGENT-STATEMENT PR2_ROBOT PR2_ROBOT isAt @tLocation) @result))
 
 	 (~>(ExecutionManager.isExecutingAction @executionId))	 
 
+     (!(ReportManager.publish ExecutionManager.report  (VAL @executionId) OK))
+     (~>(ExecutionManager.isExecutingAction (VAL @executionId)))
      (!(SEM-V ExecutionManager.sem))
      )
 
@@ -1536,10 +1544,18 @@ $distance , $info, $orientation, $speed, $inRange  the output observations"
 (defop |Point|
   :invocation(ExecutionManager.execute pointTo @location @executionId)
   :body (
+         ;;close gripper if needed
+         (IF(?(Robot.gripperStatus RIGHT OPEN))
+            (!(ArmActions.getFreeId @actionId))
+            (=>(ArmActions.action closeGripper RIGHT @actionId))
+            (!(ExecutionManager.handleReport ArmActions @actionId @executionId FALSE FALSE (. .)))
+            )
+
+
          (?(Action.param point (VAL @location) @confName))
          (!(GtpActions.getFreeId @gtpId))
          (=>(GtpActions.action moveTo @confName @gtpId))
-         (!(ExecutionManager.handleReport GtpActions @gtpId @executionId TRUE TRUE (. .) (. .)))
+         (!(ExecutionManager.handleReport GtpActions @gtpId @executionId TRUE TRUE (. .)))
 
          (!(ReportManager.publish ExecutionManager.report @executionId OK))
          )

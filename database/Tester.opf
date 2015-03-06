@@ -1,4 +1,22 @@
 (
+
+(defop |testResetDomain|
+       :invocation(!(Tester.resetDomain))
+       :body (
+              (!(Database.set (AGENT-STATEMENT PR2_ROBOT ASSEMBLY_SURFACE_1 state COMPLETE)))
+              (!(Database.set (AGENT-STATEMENT PR2_ROBOT BRACKET_1 glued true)))
+(!(Database.set (AGENT-STATEMENT PR2_ROBOT ASSEMBLY_SURFACE_2 state DEFAULT)))
+(!(Database.set (AGENT-STATEMENT PR2_ROBOT ASSEMBLY_SURFACE_3 state DEFAULT)))
+(!(Database.findListLocal (AGENT-STATEMENT PR2_ROBOT PR2_ROBOT holds @b) (. @b .) @result))
+(IF(?(~(NULL @result)))
+   (!(= @b (CAR(CAR @result))))
+   (!(Database.remove (AGENT-STATEMENT PR2_ROBOT PR2_ROBOT holds @b)))
+   )
+(!(Database.remove (AGENT-STATEMENT PR2_ROBOT BRACKET_2 glued true)))
+(!(Database.remove (AGENT-STATEMENT PR2_ROBOT BRACKET_3 glued true)))
+)
+)
+
 (defop |testFindList|
   :invocation (!(Tester.testFindList))
   :body (

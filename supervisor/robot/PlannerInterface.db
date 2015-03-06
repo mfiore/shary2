@@ -20,7 +20,7 @@
 (PlannerInterface.action hatp Clean clean) 
 (PlannerInterface.action hatp Glue glue) 
 (PlannerInterface.action hatp AttachBracket installBracket) 
-(PlannerInterface.action hatp StartPointing undefined) 
+(PlannerInterface.action hatp StartPointing pointTo) 
 (PlannerInterface.action hatp StopPointing undefined) 
 (PlannerInterface.action hatp CarryTo go) 
 )

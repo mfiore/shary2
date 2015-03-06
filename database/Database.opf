@@ -230,12 +230,13 @@ $unboundVariables= lisp-list containing the variables for which we want to find 
 		   (=>(VAL @newFact))
 		   (IF(? (toMonitor (VAL @newFact) @event))
 		      (! (SEND-MESSAGE @supName @event))
-		      )
+              )
+           (!(== (VAL @newFact) (AGENT-STATEMENT @agent @subject @predicate @value)))
+           (IF(?(Database.checkChanges (AGENT-STATEMENT (VAL @agent) (VAL @subject) (VAL @predicate)) @event @caller))
+              (!(SEND-MESSAGE @caller (Database.valueChange @event @value)))
+              )
            )
-         (!(== (VAL @fact) (AGENT-STATEMENT @agent @subject @predicate @value)))
-         (IF(?(Database.checkChanges (AGENT-STATEMENT (VAL @agent) (VAL @subject) (VAL @predicate)) @event @caller))
-            (!(SEND-MESSAGE @caller (Database.valueChange @event @value)))
-            )
+
 	     
 	     (IF (? (toMonitor (VAL @fact) @event))
 		 (! (SEND-MESSAGE @supName @event))

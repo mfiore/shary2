@@ -20,8 +20,18 @@
 (Action.type place PLACEHERE)
 (Action.type installBracket PLACEMENT)
 (Action.type go MOVEMENT)
+(Action.type pointTo POINT)
 
-(Action.param point WORK_LOCATION_1 point3)
-(Action.param point WORK_LOCATION_2 point4)
-(Action.param point WORK_LOCATION_3 point5)
+(Action.param point ASSEMBLY_SURFACE_1 point3)
+(Action.param point ASSEMBLY_SURFACE_2 point4)
+(Action.param point ASSEMBLY_SURFACE_3 point5)
+
+(Action.param go BRACKET_3 STOCK_TABLE_3A)
+(Action.param go BRACKET_2 STOCK_TABLE_2A)
+(Action.param go BRACKET_1 STOCK_TABLE_1A)
+
+(Action.param go WORK_LOCATION_1 WORK_LOCATION_1A)
+(Action.param go WORK_LOCATION_2 WORK_LOCATION_2A)
+(Action.param go WORK_LOCATION_3 WORK_LOCATION_3A)
+
 )

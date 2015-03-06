@@ -31,13 +31,13 @@
          ;;set the parameters for the monitor manager. We stop when the human has completed his actions and we fail if he fails or he's stopped
 
 
-	     (!(= @successConditions (. (.(PlanManager.agentReport (VAL @agent) OK) .) (. .) .)))
-	     (!(= @failureConditions (. (. .) (. (PlanManager.agentReport (VAL @agent) FAILURE) (PlanManager.agentReport (VAL @agent) STOPPED) .) .) )) 		   
-         (?(Spark.humanHead @sparkHumanHead))
+         ;; (!(= @successConditions (. (.(PlanManager.agentReport (VAL @agent) OK) .) (. .) .)))
+         ;; (!(= @failureConditions (. (. .) (. (PlanManager.agentReport (VAL @agent) FAILURE) (PlanManager.agentReport (VAL @agent) STOPPED) .) .) ))
+         ;; (?(Spark.humanHead @sparkHumanHead))
 
-         (!(MonitorManager.sub PlanManager.agentReport @agent @monitorId))
-         ;;start the monitoring
-	     (!(MonitorManager.monitorTarget @agent @sparkHumanHead @successConditions @failureConditions MEDIUM @monitorId))
+         ;; (!(MonitorManager.sub PlanManager.agentReport @agent @monitorId))
+         ;; ;;start the monitoring
+         ;; (!(MonitorManager.monitorTarget @agent @sparkHumanHead @successConditions @failureConditions MEDIUM @monitorId))
          (!(DatabaseInterface.registerToChanges (AGENT-STATEMENT PR2_ROBOT (VAL @agent) isAt) (humanLocation (VAL @agent)) @result))
          (=>(AgentActionMonitor.isMonitoringAgent @agent @monitorId))
 
@@ -276,6 +276,7 @@
 
          (!(= @agent (CAR @agentList)))
          (!(DatabaseInterface.findList (AGENT-STATEMENT PR2_ROBOT (VAL @agent) isAt @l) (. @l .) @result))
+         (IF(?(~(NULL @result)))
          (!(= @table (CAR(CAR @result))))
                                         ;(?(Object.table @tableList))
          (!(= @tableList (. @table .)))
@@ -381,6 +382,7 @@
                      )
                   )
                )
+         )
          )
   )
 
@@ -844,7 +846,7 @@
                      (!(Spark.getFreeId @sparkId))
                      (!(ReportManager.sub Spark.report @sparkId))
                      (IF(?(Spark.sim FALSE))
-                        (=>(Spark.request placeObject @heldObject @x @y @z 0 0 0 @sparkId))
+                        (=>(Spark.request placeObject @heldObject @x @y 0.85 0 0 0 @sparkId))
 
                         ELSE
                         (=>(Spark.request placeObjectForSimu @heldObject @x @y @z 0 0 0 0 @sparkId))
