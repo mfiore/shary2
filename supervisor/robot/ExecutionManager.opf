@@ -1392,13 +1392,13 @@ $distance , $info, $orientation, $speed, $inRange  the output observations"
 	 (=>(ExecutionManager.isExecutingAction @executionId))
 
      (?(Robot.pose @arm @sup @obj @pose))
-     (IF(?(~(EQUAL @pose NAV)))
-     (!(GtpActions.getFreeId @gtpId))
-     (=>(GtpActions.action moveTo sNaviPose @gtpId))
-     (!(ExecutionManager.handleReport GtpActions @gtpId @executionId TRUE TRUE (. .)))
+    ; (IF(?(~(EQUAL @pose NAV)))
+;     (!(GtpActions.getFreeId @gtpId))
+ ;    (=>(GtpActions.action moveTo sNaviPose @gtpId))
+  ;   (!(ExecutionManager.handleReport GtpActions @gtpId @executionId TRUE TRUE (. .)))
 
-     (=>(Robot.pose NO_NAME NO_NAME NO_NAME NAV))
-     )
+   ;  (=>(Robot.pose NO_NAME NO_NAME NO_NAME NAV))
+    ; )
      (IF(?(Module.isActive waypoints FALSE))
      ;;get list of nodes in semantic ma3p
      (?(Robot.location @source))

@@ -11,4 +11,4 @@ load opf "database/Tester.opf"
 load db "supervisor/domains/saphariObjects.db"
 load db "database/HatpRules.db"
 
-load db "database/domains/intentions2.db"
+load db "database/domains/intentions.db"

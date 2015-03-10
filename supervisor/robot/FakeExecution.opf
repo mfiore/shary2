@@ -2,7 +2,122 @@
 ;;author: Michelangelo Fiore
 ;;Everything here is hacked crappy and fake
 (
-(defop |GoToGlueBottle|
+ (defop |TakeBook|
+   :invocation(!(FakeExecution.bottle))
+   :body (
+          (!(Softmotion.getFreeId @smId))
+          (!(ReportManager.sub Softmotion.report @smId))
+          (=>(Softmotion.request goToQ RARM 0 5.78962 9.74734 0 0 0 1.51389 0.0115936 0.0873107 -0.385055 0.64163 -0.251132 0.5518 0.408417 -2.04602 -2.75259 -1.78319 -0.395011 0.0879481 0.0879481 0.0338063 1.27346 1.59399 -1.46491 -0.443062 -0.0798549 -1.40445 0.0878115 0.0878115 @smId))
+          (^(Softmotion.report (VAL @smId) @report))
+
+          (!(Softmotion.getFreeId @smId))
+          (!(ReportManager.sub Softmotion.report @smId))
+          (=>(Softmotion.request goToQ RARM 0 5.78956 9.7475 0 0 0 1.51408 0.0115936 0.0912901 -0.385055 -0.328161 -0.131581 0.488523 0.441932 -1.54207 -2.74698 -1.29363 -0.582883 0.0879481 0.0879481 0.0343866 1.26322 1.59158 -1.4623 -0.442946 -0.0799419 -1.39931 0.0878112 0.0878112 @smId))
+          (^(Softmotion.report (VAL @smId) @report))
+
+          (!(Softmotion.getFreeId @smId))
+          (!(ReportManager.sub Softmotion.report @smId))
+          (=>(Softmotion.request useGripper RCLOSE @smId))
+          (^(Softmotion.report (VAL @smId) @report))
+
+          (!(Softmotion.getFreeId @smId))
+          (!(ReportManager.sub Softmotion.report @smId))
+          (=>(Softmotion.request goToQ RARM 0 5.78962 9.74734 0 0 0 1.51389 0.0115936 0.0873107 -0.385055 0.64163 -0.251132 0.5518 0.408417 -2.04602 -2.75259 -1.78319 -0.395011 0.0879481 0.0879481 0.0338063 1.27346 1.59399 -1.46491 -0.443062 -0.0798549 -1.40445 0.0878115 0.0878115 @smId))
+          (^(Softmotion.report (VAL @smId) @report))
+
+
+
+          )
+
+   )
+
+ (defop |FakeHandover|
+   :invocation(!(FakeExecution.handover))
+   :body (
+          (!(Softmotion.getFreeId @smId))
+          (!(ReportManager.sub Softmotion.report @smId))
+          (=>(Softmotion.request goToQ RARM 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0  @smId ))
+          (^(Softmotion.report (VAL @smId) @report))
+
+          (!(Softmotion.getFreeId @smId))
+          (!(ReportManager.sub Softmotion.report @smId))
+          (=>(Softmotion.request useGripper RRELEASE  @smId ))
+          (^(Softmotion.report (VAL @smId) @report))
+          )
+
+   )
+
+ (defop |LManPose|
+   :invocation(!(FakeExecution.lmp))
+   :body (
+          (!(Softmotion.getFreeId @smId))
+          (!(ReportManager.sub Softmotion.report @smId))
+          (=>(Softmotion.request goToQ LARM 0 4.31996 6.05212 0 0 0 1.58582 0.0115093 0.25591 -0.386102 0.214893 0.564752 1.02494 -0.453971 -1.66744 -2.24608 -2.003 -1.60871 0.0104643 0.0104643 1.02487 -0.234955 1.58854 -1.79889 -0.607116 -0.090384 -1.24599 0.0880321 0.0880321 @smId ))
+          (^(Softmotion.report (VAL @smId) @report))
+          )
+
+)
+
+ (defop |GiveDrink|
+   :invocation(!(FakeExecution.giveDrink))
+   :body (
+          (^(ELAPSED-TIME (TIME) 1))
+
+          (!(Softmotion.getFreeId @smId))
+          (=>(Softmotion.request moveHead 0.0 0.8 @smId))
+          (^(Softmotion.report (VAL @smId) @report))
+
+          (!(Softmotion.getFreeId @smId))
+          (!(ReportManager.sub Softmotion.report @smId))
+          (=>(Softmotion.request goToQ LARM 0 4.31996 6.05212 0 0 0 1.58582 0.0115093 0.25591 -0.386102 0.214893 0.564752 1.02494 -0.453971 -1.66744 -2.24608 -2.003 -1.60871 0.0104643 0.0104643 1.02487 -0.234955 1.58854 -1.79889 -0.607116 -0.090384 -1.24599 0.0880321 0.0880321 @smId ))
+          (^(Softmotion.report (VAL @smId) @report))
+
+          (!(Softmotion.getFreeId @smId))
+          (!(ReportManager.sub Softmotion.report @smId))
+          (=>(Softmotion.request goToQ LARM 0 4.32005 6.05237 0 0 0 1.5833 0.0115093 0.256852 -0.385997 -0.699544 0.564752 1.02037 -0.445953 -1.6935 -2.25083 -2.003 -1.60871 0.0104643 0.0104643 0.877381 0.521239 1.70816 -1.34171 -0.0450163 -0.543355 -1.01857 0.0880253 0.0880253 @smId))
+          (^(Softmotion.report (VAL @smId) @report))
+
+          (!(Softmotion.getFreeId @smId))
+          (!(ReportManager.sub Softmotion.report @smId))
+          (=>(Softmotion.request goToQ LARM 0 4.32023 6.05241 0 0 0 1.5828 0.0115093 0.256852 -0.385892 0.7971 0.564752 1.01919 -0.44467 -1.69857 -2.25112 -2.003 -1.60871 0.0104643 0.0104643 0.650632 0.498906 1.67336 -1.25296 -0.0672295 -0.416788 -0.970663 0.0880241 0.0880241 @smId ))
+          (^(Softmotion.report (VAL @smId) @report))
+
+          (!(Softmotion.getFreeId @smId))
+          (=>(Softmotion.request useGripper LCLOSE @smId))
+          (^(Softmotion.report (VAL @smId) @report))
+
+          (!(Softmotion.getFreeId @smId))
+          (!(ReportManager.sub Softmotion.report @smId))
+          (=>(Softmotion.request goToQ LARM 0 4.31996 6.05212 0 0 0 1.58582 0.0115093 0.25591 -0.386102 0.214893 0.564752 1.02494 -0.453971 -1.66744 -2.24608 -2.003 -1.60871 0.0104643 0.0104643 1.02487 -0.234955 1.58854 -1.79889 -0.607116 -0.090384 -1.24599 0.0880321 0.0880321 @smId ))
+          (^(Softmotion.report (VAL @smId) @report))
+
+          (!(Softmotion.getFreeId @smId))
+          (=>(Softmotion.request moveHead 0.3 0.2 @smId))
+          (^(Softmotion.report (VAL @smId) @report))
+
+
+          (!(Softmotion.getFreeId @smId))
+          (!(ReportManager.sub Softmotion.report @smId))
+          (=>(Softmotion.request goToQ LARM 0 4.32005 6.05244 0 0 0 1.58114 0.0115093 0.257271 -0.386206 0.91539 0.564835 1.01792 -0.442265 -1.70421 -2.25117 -2.003 -1.60871 0.0879231 0.0879231 0.595913 -0.3028 0.847536 -0.590059 -1.44139 -0.0835096 0.566246 0.0244686 0.0244686 @smId ))
+          (^(Softmotion.report (VAL @smId) @report))
+
+          (!(Softmotion.getFreeId @smId))
+          (!(ReportManager.sub Softmotion.report @smId))
+          (=>(Softmotion.request goToQ LARM 0 4.32001 6.05273 0 0 0 1.58047 0.0115093 0.257061 -0.386206 0.261108 0.564752 1.01699 -0.440661 -1.70856 -2.25123 -2.003 -1.60871 0.0879231 0.0879231 0.579581 -0.302631 0.97614 -0.675473 0.150044 -0.0962577 0.568291 0.0244707 0.0244707 @smId))
+          (^(Softmotion.report (VAL @smId) @report))
+
+          (^(ELAPSED-TIME (TIME) 3))
+
+          (!(Softmotion.getFreeId @smId))
+          (!(ReportManager.sub Softmotion.report @smId))
+          (=>(Softmotion.request goToQ LARM 0 4.32005 6.05244 0 0 0 1.58114 0.0115093 0.257271 -0.386206 0.91539 0.564835 1.01792 -0.442265 -1.70421 -2.25117 -2.003 -1.60871 0.0879231 0.0879231 0.595913 -0.3028 0.847536 -0.590059 -1.44139 -0.0835096 0.566246 0.0244686 0.0244686 @smId))
+          (^(Softmotion.report (VAL @smId) @report))
+
+          )
+
+   )
+
+ (defop |GoToGlueBottle|
 :invocation (!(FakeExecution.goToGlueBottle @type))
 :body (
        (!(FakeExecution.goToMatPose))
