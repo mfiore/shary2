@@ -249,7 +249,7 @@ be moved in another class"
 		   (WHILE(?(& (~(VAL @successConditionsTrue)) (~(VAL @failureConditionsTrue)) (MonitorManager.highestAvailablePriority  (VAL @priority)) (~(MonitorManager.cancelMonitoring (VAL @monitorId))) (MonitorManager.shouldRun TRUE) (EQUAL @executionReport "OK")))
 ;			 (^(ELAPSED-MTIME (TIME) 500))
 			 
-             (IF(?(Softmotion.sim FALSE))
+             (IF(?(Softmotion.isActive TRUE))
 			 
                 (!(HeadActions.freeId @executionId))  ;we link execution to an ID. This is the last used ID + 1 (needs to be implemented
                 (!(ReportManager.sub HeadActions.report @executionId))
@@ -292,16 +292,16 @@ be moved in another class"
 			 )
 		      (IF (?(VAL @successConditionsTrue))
                   (~>(VAL @successConditionsTrue))
-                  (!(ReportManager.publish MonitorManager.report @monitorId OK))
+                  (!(ReportManager.publish MonitorManager.report @monitorId "OK"))
 
-                  ELSEIF(?(|| (VAL @failureConditionsTrue) (~(EQUAL @executionReport OK))))
+                  ELSEIF(?(|| (VAL @failureConditionsTrue) (~(EQUAL @executionReport "OK"))))
                   (~>(VAL @failureConditionsTrue))
-                  (!(ReportManager.publish MonitorManager.report @monitorId FAILURE))
+                  (!(ReportManager.publish MonitorManager.report @monitorId "FAILURE"))
 
 			  
 			  ELSEIF(?(MonitorManager.cancelMonitoring (VAL @monitorId)))
 			  (~>(MonitorManager.cancelMonitoring (VAL @monitorId)))
-              (!(ReportManager.publish MonitorManager.report @monitorId CANCELED))
+              (!(ReportManager.publish MonitorManager.report @monitorId "CANCELED"))
 			  )
 		      )
 		   )

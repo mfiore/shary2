@@ -63,120 +63,34 @@
 					       (PARAMETERS @parameters)
 					       )))
 		   
-		   (IF(?(PlannerInterface.action hatp (VAL @hatpActionName) @actionName))    ;convert the action name from the domain name of hatp to the supervisor domain
-		   (IF(?(Action.type (VAL @actionName) MANIPULATION))               ;depending on the action we convert the parameters from the hatp domain to the supervisor odmain
-		      (!(= @object NO_NAME))
-		      (WHILE(?(~(NULL @parameters)))
-			    (!(= @currentParameter (CAR @parameters)))
-			    (!(= @parameters (CDR @parameters)))
-			    (IF(?(Object.type (VAL @currentParameter) @class @type))    ;;depending on the type of the parameter in the supervisor domain we update the correct variable
-			       (IF(?(EQUAL @type PICKABLE))
-				  (!(= @object (VAL @currentParameter)))  
-				  )
-			       )
-			    )
-              (!(= @actionParameters (. (VAL @object)  .)))
-              ELSEIF(?(Action.type (VAL @actionName) SURFACE))
+           (IF(?(PlannerInterface.action hatp (VAL @hatpActionName) @actionName))    ;convert the action name from the domain name of hatp to the supervisor domain
 
-              (!(= @object NO_NAME))
-              (WHILE(?(~(NULL @parameters)))
-                    (!(= @currentParameter (CAR @parameters)))
-                    (!(= @parameters (CDR @parameters)))
-                    (IF(?(Object.type (VAL @currentParameter) @class @type))    ;;depending on the type of the parameter in the supervisor domain we update the correct variable
-                       (IF(?(EQUAL @type PLACEMENT))
-                          (!(= @placement (VAL @currentParameter)))
+              (?(PlannerInterface.parameterLinks hatp (VAL @hatpActionName) @parameterLinks))
+
+              ;;get the size of the parameters
+              (?(Actions.nParameters (VAL @actionName) @n))
+
+              (!(= @i 0))
+              (!(= @actionParameters (. .)))
+              ;;the parameters of the HATP actions can be in a different order (and also a different number) from the parameters used by supervision. The Db contains a mapping of the indexs.
+              ;;We use this mapping now to create a list of parameters in the correct order
+              (WHILE(?(< @i @n))
+                    (!(= @parameterLinksCopy @parameterLinks))
+                    (!(= @parametersCopy @parameters))
+                    (WHILE(?(~(NULL @parameterLinksCopy)))
+                          (!(= @aLink (CAR @parameterLinksCopy)))
+                          (!(= @parameterLinksCopy (CDR @parameterLinksCopy)))
+                          (!(= @aParameter (CAR @parametersCopy)))
+                          (!(= @parametersCopy (CDR @parametersCopy)))
+
+                          (IF(?(EQUAL @aLink @i))
+                             (!(= @actionParameters (CONS-TAIL (VAL @aParameter) @actionParameters)))
+                             )
                           )
-                       )
+                    (!(= @i (+ @i 1)))
                     )
-              (!(= @actionParameters (. (VAL @placement) .)))
 
-              ELSEIF(?(Action.type (VAL @actionName) PLACEHERE))
-              (!(= @object NO_NAME))
-              (WHILE(?(~(NULL @parameters)))
-                    (!(= @currentParameter (CAR @parameters)))
-                    (!(= @parameters (CDR @parameters)))
-                    (IF(?(Object.type (VAL @currentParameter) @class @type))    ;;depending on the type of the parameter in the supervisor domain we update the correct variable
-                       (IF(?(EQUAL @type PICKABLE))
-                          (!(= @object (VAL @currentParameter)))
-                          )
-                       )
-                    )
-              (!(= @actionParameters (. (VAL @object)  .)))
-
-              ELSEIF(?(Action.type (VAL @actionName) POINT))
-              (!(= @object NO_NAME))
-              (WHILE(?(~(NULL @parameters)))
-                    (!(= @currentParameter (CAR @parameters)))
-                    (!(= @parameters (CDR @parameters)))
-                    (IF(?(Object.type (VAL @currentParameter) @class @type))    ;;depending on the type of the parameter in the supervisor domain we update the correct variable
-                       (IF(?(EQUAL @type PLACEMENT))
-                          (!(= @object (VAL @currentParameter)))
-                          )
-                       )
-                    )
-              (!(= @actionParameters (. (VAL @object)  .)))
-              ELSEIF(?(Action.type (VAL @actionName) MOVEMENT))
-
-              (!(= @object NO_NAME))
-              (WHILE(?(~(NULL @parameters)))
-                    (!(= @currentParameter (CAR @parameters)))
-                    (!(= @parameters (CDR @parameters)))
-                    (IF(?(Object.type (VAL @currentParameter) @class @type))    ;;depending on the type of the parameter in the supervisor domain we update the correct variable
-                       (IF(?(EQUAL @type SUPPORT))
-                          (!(= @object (VAL @currentParameter)))
-                          )
-                       )
-                    )
-              (!(= @actionParameters (. (VAL @object)  .)))
-		      ELSEIF(?(Action.type (VAL @actionName) PLACEMENT))
-;		      (!(= @object NO_NAME))
-;		      (!(= @placement NO_NAME))
-
-
-		      (WHILE(?(~(NULL @parameters)))
-			    (!(= @currentParameter (CAR @parameters)))
-			    (!(= @parameters (CDR @parameters)))
-			    (IF(?(Object.type (VAL @currentParameter) @class @type))    ;;depending on the type of the parameter in the supervisor domain we update the correct variable
-			       (IF(?(EQUAL @type PICKABLE))
-				  (!(= @object (VAL @currentParameter)))  
-				  
-				  ELSEIF(?(||(EQUAL @type PLACEMENT) (EQUAL @type BIN) (EQUAL @type SUPPORT)))
-				  (!(= @placement (VAL @currentParameter)))
-			       )
-			    )
-			    )
-		      (!(= @actionParameters (. (VAL @object) (VAL @placement)  .)))
-		      ELSEIF(?(Action.type (VAL @actionName) HANDOVER))
-
-		      (!(= @object NO_NAME))
-		      (!(= @agent1 NO_NAME))
-		      (!(= @agent2 NO_NAME))
-		      (!(= @i 0))
-		      (WHILE(?(~(NULL @parameters)))
-			    (!(= @currentParameter (CAR @parameters)))
-			    (!(= @parameters (CDR @parameters)))
-
-			    (IF(?(Object.type (VAL @currentParameter) @class @type))    ;;depending on the type of the parameter in the supervisor domain we update the correct variable
-                   (IF(?(EQUAL @type PICKABLE))
-				  (!(= @object (VAL @currentParameter)))  
-				  
-			       
-				  ELSEIF(?(EQUAL @type AGENT))
-				  (IF(?(EQUAL @i 0))
-				     (!(= @agent1 (VAL @currentParameter)))
-				     (!(= @i (+ @i 1)))
-				     
-				     ELSE
-				     (!(= @agent2 (VAL @currentParameter)))
-				     )
-				  )
-			       )
-			    )
-		      (!(= @actionParameters (. (VAL @object) (VAL @agent1) (VAL @agent2) .)))   
-		      )
-		   
-		     
-		      ;;now we need to scan the LINK-LIST. Since HATP provides a single link list for all the domain while we want that each actions has a list of preconditions we need to scan this list for every action
+              ;;now we need to scan the LINK-LIST. Since HATP provides a single link list for all the domain while we want that each actions has a list of preconditions we need to scan this list for every action
 		      ;;so we create a backup to update.
 		      (!(= @tempLinkList (VAL @linkList)))                    
 		      (!(= @actionLinks (. .)))
@@ -192,14 +106,7 @@
 		   
 		      (!(= @action (. (VAL @actionName) (VAL @actionParameters) .)))  
 		      (!(= @completeAction (. (VAL @action) (VAL @actionId) (VAL @actionLinks) .)))
-		      ;;if the actor is the robot we add the action to its actions, else we add it to the human action list
-		   ;   (!(= @mainActor OTHER))
-		    ;  (WHILE(?(~(NULL @actor)))
-		;	    (!(= @currentActor (CAR @actor)))
-		;	    (IF(?(EQUAL @actor PR2_ROBOT))
-		;	       (!(= @mainActor PR2_ROBOT))
-		;	       )
-					;	    )
+
 		      (IF(?(|| (EQUAL @actor PR2_ROBOT) (EQUAL @actionName handover)))
 			   (!(= @robotActions (CONS-TAIL (VAL @completeAction) @robotActions)))
 			 

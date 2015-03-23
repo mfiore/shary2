@@ -29,6 +29,20 @@
 	 )
   )
 
+
+(defop |findFacts|
+  :invocation (! (DatabaseInterface.findFacts $factList $result))
+  :documentation "this procedure contacts the Database to check if $fact is present. It returns Database.result TRUE, Database.result FALSE or Database.result ERROR in $result"
+  :body (
+         (!(SEM-P DatabaseInterface.sem))
+         (? (ONTO_NAME $ONTO_NAME))
+         (? (SUP_NAME $SUP_NAME))
+         (!(SEND-MESSAGE $ONTO_NAME (Database.findFacts $factList $SUP_NAME)))
+         (!(DatabaseInterface.getResult $result))
+         (!(SEM-V DatabaseInterface.sem))
+         )
+  )
+
  (defop |find|
    :invocation (! (DatabaseInterface.find $fact $result))
    :documentation "this procedure contacts the Database to check if $fact is present. It returns Database.result TRUE, Database.result FALSE or Database.result ERROR in $result"

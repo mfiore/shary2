@@ -10,6 +10,7 @@ declare cwp PlanManager.stop
 declare cwp PlanManager.actionTold 
 declare ff PlanManager.planningModality 0
 
+
 ;manage plans
 declare be PlanManager.managePlans
 declare ff PlanManager.maxPlanningTime 0

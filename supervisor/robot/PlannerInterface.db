@@ -22,5 +22,10 @@
 (PlannerInterface.action hatp AttachBracket installBracket) 
 (PlannerInterface.action hatp StartPointing pointTo) 
 (PlannerInterface.action hatp StopPointing undefined) 
-(PlannerInterface.action hatp CarryTo go) 
+(PlannerInterface.action hatp CarryTo go)
+
+(PlannerInterface.parameterLinks hatp TakeObject (. 0 1 .))
+(PlannerInterface.parameterLinks hatp PlaceObject (. 0 1 2 .))
+(PlannerInterface.parameterLinks hatp ThrowObject (. 0 1 2 .))
+
 )

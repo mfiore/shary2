@@ -28,10 +28,7 @@
    :body (
 	  (?(Robot.name @robotName))
 
-
-      (!(= @arm RIGHT)) ;;HACK!! LEFT ARM DOESN'T WORK IN GTP RIGHT NOW
-
-	  (IF(?(EQUAL @arm RIGHT))
+      (IF(?(EQUAL @arm RIGHT))
 	     (!(= @hand "right"))
 	     
 	     ELSE
@@ -57,12 +54,8 @@
 	  (=>(Mhp.request addGtpData hand @hand @id))
       (!(GtpActions.handleReport Mhp @id @gtpId))
 
-
-
-	  (!(GtpActions.executeTask "pick" @arm @object NO_NAME @gtpId))
-
-	  
-	  )
+      (!(GtpActions.executeTask "pick" @arm @object NO_NAME @gtpId))
+      )
    )
 
 (defop |place|
@@ -140,7 +133,9 @@
   :invocation(GtpActions.action placeReachable @targetAgent @mainObject @supportObject @hand)
   :body (
 	  (?(Robot.name @robotName))
-	  
+
+      (=>(Mhp.previousTask -2 -2))
+
 	  (!(Mhp.getFreeId @id))
 	  (=>(Mhp.request addGtpAgent mainAgent @robotName @id))
 	  (!(GtpActions.handleReport Mhp @id @gtpId))
@@ -172,6 +167,8 @@
   :body (
 	  (?(Robot.name @robotName))
 	  
+      (=>(Mhp.previousTask -2 -2))
+
 
 	  (!(Mhp.getFreeId @id))
 	  (=>(Mhp.request addGtpAgent mainAgent @robotName @id))
@@ -201,7 +198,8 @@
 	       (!(FAILED))
 	     )
 	  
-	  (!(GtpActions.executeTask "goto" NO_NAME NO_NAME NO_NAME @gtpId))
+      (!(GtpActions.executeTask "goto" NO_NAME NO_NAME NO_NAME @gtpId))
+
 	 
 	 )
   )
@@ -210,19 +208,22 @@
   :invocation(GtpActions.action moveTo @configurationName @gtpId)
   :body (
 	  (?(Robot.name @robotName))
-	  
 
-      
-	  (!(Mhp.getFreeId @id))
+      (!(Mhp.getFreeId @id))
 	  (=>(Mhp.request addGtpAgent mainAgent @robotName @id))
 	  (!(GtpActions.handleReport Mhp @id @gtpId))
 
-
-
-	  (!(Mhp.getFreeId @id))
+      (!(Mhp.getFreeId @id))
 	  (=>(Mhp.request addGtpData confName @configurationName @id))
 	  (!(GtpActions.handleReport Mhp @id @gtpId))
-	      
+
+
+      (IF(?(GtpActions.objectAttachment @id))
+         (!(Mhp.getFreeId @mhpId))
+         (=>(Mhp.request addGtpAttachmentFromTask @id 0 @mhpId))
+         (!(GtpActions.handleReport Mhp @mhpId))
+      )
+
       (!(GtpActions.executeTask "moveto" RIGHT NO_NAME NO_NAME @gtpId))
 	 
 	  )
@@ -233,159 +234,136 @@
    :invocation(!(GtpActions.executeTask @task @arm @object @support @gtpId))
    :body (
 
-	  (!(= @task (MAKE-ATOM @task)))
+          (?(Robot.name @robotName))
 
-      ;(!(Tester.breakpoint))
-	  (!(Mhp.getFreeId @id))
-	  (=>(Mhp.request fetchEnvironment @id))
-	  (!(GtpActions.handleReport Mhp @id @gtpId))
+          (!(= @task (MAKE-ATOM @task)))
+
+          (!(Mhp.getFreeId @id))
+          (=>(Mhp.request fetchEnvironment @id))
+          (!(GtpActions.handleReport Mhp @id @gtpId))
 	  
-	  (!(Mhp.getFreeId @id))
-	  (=>(Mhp.request planGtpTask @task @id))
-	  (!(GtpActions.handleReport Mhp @id @gtpId))
+          (!(Mhp.getFreeId @id))
+          (=>(Mhp.request planGtpTask @task @id))
+          (!(GtpActions.handleReport Mhp @id @gtpId))
 
-	  (?(Mhp.previousTask @taskId @alternativeId))
+          (?(Mhp.previousTask @taskId @alternativeId))
 
+          (!(Mhp.getFreeId @id))
+          (=>(Mhp.request smoothGtpTraj @taskId @alternativeId @id))
+          (!(GtpActions.handleReport Mhp @id @gtpId))
 
+          (!(Mhp.getFreeId @id))
+          (=>(Mhp.request getGtpTaskDetails @taskId @alternativeId @id))
+          (!(ReportManager.sub Mhp.report @id))
+          (^(Mhp.report (VAL @id) @report))
+          (!(ReportManager.unsub Mhp.report @id))
 	  
-
-      (!(Mhp.getFreeId @id))
-      (=>(Mhp.request smoothGtpTraj @taskId @alternativeId @id))
-      (!(GtpActions.handleReport Mhp @id @gtpId))
-
-
-
-      (!(Mhp.getFreeId @id))
-
-      (=>(Mhp.request getGtpTaskDetails @taskId @alternativeId @id))
-      (!(ReportManager.sub Mhp.report @id))
-      (^(Mhp.report (VAL @id) @report))
-      (!(ReportManager.unsub Mhp.report @id))
-	  
-	  (!(= @follow 0))
-	  (IF(?(EQUAL @report "OK"))
-	     (^(Mhp.result (VAL @id) @trajList))
-	     (~>(Mhp.result (VAL @id) (VAL @trajList)))
-	     (WHILE(?(~(NULL @trajList)))
-		   (!(= @traj (CAR @trajList)))
-		   (!(= @trajList (CDR @trajList)))
+          (!(= @follow 0))
+          (IF(?(EQUAL @report "OK"))
+             (^(Mhp.result (VAL @id) @trajList))
+             (~>(Mhp.result (VAL @id) (VAL @trajList)))
+             (WHILE(?(~(NULL @trajList)))
+                   (!(= @traj (CAR @trajList)))
+                   (!(= @trajList (CDR @trajList)))
 		   
-;		   (!(== (VAL @traj) (. @subTrajId @dummy @subTrajName @robot .)))
-		   ;;unification doesn't seem to work here =\ maybe because it was already unified somewhere?
+                                        ;		   (!(== (VAL @traj) (. @subTrajId @dummy @subTrajName @robot .)))
+                   ;;unification doesn't seem to work here =\ maybe because it was already unified somewhere?
 
-		   (!(= @subTrajId (CAR @traj)))
-		   (!(= @dummy (CAR(CDR @traj))))
-		   (!(= @subTrajName (CAR(CDR(CDR @traj)))))
-           (!(= @robot (CAR(CDR(CDR(CDR @traj))))))
+                   (!(= @subTrajId (CAR @traj)))
+                   (!(= @dummy (CAR(CDR @traj))))
+                   (!(= @subTrajName (CAR(CDR(CDR @traj)))))
+                   (!(= @robot (CAR(CDR(CDR(CDR @traj))))))
 
 
-		   (IF(?(EQUAL @subTrajName "grasp"))
-		      (!(ArmActions.getFreeId @id))
-		      (=>(ArmActions.action closeGripper (VAL @arm) @id))
-		      (!(GtpActions.handleReport ArmActions @id @gtpId))
+                   (IF(?(EQUAL @subTrajName "grasp"))
+                      (!(ArmActions.getFreeId @id))
+                      (=>(ArmActions.action closeGripper (VAL @arm) @id))
+                      (!(GtpActions.handleReport ArmActions @id @gtpId))
 		      
-		      (IF(?(EQUAL @task pick))
-			 (=> (Robot.hasObject (VAL @arm) (VAL @object))) ;if we arrive here with no FAILED than we've got the item (hopefully XD)
-			 (!(Spark.getFreeId @sparkId))
-             (=>(Spark.request setObjectInHand PR2_ROBOT (VAL @object) (VAL @arm) TRUE (VAL @sparkId)))
+                      (IF(?(EQUAL @task pick))
+                         (!(= @postParams (. (VAL @robotName) (VAL @object) (VAL @arm) .)))
+                         (!(Actions.setPostConditions take @postParams))
 
-             (!(GtpActions.handleReport Spark @sparkId @gtpId))
+                         (=>(GtpActions.objectAttachment @taskId))
+                         )
 		      
-			 (!(DatabaseInterface.add (AGENT-STATEMENT PR2_ROBOT PR2_ROBOT hasInHand (VAL @object)) @result))
+                      ELSEIF(?(EQUAL @subTrajName "release"))
+                      (IF(?(EQUAL @task place))
+                         (!(Spark.getFreeId @sparkId))
+                         (?(Spark.robotFinger (VAL @arm) @sparkHand))
+                         (=>(Spark.request getJointAbsPose PR2_ROBOT @sparkHand @sparkId))
+                         (!(GtpActions.handleReport Spark @sparkId @gtpId))
+                         (^(Spark.result (VAL @sparkId) @rx @ry @rz @rtx @rty @rtz))
+                         (~>(Spark.result (VAL @sparkId) (VAL @rx) (VAL @ry) (VAL @rz) (VAL @rtx) (VAL @rty) (VAL @rtz)))
 
-             (!(AgentActionMonitor.cleanObjectMonitorSpheres (VAL @object)))
+                         (!(= @postParams (. @robotName @object (. @rx @ry @rz .) .)  ))
 
-             (=>(GtpActions.objectAttachment @taskId))
+                         (!(Actions.setPostConditions place @postParams))
 
-			 )
+                         )
+                      (!(ArmActions.getFreeId @id))
+                      (=>(ArmActions.action openGripper RIGHT @id))
+                      (!(GtpActions.handleReport ArmActions @id @gtpId))
+
+                      (!(Spark.getFreeId @sparkId))
+                      (=>(Spark.request placeObject @object @rx @ry 0.85 0 0 0 @sparkId))
+                      (!(GtpActions.handleReport Spark @sparkId @gtpId))
+
+                      (IF(?(GtpActions.objectAttachment @oldTaskId))
+                         (~>(GtpActions.objectAttachment (VAL @oldTaskId)))
+                         )
+
+                      (!(Mhp.getFreeId @mhpId))
+                      (=>(Mhp.request clearGtpAttachmentSaved @mhpId))
+                      (!(GtpActions.handleReport Mhp @mhpId @gtpId))
+
+                      ELSEIF(?(EQUAL @subTrajName "navigate"))
+                      (!(Mhp.getFreeId @id))
+                      (=>(Mhp.request loadGtpTaskTrajForNav @taskId @alternativeId @subTrajId @follow @id))
+                      (!(GtpActions.handleReport Mhp @id @gtpId))
+                      (^(Mhp.result (VAL @id) @waypoints))
+                      (?(Mhp.result (VAL @id) @waypoints))
+                      (~>(Mhp.result (VAL @id) @waypoints))
+
+                      (!(BaseActions.getFreeId @id))
+                      (=>(BaseActions.action move @waypoints @id))
+                      (!(GtpActions.handleReport BaseActions @id @gtpId))
 		      
-		      ELSEIF(?(EQUAL @subTrajName "release"))
-		      (IF(?(EQUAL @task place))
-			 (~>(Robot.hasObject (VAL @arm) (VAL @object)))
-  			 (!(Spark.getFreeId @sparkId))
-			 (=>(Spark.request setObjectInHand PR2_ROBOT (VAL @object) (VAL @arm) FALSE (VAL @sparkId)))
-             (!(GtpActions.handleReport Spark @sparkId @gtpId))
-			 
-             (!(DatabaseInterface.remove (AGENT-STATEMENT PR2_ROBOT PR2_ROBOT hasInHand (VAL @object)) @result))
+                      ELSEIF(?(EQUAL @subTrajName "extract"))
+                      (!(= @a 3))
+                      ELSE
+                      (!(Mhp.getFreeId @id))
+                      (=>(Mhp.request fetchEnvironment @id))
+                      (!(GtpActions.handleReport Mhp @id @gtpId))
 
-			 (!(Spark.getFreeId @sparkId))
-			 (?(Spark.robotFinger (VAL @arm) @sparkHand))
-			 (=>(Spark.request getJointAbsPose PR2_ROBOT @sparkHand @sparkId))
-             (!(GtpActions.handleReport Spark @sparkId @gtpId))
-			 (^(Spark.result (VAL @sparkId) @rx @ry @rz @rtx @rty @rtz))
-             (~>(Spark.result (VAL @sparkId) (VAL @rx) (VAL @ry) (VAL @rz) (VAL @rtx) (VAL @rty) (VAL @rtz)))
+                      (!(Mhp.getFreeId @id))
+                      (=>(Mhp.request loadGtpTaskTraj @taskId @alternativeId @subTrajId @follow @id))
+                      (!(GtpActions.handleReport Mhp @id @gtpId))
 
-			 (!(Spark.getFreeId @sparkId))
-			 (=>(Spark.request getJointAbsPose @support NO_NAME @sparkId))
-             (!(GtpActions.handleReport Spark @sparkId @gtpId))
-			 (^(Spark.result (VAL @sparkId) @tx @ty @tz @ttx @tty @ttz))
-             (~>(Spark.result (VAL @sparkId) (VAL @tx) (VAL @ty) (VAL @tz) (VAL @ttx) (VAL @tty) (VAL @ttz)))
-			 
+                      (?(Softmotion.arm (VAL @arm) @smArm))
+                      (!(Softmotion.getFreeId @id))
+                      (=>(Softmotion.request moveArm @smArm @id))
+                      (!(GtpActions.handleReport Softmotion @id @gtpId))
 
-			 )
-		      (!(ArmActions.getFreeId @id))
-		      (=>(ArmActions.action openGripper RIGHT @id))
-		      (!(GtpActions.handleReport ArmActions @id @gtpId))
+                      (!(DatabaseInterface.set (AGENT-STATEMENT (VAL @robotName) (VAL @robotName) pose OTHER)))
 
-		      (!(Spark.getFreeId @sparkId))
-              (=>(Spark.request placeObject @object @rx @ry 0.85 0 0 0 @sparkId))
-              (!(GtpActions.handleReport Spark @sparkId @gtpId))
-
-              (IF(?(GtpActions.objectAttachment @oldTaskId))
-                 (~>(GtpActions.objectAttachment (VAL @oldTaskId)))
-                 )
-
-              (!(Mhp.getFreeId @mhpId))
-              (=>(Mhp.request clearGtpAttachmentSaved @mhpId))
-              (!(GtpActions.handleReport Mhp @mhpId @gtpId))
-
-		      ELSEIF(?(EQUAL @subTrajName "navigate"))
-		      (!(Mhp.getFreeId @id))
-		      (=>(Mhp.request loadGtpTaskTrajForNav @taskId @alternativeId @subTrajId @follow @id))
-		      (!(GtpActions.handleReport Mhp @id @gtpId))
-		      (^(Mhp.result (VAL @id) @waypoints))
-		      (?(Mhp.result (VAL @id) @waypoints))
-		      (~>(Mhp.result (VAL @id) @waypoints))
-
-		       (!(BaseActions.getFreeId @id))
-		       (=>(BaseActions.action move @waypoints @id))
-		       (!(GtpActions.handleReport BaseActions @id @gtpId))
-		      
-		      ELSEIF(?(EQUAL @subTrajName "extract"))
-		      (!(= @a 3))
-		      ELSE
-              (!(Mhp.getFreeId @id))
-              (=>(Mhp.request fetchEnvironment @id))
-              (!(GtpActions.handleReport Mhp @id @gtpId))
-
-              (!(Mhp.getFreeId @id))
-		      (=>(Mhp.request loadGtpTaskTraj @taskId @alternativeId @subTrajId @follow @id))
-		      (!(GtpActions.handleReport Mhp @id @gtpId))
-
-		      (?(Softmotion.arm (VAL @arm) @smArm))
-		      (!(Softmotion.getFreeId @id))
-		      (=>(Softmotion.request moveArm @smArm @id))
-              (!(GtpActions.handleReport Softmotion @id @gtpId))
-              (~>(Robot.pose @a @b @c @d))
-              (=>(Robot.pose @arm NO_NAME NO_NAME OTHER))
-
-              (IF(?(EQUAL @subTrajId 0))
-                 (^(ELAPSED-MTIME (MTIME) 500))
-                 )
-              )
+                      (IF(?(EQUAL @subTrajId 0))
+                         (^(ELAPSED-MTIME (MTIME) 500))
+                         )
+                      )
 
 
-           (!(= @follow 0))
-           )
-	     )
-	  (!(Mhp.getFreeId @id))
-	  (=>(Mhp.request clearGtpInputs @id))
-	  (!(GtpActions.handleReport Mhp @id @gtpId))
+                   (!(= @follow 0))
+                   )
+             )
+          (!(Mhp.getFreeId @id))
+          (=>(Mhp.request clearGtpInputs @id))
+          (!(GtpActions.handleReport Mhp @id @gtpId))
 
-      (!(ReportManager.publish GtpActions.report @gtpId "OK"))
+          (!(ReportManager.publish GtpActions.report @gtpId "OK"))
 
 
-	  )
+          )
    )
 
 (defop |handleReport|

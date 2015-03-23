@@ -41,11 +41,21 @@
 (Acapela.translation STOCK_TABLE_2A "stock_table")
 (Acapela.translation STOCK_TABLE_3A "stock_table")
 
+(Acapela.translation PR2_ROBOT "I")
+(Acapela.translation HERAKLES_HUMAN1 "you")
+
+
+
 (Acapela.translation STOCK_TABLE "stock_table")
 
 (Acapela.translation PLACEMAT_RED_2 "placemat red two")
 (Acapela.translation PLACEMAT_BLUE_2 "placemat blue two")
 (Acapela.translation PLACEMAT_GREEN_2 "placemat green two")
+
+(Acapela.translation take "take")
+(Acapela.translation throw "throw")
+(Acapela.translation place "place")
+(Acapela.translation handover "give")
 
 (Acapela.sentence startSentence 0 "First, ")
 (Acapela.sentence startSentence 1 "So, ")

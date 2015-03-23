@@ -27,9 +27,10 @@
 
 (defop |moveWaypoints|
   :invocation(BaseActions.action moveWaypoints @id)
+  :documentation "Move the robot with the waypoints node"
   :body (
          (!(SEM-P BaseActions.sem))
-         (IF(?(Softmotion.sim FALSE))
+         (IF(?(Softmotion.isActive TRUE))
             (!(SEND-MESSAGE WaypointNavigation (move)))
             (^(||(WaypointNavigation.report @report)(BaseActions.stop (VAL @id)) ))
             (IF(?(WaypointNavigation.report OK))
@@ -52,93 +53,94 @@
   :invocation(BaseActions.action move @waypoints @id)
   :documentation "moves the robot through a list of waypoints"
   :body (
-	 (!(SEM-P BaseActions.sem)) 
-	 (?(BaseActions.bridgeName @name))
-	 (?(BaseActions.timeToWait @time))
+         (!(SEM-P BaseActions.sem))
 
-	 (!(= @reportName1 (TERM-STRING-CAT (VAL @name) ".move.report")))
-	 (!(= @reportName1 (MAKE-ATOM @reportName1)))
+         (IF(?(BaseActions.isActive TRUE))
+            (?(BaseActions.bridgeName @name))
+            (?(BaseActions.timeToWait @time))
 
-	 (!(= @reportName2 (TERM-STRING-CAT (VAL @name) ".move.update")))
-	 (!(= @reportName2 (MAKE-ATOM @reportName2)))
-        (IF(?(Softmotion.sim FALSE))
-	       
-	       (!(SEND-MESSAGE @name (move euler @waypoints)))
-	       (!(= @nextLocation (CAR @waypoints)))
-	       (!(= @waypoints (CDR @waypoints)))
-	       (!(= @completed FALSE))
-	       
-	       
-	       (WHILE(?(EQUAL @completed FALSE))
-		     (^(|| (@reportName1 @status) (@reportName2 @status) (BaseActions.stop (VAL @id)) (ELAPSED-TIME (TIME) @time)))
-             (IF(?(BaseActions.stop (VAL @id)))
-			(!(BaseActions.getFreeId @stopId))
-            (=>(BaseActions.action stop (VAL @stopId)))
-            (!(ReportManager.sub BaseActions.report @stopId))
-            (^(BaseActions.report (VAL @stopId) @report))
-            (!(ReportManager.unsub BaseActions.report @stopId))
+            ;;the ros node sends two kinds of messages: report signals that the robot has completed the task or the task has failed. Updates tells that the robot has reached the next waypoint.
+            (!(= @reportName1 (TERM-STRING-CAT (VAL @name) ".move.report")))
+            (!(= @reportName1 (MAKE-ATOM @reportName1)))
 
-            (^(@reportName1 @status))
-            (^(@reportName2 @status))
-            (~>(@reportName1 (VAL @status)))
-            (~>(@reportName2 (VAL @status)))
-                                        ;(!(ReportManager.sub BaseActions.report @id))
-            ;(^(BaseActions.report (VAL @id) @report))
-            ;(!(ReportManager.unsub BaseActions.report @id))
+            (!(= @reportName2 (TERM-STRING-CAT (VAL @name) ".move.update")))
+            (!(= @reportName2 (MAKE-ATOM @reportName2)))
+            (IF(?(Softmotion.isActive TRUE))
 
-            (!(ReportManager.publish BaseActions.report @id "STOPPED"))
+               (!(SEND-MESSAGE @name (move euler @waypoints)))
+               (!(= @nextLocation (CAR @waypoints)))
+               (!(= @waypoints (CDR @waypoints)))
+               (!(= @completed FALSE))
 
-			(!(= @completed TRUE))
-			
-			ELSEIF(?(@reportName1 OK))
-			(~>(@reportName1 @status)) 
-			(=>(Robot.location (VAL @nextLocation)))
-			(IF(?(~(NULL @waypoints)))
-			   (!(= @nextLocation (CAR @waypoints)))
-			   (!(= @waypoints (CDR @waypoints)))
-			   )
-			ELSEIF(?(@reportName2 OK))
-            (~>(@reportName2 @status))
+               (WHILE(?(EQUAL @completed FALSE))
+                     (^(|| (@reportName1 @status) (@reportName2 @status) (BaseActions.stop (VAL @id)) (ELAPSED-TIME (TIME) @time)))
+                     (IF(?(BaseActions.stop (VAL @id)))  ;;if we receive a stop request we send a stop to the ros node and wait for the reports
+                        (!(BaseActions.getFreeId @stopId))
+                        (=>(BaseActions.action stop (VAL @stopId)))
+                        (!(ReportManager.sub BaseActions.report @stopId))
+                        (^(BaseActions.report (VAL @stopId) @report))
+                        (!(ReportManager.unsub BaseActions.report @stopId))
+
+                        (^(@reportName1 @status))
+                        (^(@reportName2 @status))
+                        (~>(@reportName1 (VAL @status)))
+                        (~>(@reportName2 (VAL @status)))
+
+                        (!(ReportManager.publish BaseActions.report @id "STOPPED"))
+
+                        (!(= @completed TRUE))
+
+                        ELSEIF(?(@reportName1 OK))
+                        (~>(@reportName1 @status))
+                                        ;(=>(Robot.location (VAL @nextLocation)))  ;;this should be handled by toaster so we ares it
+                        (IF(?(~(NULL @waypoints)))
+                           (!(= @nextLocation (CAR @waypoints)))
+                           (!(= @waypoints (CDR @waypoints)))
+                           )
+                        ELSEIF(?(@reportName2 OK))
+                        (~>(@reportName2 @status))
+                        (!(ReportManager.publish BaseActions.report @id "OK"))
+
+                        (!(= @completed TRUE))
+                        ELSE
+                        (~>(@reportName1 @status))
+                        (~>(@reportName2 @status))
+                        (!(ReportManager.publish BaseActions.report @id "FAILURE"))
+
+                        (!(= @completed TRUE))
+                        )
+                     )
+               (~>(@reportName1 @status))
+               (~>(@reportName2 @status))
+
+               ELSE
+               (!(ReportManager.publish BaseActions.report @id "FAILURE"))
+               )
+            ELSE
             (!(ReportManager.publish BaseActions.report @id "OK"))
-
-			(!(= @completed TRUE))
-			ELSE
-			(~>(@reportName1 @status)) 
-            (~>(@reportName2 @status))
-            (!(ReportManager.publish BaseActions.report @id "FAILURE"))
-
-			(!(= @completed TRUE))
-			)
-		     )
-	       (~>(@reportName1 @status)) 
-	       (~>(@reportName2 @status)) 
-	       
-	       ELSE
-           (^(|| (@reportName1 @status) (@reportName2 @status) (BaseActions.stop (VAL @id))))
-           (!(ReportManager.publish BaseActions.report @id @status))
-
-
-	 )
-	 (!(SEM-V BaseActions.sem))
-	 )
+            )
+         (!(SEM-V BaseActions.sem))
+         )
   )
 
 (defop |stop|
   :invocation(BaseActions.action stop @id)
   :documentation "halts the robot movement"
   :body (
-     (IF(?(Softmotion.sim FALSE))
-	 (?(BaseActions.bridgeName @name))
-	 (?(BaseActions.timeToWait @time))
-	 (!(= @reportName (TERM-STRING-CAT (VAL @name) ".stop.report")))
-	 (!(= @reportName (MAKE-ATOM @reportName)))
-	 (!(SEND-MESSAGE @name (stop)))
-	 (^(||(@reportName @report) (ELAPSED-TIME (TIME) @time)))
-	 (~>(@reportName @report))
+     (IF(?(Softmotion.isActive TRUE))
+        (?(BaseActions.bridgeName @name))
+        (?(BaseActions.timeToWait @time))
 
-     (!(ReportManager.publish BaseActions.report @id "OK"))
+        ;;after a stop we receive a stop.report message
+        (!(= @reportName (TERM-STRING-CAT (VAL @name) ".stop.report")))
+        (!(= @reportName (MAKE-ATOM @reportName)))
+        (!(SEND-MESSAGE @name (stop)))
+        (^(||(@reportName @report) (ELAPSED-TIME (TIME) @time)))
+        (~>(@reportName @report))
 
-     )
+        (!(ReportManager.publish BaseActions.report @id "OK"))
+
+        )
      (!(ReportManager.publish BaseActions.report @id "OK"))
 
 	 )

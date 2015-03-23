@@ -279,10 +279,7 @@
   :invocation(Spark.request setObjectInHand @agent @object @arm @value @id)
   :body (
 	 (IF(?(EQUAL @value TRUE))
-	      (?(Spark.freeId @sparkId))
-          (=>(Spark.request placeObjectForSimu (VAL @object) 0 0 0 0 0 0 0 (VAL @sparkId)))
-	      (!(ExecutionManager.handleReport Spark @sparkId @executionId FALSE FALSE NO_NAME))
-	      (!(= @flag 1))
+          (!(= @flag 1))
 	      
 	    ELSE 
 	    (!(= @flag 0))
@@ -311,7 +308,12 @@
 	       (^(Spark.report @sparkId @report))
            (!(ReportManager.unsub Spark.report @sparkId))
 	  
-	       )
+           )
+      (IF(?(EQUAL @value TRUE))
+         (?(Spark.freeId @sparkId))
+         (=>(Spark.request placeObjectForSimu (VAL @object) 0 0 0 0 0 0 1 (VAL @sparkId)))
+         (!(ExecutionManager.handleReport Spark @sparkId @executionId FALSE FALSE NO_NAME))
+         )
 
       (IF(?(Facts.sim TRUE))
          (!(DatabaseInterface.findList (AGENT-STATEMENT PR2_ROBOT (VAL @object) isOn @support) (. @support .) @result))

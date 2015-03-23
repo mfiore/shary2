@@ -1,0 +1,137 @@
+;; -*-Lisp-*-
+;;author: Michelangelo Fiore
+;;this files contains procedures related to action management.
+
+
+(
+
+
+ (defop |CleanPreconditions|
+   :invocation(!(Actions.checkPreconditions clean @parameters $return))
+   :body (
+          (!(= @agent (CAR(CAR @parameters))))
+          (!(= @parameters (CDR @parameters)))
+          (!(= @placement (CAR(CAR @parameters))))
+          (!(= @parameters (CDR @parameters)))
+
+          (?(Robot.name @robotName))
+
+          (!(DatabaseInterface.find (AGENT-STATEMENT (VAL @robotName) (VAL @placement) state HIGHLIGHTED) @result ))
+
+          (IF(?(EQUAL @result (. TRUE .)))
+             (!(DatabaseInterface.findList (AGENT-STATEMENT (VAL @robotName) (VAL @agent) hasInHand @o) (. @o .) @result))
+             (IF(?(NULL @result))
+                (!(= $return TRUE))
+                ELSE
+                (!(= $return FALSE))
+                )
+             ELSE
+             (!(= $return FALSE))
+             )
+          )
+   )
+
+ (defop |CleanPostConditions|
+   :invocation(!(Action.setPostconditions clean @parameters))
+   :body (
+          (!(= @agent (CAR(CAR @parameters))))
+          (!(= @parameters (CDR @parameters)))
+          (!(= @placement (CAR(CAR @parameters))))
+          (!(= @parameters (CDR @parameters)))
+
+          (?(Robot.name @robotName))
+          (!(DatabaseInterface.set (AGENT-STATEMENT (VAL @robotName) (VAL @placement) state CLEAN) @result))
+          )
+   )
+
+ (defop |SaphariPointPreconditions|
+   :invocation(!(Actions.checkPreconditions saphariPointTo @parameters $return))
+   :body (
+          (!(= @agent (CAR(CAR @parameters))))
+          (!(= @parameters (CDR @parameters)))
+          (!(= @placement (CAR(CAR @parameters))))
+          (!(= @parameters (CDR @parameters)))
+
+          (?(Robot.name @robotName))
+
+          (IF(?(EQUAL @roobtName @agent))
+             (!(DatabaseInterface.find (AGENT-STATEMENT (VAL @robotName) (VAL @placement) state CLEAN) @result ))
+             (IF(?(EQUAL @result (. TRUE .)))
+                (!(= $return TRUE))
+                ELSE
+                (!(= $return FALSE))
+                )
+
+             ELSE
+             (!(= $return FALSE))
+             )
+          )
+   )
+
+ (defop |SaphariPointPostconditions|
+   :invocation(!(Actions.setPostconditions saphariPointTo @parameters $return))
+   :body (
+          (!(= @agent (CAR(CAR @parameters))))
+          (!(= @parameters (CDR @parameters)))
+          (!(= @placement (CAR(CAR @parameters))))
+          (!(= @parameters (CDR @parameters)))
+
+          (?(Robot.name @robotName))
+
+          (!(DatabaseInterface.set (AGENT-STATEMENT (VAL @robotName) (VAL @placement) state HIGHLIGHTED)))
+          )
+
+   )
+
+ (defop |InstallBracketPreconditions|
+   :invocation(!(Actions.checkPreconditions installBracket @parameters $return))
+   :body (
+          (!(= @agent (CAR(CAR @parameters))))
+          (!(= @parameters (CDR @parameters)))
+          (!(= @bracket (CAR(CAR @parameters))))
+          (!(= @parameters (CDR @parameters)))
+          (!(= @placement (CAR(CAR @parameters))))
+          (!(= @parameters (CDR @parameters)))
+
+          (?(Robot.name @robotName))
+
+          (IF(?(Object.type (VAL @bracket) BRACKET @class))
+             (!(= @bracketCheck TRUE))
+             ELSE
+             (!(= @bracketCheck FALSE))
+             )
+          (!(DatabaseInterface.find (AGENT-STATEMENT (VAL @robotName) (VAL @agent) hasInHand (VAL @bracket)) @hasCheck))
+
+          (!(DatabaseInterface.find (AGENT-STATEMENT (VAL @robotName) (VAL @placement) state CLEAN) @stateCheck))
+
+          (IF(?(& (EQUAL @bracketCheck TRUE) (EQUAL @hasCheck (. TRUE .)) (EQUAL @stateCheck (. TRUE .))))
+             (!(= $return TRUE))
+
+             ELSE
+             (!(= $return FALSE))
+             )
+          )
+   )
+
+ (defop |InstallBracketPostconditions|
+   :invocation(!(Actions.setPostconditions installBracket @parameters))
+   :body (
+          (!(= @agent (CAR(CAR @parameters))))
+          (!(= @parameters (CDR @parameters)))
+          (!(= @bracket (CAR(CAR @parameters))))
+          (!(= @parameters (CDR @parameters)))
+          (!(= @placement (CAR(CAR @parameters))))
+          (!(= @parameters (CDR @parameters)))
+
+          (?(Robot.name @robotName))
+
+
+          (!(Actions.setPostconditions @place @parameters))
+          (!(DatabaseInterface.set (AGENT-STATEMENT (VAL @robotName) (VAL @placement) state COMPLETE) @result) )
+
+
+          )
+
+   )
+
+ )

@@ -34,6 +34,15 @@
           )
    )
 
+ (defop |testInference|
+   :invocation(!(Tester.testInference))
+   :body (
+          (!(Controller.initAll))
+          (!(AgentActionMonitor.calculateInferencesForAgents (. HERAKLES_HUMAN1 .)))
+          )
+
+   )
+
  (defop |testInferenceOnPickPlace|
    :invocation(!(Tester.testInferenceOnPickPlace))
    :body (
@@ -390,12 +399,16 @@
 (defop |testPlan|
   :invocation(!(Tester.testPlan))
   :body (
-	 (!(Controller.initAll))
-                                        ; (=>(PlanManager.goal Clean (. TABLE_4 .)))
-     ;(=>(PlanManager.goal TravelTo (. HERAKLES_HUMAN1 STOCK_TABLE .)))
-     (=>(PlanManager.goal HandleSurface (. ASSEMBLY_SURFACE_1 .)))
-	 (=>(PlanManager.newGoal TRUE))
-	 (=>(PlanManager.managePlans))
+         (!(Controller.initAll))
+         (!(AgentActionMonitor.cleanMonitorSpheres))
+         (!(AgentActionMonitor.calculateInferencesForAgents (. HERAKLES_HUMAN1 .)))
+         (!(AgentActionMonitor.startMonitoringAgent HERAKLES_HUMAN1 ))
+                                         (=>(PlanManager.goal Clean (. .)))
+     ;;(=>(PlanManager.goal TravelTo (. HERAKLES_HUMAN1 STOCK_TABLE .)))
+     ;(=>(PlanManager.goal HandleSurface (. ASSEMBLY_SURFACE_1 .)))
+                                         (=>(PlanManager.newGoal TRUE))
+
+                                         (=>(PlanManager.managePlans))
 	 )
   )
  

@@ -256,11 +256,12 @@ $unboundVariables= lisp-list containing the variables for which we want to find 
 (defop |set|
   :invocation(Database.set @fact @caller)
   :body (
-         (!(== (VAL @fact) (AGENT-STATEMENT PR2_ROBOT @subject @predicate @value)))
-         (IF(?(AGENT-STATEMENT PR2_ROBOT (VAL @subject) (VAL @predicate) @oldValue))
+         (?(Robot.name @robotName))
+         (!(== (VAL @fact) (AGENT-STATEMENT (VAL @robotName) @subject @predicate @value)))
+         (IF(?(AGENT-STATEMENT (VAL @robotName) (VAL @subject) (VAL @predicate) @oldValue))
             (!(Database.remove (AGENT-STATEMENT PR2_ROBOT @subject @predicate @oldValue)))
             )
-         (=>(Database.add @fact @caller))
+         (=>(Database.add (VAL @fact) @caller))
          )
   )
 (defop |setLocal|

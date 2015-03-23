@@ -1,11 +1,10 @@
 (
 ;;Object.class (. LIST .) is used when creating monitor spheres. 
 
-;(Object.bin (. GREEN_TRASHBIN BLUE_TRASHBIN .))
-                                        ;(Object.pickable (. RED_CUBE RED_CUBE2 GREEN_CUBE GREEN_CUBE2 BLUE_CUBE BLUE_CUBE2 .))
-(Object.pickable (. GLUE_BOTTLE BRACKET_1 BRACKET_2 BRACKET_3 .))
+(Object.bin (. GREEN_TRASHBIN BLUE_TRASHBIN .))                 
+(Object.pickable (. RED_CUBE RED_CUBE2 GREEN_CUBE GREEN_CUBE2 BLUE_CUBE BLUE_CUBE2 .))
 (Object.placement (. PLACEMAT_RED PLACEMAT_GREEN PLACEMAT_BLUE .))
-(Object.table (. TABLE_4 IKEA_SHELF_1 IKEA_SHELF_2 IKEA_SHELF_3 .))
+(Object.table (. TABLE_4 .))
 
 ;;Object.type NAME TYPE CLASS 
 ;NAME is the name of the object
@@ -31,7 +30,9 @@
 (Object.type BRACKET_3 BRACKET PICKABLE)
 (Object.type GLUE_BOTTLE BOTTLE PICKABLE)
 
-
+(Object.actions PICKABLE (. take .))
+(Object.actions PLACEMENT (. place .))
+(Object.actions BIN (. throw .))
 
 (Object.type PLACEMAT_RED PLACEMAT PLACEMENT)
 (Object.type PLACEMAT_GREEN PLACEMAT PLACEMENT)
@@ -49,4 +50,10 @@
 (Object.type 4 HUMAN AGENT)
 (Object.type 5 HUMAN AGENT)
 (Object.type 6 HUMAN AGENT)
+
+(Object.height TABLE 0.74)
+(Object.height PLACEMAT 0.74)
+
+(Agents.maxObjects ROBOT 2)
+(Agents.maxObjects HUMAN 1)
 )

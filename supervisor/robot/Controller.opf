@@ -23,23 +23,23 @@
 	  )
 
 	  ;;activate modules
-	  (IF(?(Module.isActive mhp TRUE))
+      (IF(?(Mhp.isActive TRUE))
 	     (!(Mhp.init))
 	     )
-	  (IF(?(Module.isActive gtp TRUE))
+      (IF(?(Gtp.isActive TRUE))
 	     (!(GtpActions.init))
 	     )
-	  (IF(?(Module.isActive spark TRUE))
+      (IF(?(Spark.isActive base TRUE))
 	     (!(Spark.init))
 	     (!(AgentActionMonitor.init))
 	     )
-	  (IF(?(Module.isActive viman TRUE))
+      (IF(?(Viman.isActive TRUE))
 	     (!(Viman.init))
 	     )
-	  (IF(?(Module.isActive softmotion TRUE))
+      (IF(?(Softmotion.isActive TRUE))
 	     (!(Softmotion.init))
 	     )
-	  (IF(?(Module.isActive acapela TRUE))
+      (IF(?(Acapela.isActive TRUE))
 	     (!(Acapela.init))
 	  )
 	  
@@ -60,36 +60,9 @@
 
 	  ;;get the robot position and put a starting world state.
 	  (?(Robot.name @robotName))
-	  (IF(?(Module.isActive spark TRUE))
-         (!(Spark.getFreeId @sparkId))
-         (!(ReportManager.sub Spark.report @sparkId))
-         (=>(Spark.request getJointAbsPose PR2_ROBOT Torso @sparkId))
-         (^(Spark.report (VAL @sparkId) @report))
-         (^(Spark.result (VAL @sparkId) @x @y @z @yaw @pitch @roll))
-         (~>(Spark.result (VAL @sparkId) (VAL @x) (VAL @y) (VAL @z) (VAL @yaw) (VAL @pitch) (VAL @roll)))
-         (!(ReportManager.unsub Spark.report @sparkId))
 
 
-	     ELSE 
-	     
-	     (!(DatabaseInterface.findList (AGENT-STATEMENT (VAL @robotName) (VAL @robotName) hasLocation @location) (. @location .) @result ))
-	     (IF(?(~(NULL @result)))
-		(!(= @location (CAR(CAR @result))))
-		(!(== (VAL @location) (. @x @y @z @yaw @pitch @roll .)))
-		)
-		  
-	     )
-	  (=>(Robot.position TORSO @x @y @z @yaw @pitch @roll))
-
-      (!(DatabaseInterface.findList (AGENT-STATEMENT (VAL @robotName) (VAL @robotName) isAt @location) (. @location .) @result))
-      (IF(?(~(NULL @result)))
-         (!(= @location (CAR(CAR @result))))
-         ELSE
-         (!(= @location UNKNOWN))
-         )
-      (=>(Robot.location @location))
-
-;      (!(GtpActions.getFreeId @gtpId))
+      ;      (!(GtpActions.getFreeId @gtpId))
  ;     (=>(GtpActions.action moveTo sNaviPose @gtpId))
   ;    (!(ExecutionManager.handleReport GtpActions @gtpId @executionId TRUE TRUE (. .) ))
 

@@ -1,5 +1,5 @@
 (
-	(MySelf PR2_ROBOT)
+	(Robot.name PR2_ROBOT)
 	
 
 	(Database.supervisorName OPRS_SUP)

@@ -11,10 +11,29 @@
 ;;when adding a new class the parameters must be coded in the function ExecutionManager.executeAction (found in the ExecutionManager.opf file)  and in the PlanManager.manageHumanActions file (found in PlanManager.opf)
 
 
-(Action.type take MANIPULATION)
-(Action.type throw PLACEMENT)
-(Action.type place PLACEMENT)
-(Action.type handover HANDOVER)
-(Action.type moveTo POSE)
-(Action.type undefined UNDEFINED)
+ (Action.type take MANIPULATION)
+ (Action.type throw PLACEMENT)
+ (Action.type place PLACEMENT)
+ (Action.type handover HANDOVER)
+ (Action.type moveTo POSE)
+ (Action.type undefined UNDEFINED)
+ (Action.type go MOVEMENT)
+
+
+ (Actions.activation take OUT)
+ (Actions.activation throw OUT)
+ (Actions.activation place OUT)
+
+
+ (Actions.monitorParameter take 1)
+(Actions.monitorParameter throw 2)
+(Actions.monitorParameter place 2)
+
+ (Actions.nParameters take 2)
+ (Actions.nParameters place 3 )
+ (Actions.nParameters throw 3)
+ (Actions.nParameters pointTo 2)
+ (Actions.nParameters go 2)
+ (Actions.nParameters handover 3)
+
 )

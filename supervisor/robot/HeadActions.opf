@@ -29,14 +29,13 @@
    :body (
 	  (=>(HeadActions.freeId (+ @actionId 1)))
 
-      (IF(?(Softmotion.sim FALSE))
+      (IF(?(Softmotion.isActive TRUE))
                                         ;Get the position of the target
          (!(Spark.getFreeId @sparkId))
          (=>(Spark.request getJointAbsPose (VAL @target) (VAL @joint) (VAL @sparkId)))
          (!(HeadActions.handleReport Spark.report (VAL @sparkId) (VAL @actionId)))
          (^(Spark.result (VAL @sparkId) @xOb @yOb @zOb @yawOb @pitchOb @rollOb))
          (~>(Spark.result (VAL @sparkId) @xOb @yOb @zOb @yawOb @pitchOb @rollOb))
-
                                         ;get needed pan-tilt to look at it
          (?(Softmotion.freeId @smId))
          (=>(Softmotion.request getPanTiltFromXYZ (VAL @xOb) (VAL @yOb) (VAL @zOb) (VAL @smId)))
@@ -57,7 +56,7 @@
             (!(= @moveHead TRUE))
             )
          (IF(?(EQUAL @moveHead TRUE))
-            (IF(?(Module.isActive softmotion TRUE))
+            (IF(?(Softmotion.isActive TRUE TRUE))
                (!(Viman.getFreeId @vimanId))
                (=>(Viman.request stopTracking @vimanId))
                (!(HeadActions.handleReport Viman.report (VAL @vimanId) (VAL @actionId)))
@@ -74,7 +73,7 @@
                (!(HeadActions.handleReport Viman.report (VAL @vimanId) (VAL @actionId)))
 
 
-               ELSE
+               ELSE ;;if softmotion is not active use the head bridge ros node
                (?(HeadActions.headBridge @bridgeName))
                (?(HeadActions.timeToWait @time))
                (!(= @reportName (TERM-STRING-CAT (VAL @bridgeName) ".response")))   ;we create the real report name
