@@ -205,9 +205,9 @@ be moved in another class"
    :documentation "this is the main loop for the MonitorManager. It monitors the first element of the priority queue until there is a new first element, its postconditions are verified or its failing conditions are verified."
    :body (
 
+          (?(Robot.name @robotName))
+
 	  (WHILE(?(&(|| (Queue.isEmpty MonitorManager.highPriorityQueue FALSE) (Queue.isEmpty MonitorManager.mediumPriorityQueue FALSE) (Queue.isEmpty MonitorManager.lowPriorityQueue FALSE) ) (MonitorManager.shouldRun TRUE))) ;who should set this false? Is this fake and the loop should go on forever or until a shutdown? =)
-	
-		
 
 		(IF(?(Queue.isEmpty MonitorManager.highPriorityQueue FALSE))
 		   (!(= @queueInUse MonitorManager.highPriorityQueue))
@@ -238,30 +238,21 @@ be moved in another class"
 		   
            (=>(MonitorManager.testAndConditions @failureConditionsAnd @failureConditionsTrue @monitorId 3))
            (=>(MonitorManager.testOrConditions @failureConditionsOr @failureConditionsTrue @monitorId 4))
-		  
-           (!(HeadActions.getFreeId @actionId))  ;we link execution to an ID. This is the last used ID + 1 (needs to be implemented
-           (!(ReportManager.sub HeadActions.report @actionId))
-		   (=>(HeadActions.action lookAt (VAL @target) (VAL @targetPart) (VAL @actionId)))
-		   (^(HeadActions.report (VAL @actionId) @executionReport))
-           (!(ReportManager.unsub HeadActions.report @actionId))
+
+           (!(MonitorManager.findTarget @target @targetPart @result))
+
+           (IF(?(Object.isTrackable (VAL @target) TRUE))
+              (!(HeadActions.getFreeId @actionId))
+              (!(ReportManager.sub HeadActions.report @actionId))
+              (=>(HeadActions.action track (VAL @target) (VAL @actionId)))
+              (^(HeadActions.report (VAL @actionId) @executionReport))
+              (!(ReportManager.unsub HeadActions.report @actionId))
+              )
 
 
 		   (WHILE(?(& (~(VAL @successConditionsTrue)) (~(VAL @failureConditionsTrue)) (MonitorManager.highestAvailablePriority  (VAL @priority)) (~(MonitorManager.cancelMonitoring (VAL @monitorId))) (MonitorManager.shouldRun TRUE) (EQUAL @executionReport "OK")))
-;			 (^(ELAPSED-MTIME (TIME) 500))
-			 
-             (IF(?(Softmotion.isActive TRUE))
-			 
-                (!(HeadActions.freeId @executionId))  ;we link execution to an ID. This is the last used ID + 1 (needs to be implemented
-                (!(ReportManager.sub HeadActions.report @executionId))
-			    (=>(HeadActions.action lookAt (VAL @target) (VAL @targetPart) (VAL @executionId)))
-			    (^(HeadActions.report (VAL @executionId) @executionReport))
-                (!(ReportManager.unsub HeadActions.report @executionId))
-
-
-			    ELSE
-			    (^(ELAPSED-TIME (TIME) 1))
-			    )
-			 )
+             (^(ELAPSED-MTIME (TIME) 500))
+             )
 
 		   (~>(MonitorManager.isMonitoringTarget (VAL @monitorId)))
 
@@ -310,6 +301,73 @@ be moved in another class"
 	  (=>(MonitorManager.startLoop FALSE))
 	  )
    )
+
+(defop |findTarget|
+  :invocation(!(MonitorManager.findTarget @target @targetPart $result))
+  :documentation "Explores the environment to find the target"
+  :body (
+         (!(HeadActions.getFreeId @actionId))  ;we link execution to an ID. This is the last used ID + 1 (needs to be implemented
+         (!(ReportManager.sub HeadActions.report @actionId))
+         (=>(HeadActions.action lookAt (VAL @target) (VAL @targetPart) (VAL @actionId)))
+         (^(HeadActions.report (VAL @actionId) @executionReport))
+         (!(ReportManager.unsub HeadActions.report @actionId))
+
+         (!(DatabaseInterface.find (AGENT-STATEMENT (VAL @robotName) (VAL @robotName) sees (VAL @target)) @result))
+         (IF(?(EQUAL @result (. FALSE .)))
+            (!(= @dirList (. RIGHT UP LEFT LEFT DOWN DOWN RIGHT RIGHT RIGHT .)))
+
+            (WHILE(?(&(~(NULL @dirList) (EQUAL @found FALSE))))
+                  (!(= @aDir (CAR @dirList)))
+                  (!(= @dirList (CDR @dirList)))
+
+                  (!(ReportManager.sub HeadActions.report @actionId))
+                  (=>(HeadActions.action moveHeadDirection @aDir (VAL @actionId)))
+                  (^(HeadActions.report (VAL @actionId) @executionReport))
+                  (!(ReportManager.unsub HeadActions.report @actionId))
+
+                  (!(DatabaseInterface.find (AGENT-STATEMENT (VAL @robotName) (VAL @robotName) sees (VAL @target)  @result)))
+                  (!(= @found (CAR @result)))
+                  )
+
+            (IF(?(EQUAL @found FALSE))
+               (!(ReportManager.sub Viman.report @actionId))
+               (=>(Viman.request switch WIDE (VAL @actionId)))
+               (^(Viman.report (VAL @actionId) @executionReport))
+               (!(ReportManager.unsub Viman.report @actionId))
+
+               (!(= @dirList (. LEFT RIGHT RIGHT .)))
+               (WHILE(?(&(~(NULL @dirList) (EQUAL @found FALSE))))
+                     (!(= @aDir (CAR @dirList)))
+                     (!(= @dirList (CDR @dirList)))
+
+                     (!(ReportManager.sub HeadActions.report @actionId))
+                     (=>(HeadActions.action moveHeadDirection @aDir (VAL @actionId)))
+                     (^(HeadActions.report (VAL @actionId) @executionReport))
+                     (!(ReportManager.unsub HeadActions.report @actionId))
+
+                     (!(DatabaseInterface.find (AGENT-STATEMENT (VAL @robotName) (VAL @robotName) sees (VAL @target)  @result)))
+                     (!(= @found (CAR @result)))
+                     )
+               (!(ReportManager.sub Viman.report @actionId))
+               (=>(Viman.request switch NARROW (VAL @actionId)))
+               (^(Viman.report (VAL @actionId) @executionReport))
+               (!(ReportManager.unsub Viman.report @actionId))
+               )
+
+            (IF(?(EQUAL @found TRUE))
+               (!(HeadActions.getFreeId @actionId))  ;we link execution to an ID. This is the last used ID + 1 (needs to be implemented
+               (!(ReportManager.sub HeadActions.report @actionId))
+               (=>(HeadActions.action lookAt (VAL @target) (VAL @targetPart) (VAL @actionId)))
+               (^(HeadActions.report (VAL @actionId) @executionReport))
+               (!(ReportManager.unsub HeadActions.report @actionId))
+
+               (!(= $result TRUE))
+
+               ELSE
+               (!(= $result FALSE))
+               )
+         )
+
+  )
+  )
 )
-
-

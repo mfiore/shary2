@@ -30,7 +30,6 @@
    :body (
 	  (!(SEM-P Viman.sem))
 
-	  (=>(Viman.freeId (+ @id 1)))
 
 	  (!(GenomInterface.handleRequest VIMAN VIMAN_ACTIVATETRACKING (Viman.stop (VAL @id)) (FALSE) (Viman.isTracking TRUE) 300 NIL @report @result)) 
       (!(ReportManager.publish Viman.report (VAL @id) (VAL @report)))
@@ -45,12 +44,22 @@
    :body (
 	  (!(SEM-P Viman.sem))
 
-	  (=>(Viman.freeId (+ @id 1)))	  
-	  (!(GenomInterface.handleRequest VIMAN VIMAN_STOP (Viman.stop (VAL @id)) (FALSE) (Viman.isTracking FALSE) 300 NIL @report @result)) 
+      (!(GenomInterface.handleRequest VIMAN VIMAN_STOP (Viman.stop (VAL @id)) (FALSE) (Viman.isTracking FALSE) 300 NIL @report @result))
       (!(ReportManager.publish Viman.report (VAL @id) (VAL @report)))
 
 	  (!(SEM-V Viman.sem))
 	  )
+   )
+
+ (defop |switch|
+   :invocation(Viman.request switch @camera @id)
+   :body (
+          (?(Viman.bridge @bridgeName))
+          (!(= @command (TERM-STRING-CAT (@bridgeName ".request"))))
+          (!(SEND-MESSAGE @bridgeName switch (VAL @camera)))
+          (=>(ReportManager.publish Viman.report (VAL @id) "OK"))
+
+          )
    )
 
 )

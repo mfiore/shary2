@@ -23,303 +23,89 @@
 	  (!(SEM-V HeadActions.sem))
 	  )
    )
- (defop |lookAt|
-   :invocation(HeadActions.action lookAt @target @joint @actionId)
-   :documentation "this procedure moves the head to look at item @item"
-   :body (
-	  (=>(HeadActions.freeId (+ @actionId 1)))
 
-      (IF(?(Softmotion.isActive TRUE))
-                                        ;Get the position of the target
+(defop |moveHeadDirection|
+  :invocation(HeadActions.action moveHeadDirection @direction @actionId)
+  :body (
+         (!(Viman.getFreeId @vimanId))
+         (=>(Viman.request stopTracking @vimanId))
+         (!(HeadActions.handleReport Viman.report (VAL @vimanId) (VAL @actionId)))
+
+
+         (?(HeadActions.bridgeName @bridgeName))
+         (!(= @command (TERM-STRING-CAT (VAL @bridgeName) ".moveDir")))
+         (!(= @reportName (TERM-STRING-CAT (VAL @bridgeName) ".report")))
+         (!(= @reportName (MAKE-ATOM @reportName)))
+         (!(SEND-MESSAGE (VAL @bridgeName) (@command @direction)))
+         (^(|| (@reportName @report (ELAPSED-TIME (TIME) 5))))
+         (~>(@reportName (VAL @report)))
+
+         (!(Viman.getFreeId @vimanId))
+         (=>(Viman.request activateTracking @vimanId))
+         (!(HeadActions.handleReport Viman.report (VAL @vimanId) (VAL @actionId)))
+
+
+         (=>(HeadActions.report @actionId @report))
+
+         )
+
+  )
+
+
+(defop |lookAt|
+  :invocation(HeadActions.action lookAt @target @joint @actionId)
+  :documentation "this procedure moves the head to look at @target"
+  :body (
+         ;;Get the position of the target
          (!(Spark.getFreeId @sparkId))
          (=>(Spark.request getJointAbsPose (VAL @target) (VAL @joint) (VAL @sparkId)))
          (!(HeadActions.handleReport Spark.report (VAL @sparkId) (VAL @actionId)))
          (^(Spark.result (VAL @sparkId) @xOb @yOb @zOb @yawOb @pitchOb @rollOb))
          (~>(Spark.result (VAL @sparkId) @xOb @yOb @zOb @yawOb @pitchOb @rollOb))
-                                        ;get needed pan-tilt to look at it
-         (?(Softmotion.freeId @smId))
-         (=>(Softmotion.request getPanTiltFromXYZ (VAL @xOb) (VAL @yOb) (VAL @zOb) (VAL @smId)))
-         (!(HeadActions.handleReport Softmotion.report (VAL @smId) (VAL @actionId)))
-         (^(Softmotion.result (VAL @smId) @pan @tilt))
-         (~>(Softmotion.result (VAL @smId) (VAL @pan) (VAL @tilt)))
-         (!(= @tilt (+ @tilt 0.2)))
-
-                                        ;if the head is not already close to the target move it (we want to avoid very small continuous movement of the head)
-         (IF(?(Robot.head PAN @robotPan))
-            (?(Robot.head TILT @robotTilt))
-            (IF(?(|| (& (< @robotPan (+ @pan 0.05)) (> @robotPan (- @pan 0.05))) (& (< @robotTilt (+ @tilt 0.05) ) (> @robotTilt (- @tilt 0.05)))))
-               (!(= @moveHead FALSE))
-               ELSE
-               (!(= @moveHead TRUE))
-               )
-            ELSE
-            (!(= @moveHead TRUE))
-            )
-         (IF(?(EQUAL @moveHead TRUE))
-            (IF(?(Softmotion.isActive TRUE TRUE))
-               (!(Viman.getFreeId @vimanId))
-               (=>(Viman.request stopTracking @vimanId))
-               (!(HeadActions.handleReport Viman.report (VAL @vimanId) (VAL @actionId)))
-
-               (?(Softmotion.freeId @smId))
-               (=>(Softmotion.request moveHead (VAL @pan) (VAL @tilt) (VAL @smId)))
-               (=>(Robot.head PAN (VAL @pan)))
-               (=>(Robot.head TILT (VAL @tilt)))
-               (!(HeadActions.handleReport Softmotion.report (VAL @smId) (VAL @actionId)))
-
-               (^(ELAPSED-MTIME (MTIME) 500))
-               (!(Viman.getFreeId @vimanId))
-               (=>(Viman.request activateTracking @vimanId))
-               (!(HeadActions.handleReport Viman.report (VAL @vimanId) (VAL @actionId)))
 
 
-               ELSE ;;if softmotion is not active use the head bridge ros node
-               (?(HeadActions.headBridge @bridgeName))
-               (?(HeadActions.timeToWait @time))
-               (!(= @reportName (TERM-STRING-CAT (VAL @bridgeName) ".response")))   ;we create the real report name
-               (!(= @reportName (MAKE-ATOM @reportName)))
+         (!(Viman.getFreeId @vimanId))
+         (=>(Viman.request stopTracking @vimanId))
+         (!(HeadActions.handleReport Viman.report (VAL @vimanId) (VAL @actionId)))
 
-               (!(SEND-MESSAGE @bridgeName (moveHead pan @pan)))
-               (^(@reportName (VAL @bridgeName) @response))
-               (~>(@reportName (VAL @bridgeName) (VAL @response)))
-               (!(SEND-MESSAGE @bridgeName (moveHead tilt @tilt)))
-               (~>(@reportName (VAL @bridgeName) (VAL @response)))
-               )
 
-            )
+         (?(HeadActions.bridgeName @bridgeName))
+         (!(= @command (TERM-STRING-CAT (VAL @bridgeName) ".lookAt")))
+         (!(= @reportName (TERM-STRING-CAT (VAL @bridgeName) ".report")))
+         (!(= @reportName (MAKE-ATOM @reportName)))
+         (!(SEND-MESSAGE (VAL @bridgeName) (@command @xOb @yOb @zOb)))
+         (^(|| (@reportName @report) (ELAPSED-TIME (TIME) 5)))
+         (~>(@reportName (VAL @report)))
+
+         (!(Viman.getFreeId @vimanId))
+         (=>(Viman.request activateTracking @vimanId))
+         (!(HeadActions.handleReport Viman.report (VAL @vimanId) (VAL @actionId)))
+
+
+         (=>(HeadActions.report @actionId @report))
+
          )
-      (!(ReportManager.publish HeadActions.report @actionId "OK"))
-
-	   
-	   
-	   )
+  )
 
 
-   
-   )
+
+(defop |track|
+  :invocation(HeadActions.action track @target @id)
+  :body (
+         (?(HeadActions.bridgeName @bridgeName))
+         (!(= @command (TERM-STRING-CAT (VAL @bridgeName) ".track")))
+         (!(= @reportName (TERM-STRING-CAT (VAL @bridgeName) ".report")))
+         (!(= @reportName (MAKE-ATOM @reportName)))
+         (!(SEND-MESSAGE (VAL @bridgeName) (@command @target)))
+         (^(|| (@reportName @report) (ELAPSED-TIME (TIME) 5)))
+         (~>(@reportName (VAL @report)))
+
+         (=>(HeadActions.report @id "OK"))
+         )
+
+  )
 
 
- (defop |lookAtLocation|
-   :invocation(HeadActions.action lookAtLocation @location @actionId)
-   :documentation "this procedure looks at some location. This could be a direction from the user or a 
-pointing gesture"
-   :body (
-
-	  )
-   )
-
- (defop |headExplore|
-   :invocation(HeadActions.action headExplore @actionId)
-   :documentation "this procedure explores the surrounding area moving the head"
-   :body (
-	 (=>(HeadActions.freeId (+ @actionId 1)))
-	(!(SEM-P HeadActions.sem))
-
-	(IF(?(~(HeadActions.stop (VAL @actionId))))		
-		(!(Viman.getFreeId @vimanId))
-		(=>(Viman.request stopTracking @vimanId))
-		(!(HeadActions.handleReport Viman.report (VAL @vimanId) (VAL @actionId)))
-		
-		(?(Softmotion.freeId @smId))
-		(=>(Softmotion.request moveHead -1.2 0.7 (VAL @smId)))
-		(=>(Robot.headPan (VAL @pan)))
-		(=>(Robot.headTilt (VAL @tilt)))
-		(!(HeadActions.handleReport Softmotion.report (VAL @smId) (VAL @actionId)))
-
-		(^(ELAPSED-MTIME (MTIME) 500))
-		(!(Viman.getFreeId @vimanId))
-		(=>(Viman.request activateTracking @vimanId))
-		(!(HeadActions.handleReport Viman.report (VAL @vimanId) (VAL @actionId)))
-		)
-
-	(IF(?(~(HeadActions.stop (VAL @actionId))))		
-		(!(Viman.getFreeId @vimanId))
-		(=>(Viman.request stopTracking @vimanId))
-		(!(HeadActions.handleReport Viman.report (VAL @vimanId) (VAL @actionId)))
-
-		(?(Softmotion.freeId @smId))
-		(=>(Softmotion.request moveHead -1.1 0.7 (VAL @smId)))
-		(=>(Robot.headPan (VAL @pan)))
-		(=>(Robot.headTilt (VAL @tilt)))
-		(!(HeadActions.handleReport Softmotion.report (VAL @smId) (VAL @actionId)))
-
-		(^(ELAPSED-MTIME (MTIME) 500))
-		(!(Viman.getFreeId @vimanId))
-		(=>(Viman.request activateTracking @vimanId))
-		(!(HeadActions.handleReport Viman.report (VAL @vimanId) (VAL @actionId)))
-		)
-		
-	(IF(?(~(HeadActions.stop (VAL @actionId))))		
-		(!(Viman.getFreeId @vimanId))
-		(=>(Viman.request stopTracking @vimanId))
-		(!(HeadActions.handleReport Viman.report (VAL @vimanId) (VAL @actionId)))
-
-		(?(Softmotion.freeId @smId))
-		(=>(Softmotion.request moveHead -0.4 0.9 (VAL @smId)))
-		(=>(Robot.headPan (VAL @pan)))
-		(=>(Robot.headTilt (VAL @tilt)))
-		(!(HeadActions.handleReport Softmotion.report (VAL @smId) (VAL @actionId)))
-
-		(^(ELAPSED-MTIME (MTIME) 500))
-		(!(Viman.getFreeId @vimanId))
-		(=>(Viman.request activateTracking @vimanId))
-		(!(HeadActions.handleReport Viman.report (VAL @vimanId) (VAL @actionId)))
-		)
-	
-	(IF(?(~(HeadActions.stop (VAL @actionId))))			
-		(!(Viman.getFreeId @vimanId))
-		(=>(Viman.request stopTracking @vimanId))
-		(!(HeadActions.handleReport Viman.report (VAL @vimanId) (VAL @actionId)))
-
-		(?(Softmotion.freeId @smId))
-		(=>(Softmotion.request moveHead -0.65 0.9 (VAL @smId)))
-		(=>(Robot.headPan (VAL @pan)))
-		(=>(Robot.headTilt (VAL @tilt)))
-		(!(HeadActions.handleReport Softmotion.report (VAL @smId) (VAL @actionId)))
-
-		(^(ELAPSED-MTIME (MTIME) 500))
-		(!(Viman.getFreeId @vimanId))
-		(=>(Viman.request activateTracking @vimanId))
-		(!(HeadActions.handleReport Viman.report (VAL @vimanId) (VAL @actionId)))
-		)
-		
-	(IF(?(~(HeadActions.stop (VAL @actionId))))		
-		(!(Viman.getFreeId @vimanId))
-		(=>(Viman.request stopTracking @vimanId))
-		(!(HeadActions.handleReport Viman.report (VAL @vimanId) (VAL @actionId)))
-
-		(?(Softmotion.freeId @smId))
-		(=>(Softmotion.request moveHead -0.0 0.9 (VAL @smId)))
-		(=>(Robot.headPan (VAL @pan)))
-		(=>(Robot.headTilt (VAL @tilt)))
-		(!(HeadActions.handleReport Softmotion.report (VAL @smId) (VAL @actionId)))
-
-		(^(ELAPSED-MTIME (MTIME) 500))
-		(!(Viman.getFreeId @vimanId))
-		(=>(Viman.request activateTracking @vimanId))
-		(!(HeadActions.handleReport Viman.report (VAL @vimanId) (VAL @actionId)))
-		)
-		
-	(IF(?(~(HeadActions.stop (VAL @actionId))))		
-		(!(Viman.getFreeId @vimanId))
-		(=>(Viman.request stopTracking @vimanId))
-		(!(HeadActions.handleReport Viman.report (VAL @vimanId) (VAL @actionId)))
-
-		(?(Softmotion.freeId @smId))
-		(=>(Softmotion.request moveHead -0.4 0.45 (VAL @smId)))
-		(=>(Robot.headPan (VAL @pan)))
-		(=>(Robot.headTilt (VAL @tilt)))
-		(!(HeadActions.handleReport Softmotion.report (VAL @smId) (VAL @actionId)))
-
-		(^(ELAPSED-MTIME (MTIME) 500))
-		(!(Viman.getFreeId @vimanId))
-		(=>(Viman.request activateTracking @vimanId))
-		(!(HeadActions.handleReport Viman.report (VAL @vimanId) (VAL @actionId)))
-		)
-	
-	(IF(?(~(HeadActions.stop (VAL @actionId))))			
-		(!(Viman.getFreeId @vimanId))
-		(=>(Viman.request stopTracking @vimanId))
-		(!(HeadActions.handleReport Viman.report (VAL @vimanId) (VAL @actionId)))
-
-		(?(Softmotion.freeId @smId))
-		(=>(Softmotion.request moveHead -0.3 0.5 (VAL @smId)))
-		(=>(Robot.headPan (VAL @pan)))
-		(=>(Robot.headTilt (VAL @tilt)))
-		(!(HeadActions.handleReport Softmotion.report (VAL @smId) (VAL @actionId)))
-
-		(^(ELAPSED-MTIME (MTIME) 500))
-		(!(Viman.getFreeId @vimanId))
-		(=>(Viman.request activateTracking @vimanId))
-		(!(HeadActions.handleReport Viman.report (VAL @vimanId) (VAL @actionId)))
-		)
-		
-	(IF(?(~(HeadActions.stop (VAL @actionId))))		
-		(!(Viman.getFreeId @vimanId))
-		(=>(Viman.request stopTracking @vimanId))
-		(!(HeadActions.handleReport Viman.report (VAL @vimanId) (VAL @actionId)))
-
-		(?(Softmotion.freeId @smId))
-		(=>(Softmotion.request moveHead 0.3 0.7 (VAL @smId)))
-		(=>(Robot.headPan (VAL @pan)))
-		(=>(Robot.headTilt (VAL @tilt)))
-		(!(HeadActions.handleReport Softmotion.report (VAL @smId) (VAL @actionId)))
-
-		(^(ELAPSED-MTIME (MTIME) 500))
-		(!(Viman.getFreeId @vimanId))
-		(=>(Viman.request activateTracking @vimanId))
-		(!(HeadActions.handleReport Viman.report (VAL @vimanId) (VAL @actionId)))
-		)
-		
-	(IF(?(~(HeadActions.stop (VAL @actionId))))		
-		(!(Viman.getFreeId @vimanId))
-		(=>(Viman.request stopTracking @vimanId))
-		(!(HeadActions.handleReport Viman.report (VAL @vimanId) (VAL @actionId)))
-
-		(?(Softmotion.freeId @smId))
-		(=>(Softmotion.request moveHead 0.3 0.5 (VAL @smId)))
-		(=>(Robot.headPan (VAL @pan)))
-		(=>(Robot.headTilt (VAL @tilt)))
-		(!(HeadActions.handleReport Softmotion.report (VAL @smId) (VAL @actionId)))
-
-		(^(ELAPSED-MTIME (MTIME) 500))
-		(!(Viman.getFreeId @vimanId))
-		(=>(Viman.request activateTracking @vimanId))
-		(!(HeadActions.handleReport Viman.report (VAL @vimanId) (VAL @actionId)))
-		)
-		
-	(IF(?(~(HeadActions.stop (VAL @actionId))))		
-		(!(Viman.getFreeId @vimanId))
-		(=>(Viman.request stopTracking @vimanId))
-		(!(HeadActions.handleReport Viman.report (VAL @vimanId) (VAL @actionId)))
-
-		(?(Softmotion.freeId @smId))
-		(=>(Softmotion.request moveHead 0.2 0.6 (VAL @smId)))
-		(=>(Robot.headPan (VAL @pan)))
-		(=>(Robot.headTilt (VAL @tilt)))
-		(!(HeadActions.handleReport Softmotion.report (VAL @smId) (VAL @actionId)))
-
-		(^(ELAPSED-MTIME (MTIME) 500))
-		(!(Viman.getFreeId @vimanId))
-		(=>(Viman.request activateTracking @vimanId))
-		(!(HeadActions.handleReport Viman.report (VAL @vimanId) (VAL @actionId)))
-		)
-		
-	(IF(?(~(HeadActions.stop (VAL @actionId))))		
-		(!(Viman.getFreeId @vimanId))
-		(=>(Viman.request stopTracking @vimanId))
-		(!(HeadActions.handleReport Viman.report (VAL @vimanId) (VAL @actionId)))
-
-		(?(Softmotion.freeId @smId))
-		(=>(Softmotion.request moveHead 0.5 1.1 (VAL @smId)))
-		(=>(Robot.headPan (VAL @pan)))
-		(=>(Robot.headTilt (VAL @tilt)))
-		(!(HeadActions.handleReport Softmotion.report (VAL @smId) (VAL @actionId)))
-
-		(^(ELAPSED-MTIME (MTIME) 500))
-		(!(Viman.getFreeId @vimanId))
-		(=>(Viman.request activateTracking @vimanId))
-		(!(HeadActions.handleReport Viman.report (VAL @vimanId) (VAL @actionId)))
-		)
-	
-	(!(SEM-V HeadActions.sem))
-    (IF(?(HeadActions.stop (VAL @actionId)))
-       (!(ReportManager.publish HeadActions.report @actionId "STOP"))
-
-       ELSE
-       (!(ReportManager.publish HeadActions.report @actionId "OK"))
-
-		)
-	)
-   )
-
- (defop |headExploreLocation|
-   :invocation(HeadActions.action headExplore @location @actionId)
-   :documentation "this procedure explores the area surrounding a certain location. This could be useful
-when we want to find something near a certain point"
-   :body (
-	  )
-   )
 
  (defop |handleReport|
    :invocation(!(HeadActions.handleReport @reportName @id @actionId))
