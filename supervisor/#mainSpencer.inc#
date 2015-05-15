@@ -13,9 +13,8 @@ include "supervisor/robot/Controller.sym"
 include "supervisor/robot/HeadActions.sym"
 include "supervisor/robot/PathPlanner.sym"
 include "supervisor/robot/BaseActions.sym"
-include "supervisor/robot/ReportManager.sym"
 
-
+include "supervisor/domains/SpencerMonitors.sym"
 
 load db "supervisor/robot/PathPlanner.db"
 load db "supervisor/robot/BaseActions.db"
@@ -26,10 +25,10 @@ load opf "supervisor/robot/Controller.opf"
 load opf "supervisor/robot/HeadActions.opf"
 load opf "supervisor/robot/PlannerInterface.opf"
 load opf "supervisor/robot/PathPlanner.opf"
-load opf "supervisor/robot/BaseActions.opf"
 load opf "supervisor/robot/DatabaseInterface.opf"
-load opf "supervisor/robot/ReportManager.opf"
+
+load opf "supe"
+
 
 load opf "supervisor/domains/Spencer.opf"
 
-add (!(Tester.testSpencer))

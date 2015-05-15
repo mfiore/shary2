@@ -1,0 +1,133 @@
+;; -*-Lisp-*-
+;;author: Michelangelo Fiore
+;;this module contains an interface to different planners in order to give plans to the PlanManager in a standard format.
+
+(
+ (defop |init|
+   :invocation(!(PlannerInterface.init))
+   :documentation "Initializes the module"
+   :body (
+	  (=>(PlannerInterface.freeId hatp 0))
+	  )
+   )
+ 
+ (defop |getPlan|
+   :invocation(PlannerInterface.getPlan @goal @parameters)
+   :documentation "Calculates a plan for the goal goal"
+   :body (
+	  (IF(?(PlannerInterface.usePlanner HATP))
+	     (!(PlannerInterface.getHatpPlan @goal @parameters))
+	     )
+	  )
+   )
+
+ (defop |getHatpPlan|
+   :invocation(!(PlannerInterface.getHatpPlan @goal @parameters))
+   :documentation "calls HATP to obtain a plan"
+   :body (
+	  (?(PlannerInterface.freeId hatp @id))       
+	  (=>(PlannerInterface.freeId hatp (+ @id 1)))
+	  (?(PlannerInterface.bridgeName hatp @hatp)) 
+	  
+	  ;;send the request and wait for an answer
+	  (!(= @message (HATP-REQ
+			 (REQ-TYPE plan)
+			 (REQ-ID (VAL @id))
+			 (TASK-NAME (VAL @goal))
+			 (PARAMETERS (VAL @parameters))
+			 )))
+	  (!(SEND-MESSAGE @hatp @message))
+	  (^(HATP-REP 
+	     (REQ-ID (VAL @id))
+	     (REPORT @report)
+	     (STREAM (ACTION-LIST @actionList)
+                 (LINK-LIST @linkList)))
+
+        (TREE (TASK-LIST @taskList)
+              
+
+              )
+        )
+;
+	  
+	  (=>(PlannerInterface.report @report))  ;send the report
+	  (IF(?(EQUAL @report OK))  ;if everything is okay we get the plan
+	     ;;for now we plan just for an human and a robot but we could generalize it in the future
+	     (!(= @robotActions (. .)))  
+	     (!(= @humanActions (. .)))
+	     
+	     (WHILE(?(~(NULL @actionList)))
+
+		   (!(= @currentAction (CAR @actionList))) ;get the current action
+		   (!(= @actionList (CDR @actionList)))
+		   (!(== (VAL @currentAction) (ACTION 
+					       (ACTION-ID @actionId)
+					       (ACTION-NAME @hatpActionName)
+					       (ACTOR @actor)
+					       (START-TIME @startTime)
+					       (END-TIME @endTime)
+					       (PARAMETERS @parameters)
+					       )))
+		   
+           (IF(?(PlannerInterface.action hatp (VAL @hatpActionName) @actionName))    ;convert the action name from the domain name of hatp to the supervisor domain
+
+              (?(PlannerInterface.parameterLinks hatp (VAL @hatpActionName) @parameterLinks))
+
+              ;;get the size of the parameters
+              (?(Actions.nParameters (VAL @actionName) @n))
+
+              (!(= @i 0))
+              (!(= @actionParameters (. .)))
+              ;;the parameters of the HATP actions can be in a different order (and also a different number) from the parameters used by supervision. The Db contains a mapping of the indexs.
+              ;;We use this mapping now to create a list of parameters in the correct order
+              (WHILE(?(< @i @n))
+                    (!(= @parameterLinksCopy @parameterLinks))
+                    (!(= @parametersCopy @parameters))
+                    (WHILE(?(~(NULL @parameterLinksCopy)))
+                          (!(= @aLink (CAR @parameterLinksCopy)))
+                          (!(= @parameterLinksCopy (CDR @parameterLinksCopy)))
+                          (!(= @aParameter (CAR @parametersCopy)))
+                          (!(= @parametersCopy (CDR @parametersCopy)))
+
+                          (IF(?(EQUAL @aLink @i))
+                             (!(= @actionParameters (CONS-TAIL (VAL @aParameter) @actionParameters)))
+                             )
+                          )
+                    (!(= @i (+ @i 1)))
+                    )
+
+              ;;now we need to scan the LINK-LIST. Since HATP provides a single link list for all the domain while we want that each actions has a list of preconditions we need to scan this list for every action
+		      ;;so we create a backup to update.
+		      (!(= @tempLinkList (VAL @linkList)))                    
+		      (!(= @actionLinks (. .)))
+		      (WHILE(?(~(NULL @tempLinkList)))
+			    (!(= @currentLink (CAR @tempLinkList)))
+			    (!(= @tempLinkList (CDR @tempLinkList)))
+			    (!(== (VAL @currentLink) (LINK @id1 @id2)))  ;the format in HATP is @id2 follows @id1
+			    (IF(?(EQUAL @id2 @actionId))   ;if @id2 is the current action
+			       (!(= @actionLinks (CONS-TAIL (VAL @id1) @actionLinks))) ;we add @id1 to the list of preconditions for the aaction
+			       )
+			    )
+		      
+		   
+		      (!(= @action (. (VAL @actionName) (VAL @actionParameters) .)))  
+		      (!(= @completeAction (. (VAL @action) (VAL @actionId) (VAL @actionLinks) .)))
+
+		      (IF(?(|| (EQUAL @actor PR2_ROBOT) (EQUAL @actionName handover)))
+			   (!(= @robotActions (CONS-TAIL (VAL @completeAction) @robotActions)))
+			 
+			   ELSE
+			   (!(= @humanActions (CONS-TAIL (VAL @completeAction) @humanActions)))
+			   )
+			 
+			 )
+	     )
+		   
+	     )
+	     (=>(PlannerInterface.result (. (. PR2_ROBOT ROBOT (VAL @robotActions) .) (. HERAKLES_HUMAN1 HUMAN (VAL @humanActions) .) .)))  ;we have a result
+	     )
+	  )
+   )
+	       
+
+ )

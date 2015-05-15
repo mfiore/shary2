@@ -25,139 +25,10 @@
 	 (=>(MonitorManager.freeId (+ $id 1)))
 	 )
   )
- (defop |testAndConditions|
-   :invocation(MonitorManager.testAndConditions @conditionList @monitorFact @monitorId @testId)
-   :documentation "utility function to check in the database if the and of the conditions present in @conditionList is true. This is actually a hack because I can't make an expression like (?(VAL @fact)) work when @fact is a general expression containing an &. @monitor fact is inserted into the database if everything is true. This procedure is blocked when the fact MonitorManager.stopTestAndConditions @testId is true"
-   :body (
-	
-          (!(= @tempResult TRUE))
-	  (!(= @backUpConditionList (VAL @conditionList) ))
-	  (IF(?(~(NULL @conditionList)))
-         (=>(MonitorManager.isTestingConditions @monitorId (VAL @testId)))
-         (WHILE(?(& (~(MonitorManager.stopTestConditions (VAL @monitorId) (VAL @testId)))  (~ (VAL @monitorFact))))
-		   (^(ELAPSED-TIME (TIME) 1))
-		   (!(= @actualCondition (CAR @conditionList)))
-		   (!(= @conditionList (CDR @conditionList)))
-		   (IF(?(~(VAL @actualCondition)))
-		      (!(= @tempResult FALSE))
-		      )
-		   (IF(?(NULL @conditionList)) 
-		      (IF(?(EQUAL @tempResult TRUE))
-			 (=> (VAL @monitorFact))
-			 
-			 ELSE
-			 (!(= @tempResult TRUE))
-			 (!(= @conditionList (VAL @backUpConditionList)))
-			 
-			 )
-		      )
-		   
-		   )
-         (IF(?(MonitorManager.stopTestConditions (VAL @monitorId) (VAL @testId)))
-        (~> (MonitorManager.stopTestConditions (VAL @monitorId) (VAL @testId)))
-		)
-         (~>(MonitorManager.isTestingConditions (VAL @monitorId) (VAL @testId)))
-	     )
-	  )
-   )
- (defop |testOrConditions|
-  :invocation (MonitorManager.testOrConditions @conditionList @monitorFact @monitorId @testId)
-  :documentation  "utility function to check in the database if the or of the conditions present in @conditionList is true. This is actually a hack because I can't make an expression like (?(VAL @fact)) work when @fact is a general expression containing an ||. @monitor fact in inserted into the database if everything is true"
-  :body (
-	
-	 (!(= @backUpConditionList (VAL @conditionList)))
-	
-	 (IF(?(~(NULL @conditionList)))
-        (=>(MonitorManager.isTestingConditions @monitorId (VAL @testId)))
-        (WHILE(?(&  (~(MonitorManager.stopTestConditions (VAL @monitorId) (VAL @testId))) (~(VAL @monitorFact))))
-              (^(ELAPSED-TIME (TIME) 1))
-
-              (!(= @actualCondition (CAR @conditionList)))
-              (!(= @conditionList (CDR @conditionList)))
-              (IF(?(VAL @actualCondition))
-                 (=> (VAL @monitorFact))
-                 )
-              (IF(?(NULL @conditionList))
-                 (!(= @conditionList (VAL @backUpConditionList)))
-                 )
-              )
-        (~>(MonitorManager.isTestingConditions (VAL @monitorId) (VAL @testId)))
-        (IF(?(MonitorManager.stopTestConditions (VAL @monitorId) (VAL @testId)))
-           (~> (MonitorManager.stopTestConditions (VAL @monitorId) (VAL @testId)))
-           )
-        )
-     )
-  )
 
 
-(defop |parseConditions|
-  :invocation (!(MonitorManager.parseConditions @conditionList @robotName @actor @subject @value $factList))
-  :documentation "utility function. Parses the list of conditions and creates a new factList. This should 
-be moved in another class"
-  :body (
-	 (!(= @tempFactList (. .)))
-	 (WHILE(?(~(NULL @conditionList)))  ;;the postconditions is a list. Let's parse it
-	       (!(= @currentCondition (CAR @conditionList)))
-	       (!(= @conditionList (CDR @conditionList)))
-	       
-	       (!(== (VAL @currentCondition) (SubjectType @subjectType Predicate @predicate ValueType @valueType Truth @truth)))
-	       (IF(?(EQUAL @subjectType Actor))
-		  (!(= @predicateSubject (VAL @actor)))
-		  
-		  ELSEIF(?(EQUAL @subjectType Subject))
-		  (!(= @predicateSubject (VAL @subject)))
-		  
-		  ELSE
-		  (!(= @predicateSubject (VAL @value)))
-		  )
-	       
-	       (IF(?(EQUAL @valueType Actor))
-		  (!(= @predicateValue (VAL @actor)))
-		  
-		  ELSEIF(?(EQUAL @valueType Subject))
-		  (!(= @predicateValue (VAL @subject)))
-		  
-		  ELSEIF(?(EQUAL @valueType Value))
-		  (!(= @predicateValue (VAL @value)))
-		  
-		  ELSE
-		  (!(= @predicateValue NULL))
-		  )
-	       
-	       (IF(?(EQUAL @truth TRUE)) ;;depending on the truth value of the postcondition we will test for a normal fact or a negated fact
-		  (!(= @fact (AGENT-STATEMENT (VAL @robotName) (VAL @predicateSubject) (VAL @predicate) (VAL @predicateValue))))
-		  
-		  ELSE 
-		  (!(= @fact (~(AGENT-STATEMENT (VAL @robotName) (VAL @subject) (VAL @predicate) (VAL @value)))))
-		  )
-	       (!(= @tempFactList (CONS-TAIL (VAL @fact) @tempFactList))) 
-	       
-	       )
-	 (!(= $factList @tempFactList))
-	 )
-  )
-
-(defop |subscribeToReport|
-  :invocation(!(MonitorManager.sub @report @id @monitorId))
-  :body (
-         (!(ReportManager.sub @report @id))
-         (=>(MonitorManager.isSub @report @id @monitorId))
-         )
-  )
-
-
-(defop |stopTestConditions|
-  :invocation (!(MonitorManager.stopTestConditions @monitorId @testId))
-  :documentation "Utility function to stop the monitoring of a TestCondition"
-  :body (
-     (IF(?(MonitorManager.isTestingConditions (VAL @monitorId) (VAL @testId )))
-        (=>(MonitorManager.stopTestConditions @monitorId (VAL @testId)))
-	    )
-	 
-	 )
-  )
- (defop |addTargetToQueue|
-   :invocation (!(MonitorManager.monitorTarget @target @targetPart @successConditions @failureConditions @priority @monitorId))
+(defop |addTargetToQueue|
+   :invocation (!(MonitorManager.monitorTarget @target @targetPart @priority @monitorId))
    :documentation "this procedure  adds a target into the priority queue. 
 @target is the name of the item\agent to monitor.
 @successConditions and @failureConditions are  lisp-lists (. @andConditions @orContisions .) where @andConditions and @orConditions are lisp-lists composed of facts such as (. (TIME-ELAPSED(TIME) 30) (fact a) .). When this conditions become true the monitoring succed\fails. @a3ndConditions becomes true when all the sub-conditions are true, @orConditions when at least one becomes true (this is necessary because I can't make a generic variable containing facts with logic expression be evaluated without making oprs crash).  
@@ -166,14 +37,9 @@ be moved in another class"
    :body (
 	  (=> (MonitorManager.freeId (+ @monitorId 1))) 
 
+      (=>(MonitorManager.target (VAL @target) (VAL @targetPart) (VAL @priority) (VAL @monitorId)))
 
-	  (!(= @queueElement (. (VAL @target) (VAL @targetPart) (VAL @successConditions) (VAL @failureConditions) (VAL @monitorId) .) )) 
-	  (IF(?(NULL @successConditions))
-	     (!(FAILED))
-	     
-	     ELSEIF(?(NULL @failureConditions))
-	     (!(FAILED))
-	     )
+      (!(= @queueElement (. (VAL @target) (VAL @targetPart) (VAL @monitorId) .) ))
 
 	  (IF(?(EQUAL @priority HIGH))
 	     (!(Queue.push (VAL @queueElement) MonitorManager.highPriorityQueue))
@@ -223,81 +89,50 @@ be moved in another class"
 		   )
 		(!(Queue.head @toMonitor (VAL @queueInUse)))
 		(IF(?(~(NULL @toMonitor)))  ;;in some cases the list could be in use while we wait to get the head and it could be empty after that. Better to check again. Multi-thread is a bitch.
-		   (!(== (VAL @toMonitor) (. @target @targetPart @successConditions @failureConditions @monitorId .) ) )
+           (!(== (VAL @toMonitor) (. @target @targetPart @monitorId .) ) )
 		       
 		   (=>(MonitorManager.isMonitoringTarget @monitorId))
 		   
-		   (!(= @successConditionsTrue (successConditions (VAL @monitorId) TRUE)))
-		   (!(= @failureConditionsTrue (failureConditions  (VAL @monitorId) TRUE)))
-
-		   (!(== (VAL @successConditions) (. @successConditionsAnd @successConditionsOr .)))             ;;get the AND and OR part of success\failconditions
-		   (!(== (VAL @failureConditions) (. @failureConditionsAnd @failureConditionsOr .)))
-		   
-           (=>(MonitorManager.testAndConditions @successConditionsAnd @successConditionsTrue @monitorId 1))        ;;start the monitoring of success\failconditions
-           (=>(MonitorManager.testOrConditions @successConditionsOr @successConditionsTrue @monitorId 2))
-		   
-           (=>(MonitorManager.testAndConditions @failureConditionsAnd @failureConditionsTrue @monitorId 3))
-           (=>(MonitorManager.testOrConditions @failureConditionsOr @failureConditionsTrue @monitorId 4))
-
            (!(MonitorManager.findTarget @target @targetPart @result))
+           (IF(?(EQUAL @result TRUE))
+              (IF(?(Object.isTrackable (VAL @target) TRUE))
+                 (!(HeadActions.getFreeId @actionId))
+                 (!(ReportManager.sub HeadActions.report @actionId))
+                 (=>(HeadActions.action track (VAL @target) (VAL @actionId)))
+                 (^(HeadActions.report (VAL @actionId) @executionReport))
+                 (!(ReportManager.unsub HeadActions.report @actionId))
+                 )
 
-           (IF(?(Object.isTrackable (VAL @target) TRUE))
-              (!(HeadActions.getFreeId @actionId))
-              (!(ReportManager.sub HeadActions.report @actionId))
-              (=>(HeadActions.action track (VAL @target) (VAL @actionId)))
-              (^(HeadActions.report (VAL @actionId) @executionReport))
-              (!(ReportManager.unsub HeadActions.report @actionId))
-              )
+              (^(|| (MonitorManager.cancelMonitoring (VAL @monitorId)) (&(MonitorManager.highestAvailablePriority @newP) (> @newP @priority))))
 
+              (IF(?(MonitorManager.cancelMonitoring (VAL @monitorId)))
+                 (~>(MonitorManager.cancelMonitoring (VAL @monitorId)))
+                 (!(ReportManager.publish MonitorManager.report @monitorId "OK"))
+                 (!(Queue.pop (VAL @queueInUse)))
+                 (~>(MonitorManager.target @target @targetPart @priority (VAL @monitorId)))
+                 )
 
-		   (WHILE(?(& (~(VAL @successConditionsTrue)) (~(VAL @failureConditionsTrue)) (MonitorManager.highestAvailablePriority  (VAL @priority)) (~(MonitorManager.cancelMonitoring (VAL @monitorId))) (MonitorManager.shouldRun TRUE) (EQUAL @executionReport "OK")))
-             (^(ELAPSED-MTIME (TIME) 500))
-             )
+              ELSE
+              (!(ReportManager.publish MonitorManager.report @monitorId "FAILURE"))
+              (!(Queue.pop (VAL @queueInUse)))
+              (~>(MonitorManager.target @target @targetPart @priority (VAL @monitorId)))
+           )
 
-		   (~>(MonitorManager.isMonitoringTarget (VAL @monitorId)))
+           (~>(MonitorManager.isMonitoringTarget (VAL @monitorId)))
 
-		   (IF(?(|| (VAL @successConditionsTrue) (VAL @failureConditionsTrue) (~(EQUAL @executionReport "OK")) (MonitorManager.cancelMonitoring (VAL @monitorId)) ))  ;;To Note here. If there is a new element with lowest priority we just get to the start of the loop again and get the new head
-		      ;;if the monitor has success or failure erase the element from the head and send and post the result
-		      
-	      
-              (!(MonitorManager.stopTestConditions @monitorId 1))
-              (!(MonitorManager.stopTestConditions @monitorId 2))
-              (!(MonitorManager.stopTestConditions @monitorId 3))
-              (!(MonitorManager.stopTestConditions @monitorId 4))
-
-              (WHILE(?(MonitorManager.isSub @report @id (VAL @monitorId)))
-                    (!(ReportManager.unsub (VAL @report) (VAL @id)))
-                    (~>(MonitorManager.isSub (VAL @report) (VAL @id) (VAL @monitorId)))
-               )
-		      
-		      (!(Queue.pop (VAL @queueInUse)))
-		      (IF(?(Queue.isEmpty MonitorManager.highPriorityQueue FALSE))
-			 (=>(MonitorManager.highestAvailablePriority HIGH))
+           (IF(?(Queue.isEmpty MonitorManager.highPriorityQueue FALSE))
+              (=>(MonitorManager.highestAvailablePriority HIGH))
 			 
-			 ELSEIF(?(Queue.isEmpty MonitorManager.mediumPriorityQueue FALSE))
-			 (=>(MonitorManager.highestAvailablePriority MEDIUM))
+              ELSEIF(?(Queue.isEmpty MonitorManager.mediumPriorityQueue FALSE))
+              (=>(MonitorManager.highestAvailablePriority MEDIUM))
 			 
-			 ELSEIF(?(Queue.isEmpty MonitorManager.lowPriorityQueue FALSE))
-			 (=>(MonitorManager.highestAvailablePriority LOW))
+              ELSEIF(?(Queue.isEmpty MonitorManager.lowPriorityQueue FALSE))
+              (=>(MonitorManager.highestAvailablePriority LOW))
 		
 			 )
-		      (IF (?(VAL @successConditionsTrue))
-                  (~>(VAL @successConditionsTrue))
-                  (!(ReportManager.publish MonitorManager.report @monitorId "OK"))
 
-                  ELSEIF(?(|| (VAL @failureConditionsTrue) (~(EQUAL @executionReport "OK"))))
-                  (~>(VAL @failureConditionsTrue))
-                  (!(ReportManager.publish MonitorManager.report @monitorId "FAILURE"))
-
-			  
-			  ELSEIF(?(MonitorManager.cancelMonitoring (VAL @monitorId)))
-			  (~>(MonitorManager.cancelMonitoring (VAL @monitorId)))
-              (!(ReportManager.publish MonitorManager.report @monitorId "CANCELED"))
-			  )
-		      )
-		   )
-		
-		)
+           )
+        )
 	  (=>(MonitorManager.startLoop FALSE))
 	  )
    )

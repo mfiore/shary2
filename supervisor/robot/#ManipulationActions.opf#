@@ -1,0 +1,37 @@
+;; -*-Lisp-*-
+;;author: Michelangelo Fiore
+;;this module provides an intermediate interface between the high-level ExecutionManager module and lower level modules to execute arm manipulation actions. In this way
+;;the Execution Manager can be abstracted from the actual robot execution process.
+(
+
+ (defop |init|
+
+   )
+
+ (defop |handleReport|
+   )
+ (defop |take|
+   :body (
+          :invocation(ManipulationActions.request take @object)
+          )
+   )
+
+ (defop |openGripper|
+   :body (
+          )
+   )
+
+ (defop |closeGripper|
+   :body (
+          )
+   )
+
+ (defop |place|
+
+   )
+
+ (defop |goToPose|
+
+   )
+
+)

@@ -25,13 +25,9 @@
 	  (IF(?(~(AgentActionMonitor.isMonitoringAgent (VAL @agent) @id)))
 	     (!(MonitorManager.getFreeId @monitorId))
   
-         ;;set the parameters for the monitor manager. We stop when the human has completed his actions and we fail if he fails or he's stopped
-         (!(= @successConditions (. (. .) (. .) .)))
-         (!(= @failureConditions (. (. .) (.  .) .) ))
          (?(Spark.humanHead @sparkHumanHead))
-
          ;; ;;start the monitoring
-         (!(MonitorManager.monitorTarget @agent @sparkHumanHead @successConditions @failureConditions MEDIUM @monitorId))
+         (!(MonitorManager.monitorTarget @agent @sparkHumanHead MEDIUM @monitorId))
          (!(DatabaseInterface.registerToChanges (AGENT-STATEMENT PR2_ROBOT (VAL @agent) isAt) (humanLocation (VAL @agent)) @result))  ;;for movement actions
          (=>(AgentActionMonitor.isMonitoringAgent @agent @monitorId))
 	     )

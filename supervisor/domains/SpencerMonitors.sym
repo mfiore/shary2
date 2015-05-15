@@ -1,0 +1,3 @@
+declare predicate Monitor.groupIsFar
+declare predicate Monitor.groupAbandons
+declare predicate Monitor.groupIsClose

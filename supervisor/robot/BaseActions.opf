@@ -55,7 +55,11 @@
   :body (
          (!(SEM-P BaseActions.sem))
 
-         (IF(?(BaseActions.isActive TRUE))
+         (IF(?(BaseActions.isActive SIM))
+            ;(!(ReportManager.publish BaseActions.report @id "OK"))
+
+
+            ELSEIF(?(BaseActions.isActive TRUE))
             (?(BaseActions.bridgeName @name))
             (?(BaseActions.timeToWait @time))
 

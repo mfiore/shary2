@@ -956,8 +956,7 @@
          (~>(ExecutionManager.isExecuting @executionId))
          (!(ReportManager.publish ExecutionManager.report  (VAL @executionId) "OK"))
 	 )
-         )
-  )
+)
 
 (defop |moveToPose|
   :invocation(ExecutionManager.execute moveToPose @parameters @executionId)
@@ -985,12 +984,14 @@
 
          (!(@idCommand @actionId))
          (=>(@requestCommand moveToPose @pose @actionId))
-         (!(ExecutionManager.handleReport @moduleName @actionId @executionId TRUE TRUE (. .)))
+         (!(ExecutionManager.handleReport @moduleName @actionId @executionId TRUE TRUE (. .))
 
 
          (!(ReportManager.publish ExecutionManager.report  (VAL @executionId) "OK"))
-     )
+	 )
+         )
   )
+
 (defop |go| 
   :invocation (ExecutionManager.execute go @parameters  @executionId)
   :documentation "Operation to make the robot reach a destination. @goal is the node in the map the should be reached, @subgoal the item"
@@ -1102,7 +1103,7 @@
 
          (!(@idCommand @actionId))
          (=>(@requestCommand moveToPose @confName @actionId))
-         (!(ExecutionManager.handleReport @moduleName @actionId @executionId TRUE TRUE (. .)))
+         (!(ExecutionManager.handleReport @moduleName @actionId @executionId TRUE TRUE (. .))
 
            (!(ReportManager.publish ExecutionManager.report @executionId "OK"))
          )

@@ -1,0 +1,72 @@
+;; -*-Lisp-*-
+;;author: Michelangelo Fiore
+;;this files contains procedure specific to the spencer scenario.
+
+(
+(defop |startGuideSpencer|
+  :invocation(ExecutionManager.execute startGuideSpencer @executionId)
+  :body (
+         (!(DatabaseInterface.findList (AGENT-STATEMENT (VAL @robotName) @g isIn START_AREA) @result))
+         (IF(?(~(NULL @result)))
+            (!(= @groupToGuide (CAR(CAR @result))))
+            )
+         (!(= @destination ARRIVAL))
+         (=>(ExecutionManager.execute guideGroup @groupToGuide @destination @executionId))
+         )
+  )
+
+(defop |GuideGroup|
+  :invocation(ExecutionManager.execute guideGroup @groupId @destination @executionId)
+  :body (
+         (?(Robot.name @robotName))
+
+         (!(DatabaseInterface.addMonitor (AGENT-STATEMENT @robotName @groupId distance CLOSE) (Monitor.groupIsClose) @result))
+         (!(DatabaseInterface.addMonitor (AGENT-STATEMENT @robotName @groupId distance FAR)
+                                         (Monitor.groupIsFar) @result))
+         (!(DatabaseInterface.addMonitor (AGENT-STATEMENT @robotName @groupId isPresent FALSE) (Monitor.groupAbandons) @result))
+
+         (!(= @done FALSE))
+
+         (!(= @base (. 0 0 0 .)))
+
+         (WHILE(?(EQUAL @done FALSE))
+               (~>(Monitor.groupIsClose))
+               ;;start moving
+               (!(BaseActions.getFreeId @goId))
+               (=>(BaseActions.action move @goal @goId))
+               (!(ReportManager.sub BaseActions.report @goId))
+               (^(|| (BaseActions.report (VAL @goId) @report) (Monitor.groupIsFar) (Monitor.groupAbandons)))
+
+               (IF(?(Monitor.groupAbandons))
+                  (~>(Monitor.groupAbandons))
+                  (!(= @done TRUE))
+                  ELSEIF(?(Monitor.groupIsFar))
+                  (~>(Monitor.groupIsFar))
+                  (~>(Monitor.groupIsClose))
+                  (=>(BaseActions.stop @goId))
+                  (^(BaseActions.report (VAL @goId) @report))
+                  (!(ReportManager.unsub BaseActions.report (VAL @goId)))
+
+                  (^ (||(Monitor.groupAbandons) (Monitor.groupIsClose)))
+                  (IF(?(Monitor.groupAbandons)) ;;if the group disappears we quit. If not it means that the group is close again and then we go back at the start of the loop and restart the robot
+                     (~>(Monitor.groupAbandons))
+                     (!(= @done TRUE))
+                     )
+                  ELSE
+                  (!(= @done TRUE))
+                  )
+               )
+         (!(BaseActions.getFreeId @goId))
+         (=>(BaseActions.action move @base @goId))
+         (!(ReportManager.sub BaseActions.report @goId))
+         (^(|| (BaseActions.report (VAL @goId) @report)))
+         (!(ReportManager.unsub BaseActions.report @goId))
+
+         (!(DatabaseInterface.removeMonitor (AGENT-STATEMENT @robotName @groupId distance CLOSE)  @result))
+         (!(DatabaseInterface.removeMonitor (AGENT-STATEMENT @robotName @groupId distance FAR)
+                                            @result))
+         (!(DatabaseInterface.removeMonitor (AGENT-STATEMENT @robotName @groupId isPresent FALSE)  @result))
+         (=>(ExecutionManager.report @executionId "OK"))
+         )
+  )
+)

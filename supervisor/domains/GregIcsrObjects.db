@@ -1,0 +1,45 @@
+(
+;;Object.type NAME TYPE CLASS 
+;NAME is the name of the object
+;TYPE explains which kind of object it is (ex. TAPE, CUBE, PLACEMAT, TABLE, HUMAN)
+;CLASS is a second grouping of objects related to their functions (ex. PICKABLE, PLACEMAT)
+;this is then used for actions and monitor spheres. Ex. cubes have a certaing size for monitor spheres. The action take can be done on PICKABLE objects etc.
+
+;; When we add a new CLASS we should edit the PlanManager.manageHumanActions OP (the code in that functions explains the point where the user should edit) (if this class of objects could be relevant to monitor human actions) and add the Spark.typeMonitorSphere predicate in the Spark.db file.
+
+;;When we create a new TYPE we should add the Spark.sphereParameter predicate in Spark.db
+
+
+(Object.type PR2_ROBOT ROBOT AGENT)
+(Object.type HERAKLES_HUMAN_1 HUMAN AGENT)
+
+
+(Object.type Red_Cube Cube PICKABLE)
+(Object.type Blue_Cube Cube PICKABLE)
+(Object.type Green_Cube Cube PICKABLE)
+
+
+
+(Object.type CleaningArea ProcessArea PLACEMENT)
+(Object.type PolishingArea ProcessArea PLACEMENT)
+(Object.type StickersArea ProcessArea PLACEMENT)
+(Object.type SmoothingArea ProcessArea PLACEMENT)
+(Object.type GluingArea ProcessArea PLACEMENT)
+
+(Object.type StackArea Area PLACEMENT)
+
+(Object.type Clean clean OPERATION)
+(Object.type Polish polish OPERATION)
+(Object.type Stickers stickers OPERATION)
+(Object.type Smoothen smoothen OPERATION)
+(Object.type Glue glue OPERATION)
+
+(ProcessArea.type CleaningArea clean)
+(ProcessArea.type PolishingArea polish)
+(ProcessArea.type StickersArea stickers)
+(ProcessArea.type SmoothingArea smooth)
+(ProcessArea.type GluingArea glue)
+
+(Cube.previous Red_Cube Green_Cube)
+(Cube.previous Green_Cube Blue_Cube)
+)

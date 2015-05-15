@@ -43,19 +43,28 @@
 	     (!(Acapela.init))
 	  )
 	  
-	  ;;activate robot procedures
-	  (!(ExecutionManager.init))
-	  (!(Timer.init))
+      ;;activate robot procedures
+
+      (!(ExecutionManager.init))
+      (IF(?(Timer.isActive TRUE))
+         (!(Timer.init))
+         )
 	  
 	  (IF(?(Robot.joints RIGHT_ARM))
 	     (!(ArmActions.init))
 	     )
 	  (!(HeadActions.init))
-	  (!(PlannerInterface.init))
-	  (!(MonitorManager.init))
-	  (!(DatabaseInterface.init))
-	  (!(PathPlanner.init))
-	  (!(BaseActions.init))
+      (!(PlannerInterface.init))
+      (IF(?(MonitorManager.isActive TRUE))
+         (!(MonitorManager.init))
+         )
+      (!(DatabaseInterface.init))
+      (IF(?(PathPlanner.isActive TRUE))
+         (!(PathPlanner.init))
+         )
+      (IF(?(~(BaseActions.isActive FALSE)))
+         (!(BaseActions.init))
+         )
 
 
 	  ;;get the robot position and put a starting world state.
