@@ -36,6 +36,9 @@
 (PathPlanner.isActive TRUE)
 (ExecutionManager.isActive execution TRUE)
 (BaseActions.isActive TRUE)
+(Manipulation.moduleName GtpActions)
+(MonitorManager.isActive TRUE)
+
 
 
 ;;Joints

@@ -82,7 +82,9 @@
           (!(ReportManager.unsub Spark.report @sparkId))
 
           (!(AgentActionMonitor.cleanObjectMonitorSpheres @object))
+	  (IF(?(~(EQUAL @agent @robotName)))
           (!(AgentActionMonitor.calculatePresentInferences @agent))
+	  )
 
    )
 
@@ -164,7 +166,9 @@
           (!(ReportManager.unsub Spark.report @sparkId))
 
           (!(AgentActionMonitor.cleanObjectMonitorSpheres @placement))
+	  (IF(?(~(EQUAL @agent @robotName)))
           (!(AgentActionMonitor.calculatePresentInferences @agent))
+	  )
           )
    )
 

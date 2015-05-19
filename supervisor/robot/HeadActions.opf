@@ -69,13 +69,29 @@
          (!(HeadActions.handleReport Viman.report (VAL @vimanId) (VAL @actionId)))
 
 
-         (?(HeadActions.bridgeName @bridgeName))
+         (IF(?(HeadActions.bridgeName @bridgeName))
          (!(= @command (TERM-STRING-CAT (VAL @bridgeName) ".lookAt")))
          (!(= @reportName (TERM-STRING-CAT (VAL @bridgeName) ".report")))
          (!(= @reportName (MAKE-ATOM @reportName)))
          (!(SEND-MESSAGE (VAL @bridgeName) (@command @xOb @yOb @zOb)))
          (^(|| (@reportName @report) (ELAPSED-TIME (TIME) 5)))
          (~>(@reportName (VAL @report)))
+	 
+	 ELSE
+	 (!(Softmotion.getFreeId @smId))
+	 (!(ReportManager.sub Softmotion.report @smId))
+	 (=>(Softmotion.request getPanTiltFromXYZ @xOb @yOb @zOb @smId))
+	 (^(Softmotion.report (VAL @smId) @report))
+	 (!(ReportManager.unsub Softmotion.report (VAL @smId)))
+	 (^(Softmotion.result (VAL @smId) @pan @tilt))
+	 (~>(Softmotion.result (VAL @smId) (VAL @pan) (VAL @tilt)))
+	 
+	 (!(Softmotion.getFreeId @smId))
+	 (!(ReportManager.sub Softmotion.report @smId))
+	 (=>(Softmotion.request moveHead @pan @tilt @smId))
+	 (^(Softmotion.report (VAL @smId) @report))
+	 (!(ReportManager.unsub Softmotion.report (VAL @smId)))	 
+	 )
 
          (!(Viman.getFreeId @vimanId))
          (=>(Viman.request activateTracking @vimanId))

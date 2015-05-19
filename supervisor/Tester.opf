@@ -472,10 +472,8 @@
  (defop |testPlace|
    :invocation(!(Tester.testPlace))
    :body (
-	  (!(Controller.initAll))
-	  (=>(Robot.hasObject RIGHT LOTR_TAPE))
-	  (=>(Robot.armPosition RIGHT FREE))
-	  (=>(ExecutionManager.execute placeSandra LOTR_TAPE TABLE_4 PLACEMAT_RED 2))
+;	  (!(Controller.initAll))
+	  (=>(ExecutionManager.execute place (. GREY_TAPE TABLE_4 .) 2))
 	  )
    )
 
@@ -729,7 +727,7 @@
    :body (
 	  (!(Controller.initAll))
 
-      (=>(ExecutionManager.execute take GLUE_BOTTLE RIGHT 0))
+      (=>(ExecutionManager.execute take (. GREY_TAPE RIGHT .) 0 ))
 
 	  )
    )

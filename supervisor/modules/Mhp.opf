@@ -412,7 +412,7 @@
 		      (nbSubTrajs  @nSubTrajs)
 		      (subTrajs 
 		       (subTrajId  @subTrajId1)
-		       (dummy  @dummy1)
+		       (armId  @dummy1)
 		       (subTrajName 
 			(name  @subTrajName1))
 
@@ -420,7 +420,7 @@
 			(name  @robot1))
 
 		       (subTrajId  @subTrajId2)
-		       (dummy  @dummy2)
+		       (armId  @dummy2)
 		       (subTrajName 
 			(name  @subTrajName2))
 
@@ -428,7 +428,7 @@
 			(name  @robot2))
 
 		       (subTrajId  @subTrajId3)
-		       (dummy  @dummy3)
+		       (armId  @dummy3)
 		       (subTrajName 
 			(name  @subTrajName3))
 
@@ -436,7 +436,7 @@
 			(name  @robot3))
 
 		       (subTrajId  @subTrajId4)
-		       (dummy  @dummy4)
+		       (armId  @dummy4)
 		       (subTrajName 
 			(name  @subTrajName4))
 
@@ -444,7 +444,7 @@
 			(name  @robot4))
 
 		       (subTrajId  @subTrajId5)
-		       (dummy  @dummy5)
+		       (armId  @dummy5)
 		       (subTrajName 
 			(name  @subTrajName5))
 
@@ -452,7 +452,7 @@
 			(name  @robot5))
 
 		       (subTrajId  @subTrajId6)
-		       (dummy  @dummy6)
+		       (armId  @dummy6)
 		       (subTrajName 
 			(name  @subTrajName6))
 
@@ -460,7 +460,7 @@
 			(name  @robot6))
 
 		       (subTrajId  @subTrajId7)
-		       (dummy  @dummy7)
+		       (armId  @dummy7)
 		       (subTrajName 
 			(name  @subTrajName7))
 
@@ -468,7 +468,7 @@
 			(name  @robot7))
 
 		       (subTrajId  @subTrajId8)
-		       (dummy  @dummy8)
+		       (armId  @dummy8)
 		       (subTrajName 
 			(name  @subTrajName8))
 
@@ -476,7 +476,7 @@
 			(name  @robot8))
 		       
 		       (subTrajId  @subTrajId9)
-		       (dummy  @dummy9)
+		       (armId  @dummy9)
 		       (subTrajName 
 			(name  @subTrajName9))
 
@@ -484,7 +484,7 @@
 			(name  @robot9))
 
 		       (subTrajId  @subTrajId10)
-		       (dummy  @dummy10)
+		       (armId  @dummy10)
 		       (subTrajName 
 			(name  @subTrajName10))
 

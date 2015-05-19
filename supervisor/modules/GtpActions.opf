@@ -24,7 +24,7 @@
    )
 
  (defop |openGripper|
-   :invocation(!(GtpActions.action openGriper @gripper @gtpId))
+   :invocation(!(GtpActions.request openGriper @gripper @gtpId))
    :body (
           (!(ArmActions.getFreeId @actionId))
           (!(ReportManager.sub ArmActions.report @actionId))
@@ -36,7 +36,7 @@
    )
 
  (defop |closeGripper|
-   :invocation (!(GtpActions.closeGripper))
+   :invocation (!(GtpActions.request closeGripper))
    :body (
           (!(ArmActions.getFreeId @actionId))
           (!(ReportManager.sub ArmActions.report @actionId))
@@ -47,7 +47,7 @@
           )
    )
  (defop |pick|
-   :invocation(GtpActions.action pick @object @arm @gtpId)
+   :invocation(GtpActions.request pick @object @arm @gtpId)
    :body (
 	  (?(Robot.name @robotName))
 
@@ -82,11 +82,22 @@
    )
 
 (defop |place|
-  :invocation(GtpActions.action place @mainObject @supportObject @gtpId)
+  :invocation(GtpActions.request place @mainObject @supportObject @gtpId)
   :body (
          (?(Robot.name @robotName))
-         (!(DatabaseInterface.findList (AGENT-STATEMENT (VAL @robotName) @a (VAL @mainObject)) (. @a .)))
-         (!(= @arm (CAR(CAR @r))))
+         (!(DatabaseInterface.findList (AGENT-STATEMENT (VAL @robotName) (VAL @robotName) @a (VAL @mainObject)) (. @a .) @result))
+	 (!(= @found FALSE))
+	 (WHILE(?(EQUAL @found FALSE))
+	       (!(= @item (CAR(CAR @result))))
+	       (IF(?(||(EQUAL @item RIGHT) (EQUAL @item LEFT)))
+		  (!(= @found TRUE))
+		  (!(= @arm @item))
+	
+		  ELSE
+		  (!(= @result (CDR @result)))
+		  )		     
+	       )
+;         (!(= @arm (CAR(CAR @result))))
          (IF(?(EQUAL @arm RIGHT))
             (!(= @hand "right"))
 
@@ -155,7 +166,7 @@
   )
 
 (defop |placeReachable|
-  :invocation(GtpActions.action placeReachable @targetAgent @mainObject @supportObject @hand)
+  :invocation(GtpActions.request placeReachable @targetAgent @mainObject @supportObject @hand)
   :body (
 	  (?(Robot.name @robotName))
 
@@ -187,7 +198,7 @@
   )
 
 (defop |travelTo|
-  :invocation (GtpActions.action travelTo @object @point @gtpId)
+  :invocation (GtpActions.request travelTo @object @point @gtpId)
   :documentation "@points (. @x  @y @z .) "
   :body (
 	  (?(Robot.name @robotName))
@@ -230,9 +241,13 @@
   )
 
 (defop |moveTo|
-  :invocation(GtpActions.action moveTo @configurationName @gtpId)
+  :invocation(GtpActions.request moveToPose @configurationName @gtpId)
   :body (
 	  (?(Robot.name @robotName))
+
+	  (IF(?(EQUAL @configurationName MANIPULATION_RIGHT))
+	     (!(= @configurationName manipulationPoseRight))
+	     )
 
       (!(Mhp.getFreeId @id))
 	  (=>(Mhp.request addGtpAgent mainAgent @robotName @id))
@@ -246,7 +261,8 @@
       (IF(?(GtpActions.objectAttachment @id))
          (!(Mhp.getFreeId @mhpId))
          (=>(Mhp.request addGtpAttachmentFromTask @id 0 @mhpId))
-         (!(GtpActions.handleReport Mhp @mhpId))
+         (!(GtpActions.handleReport Mhp @mhpId @gtpId))
+
       )
 
       (!(GtpActions.executeTask "moveto" RIGHT NO_NAME NO_NAME @gtpId))
@@ -307,7 +323,8 @@
 		      
                       (IF(?(EQUAL @task pick))
                          (!(= @postParams (. (VAL @robotName) (VAL @object) (VAL @arm) .)))
-                         (!(Actions.setPostConditions take @postParams))
+			 (!(Actions.setPostconditions take (VAL @postParams)))
+                         
 
                          (=>(GtpActions.objectAttachment @taskId))
                          )
@@ -316,14 +333,16 @@
                       (IF(?(EQUAL @task place))
                          (!(Spark.getFreeId @sparkId))
                          (?(Spark.robotFinger (VAL @arm) @sparkHand))
-                         (=>(Spark.request getJointAbsPose PR2_ROBOT @sparkHand @sparkId))
+                         (=>(Spark.request getJointAbsPose (VAL @robotName) @sparkHand @sparkId))
                          (!(GtpActions.handleReport Spark @sparkId @gtpId))
                          (^(Spark.result (VAL @sparkId) @rx @ry @rz @rtx @rty @rtz))
                          (~>(Spark.result (VAL @sparkId) (VAL @rx) (VAL @ry) (VAL @rz) (VAL @rtx) (VAL @rty) (VAL @rtz)))
 
-                         (!(= @postParams (. @robotName @object (. @rx @ry @rz .) .)  ))
+                         (!(= @postParams (. @robotName @object @support (. @rx @ry @rz .) .)  ))
 
-                         (!(Actions.setPostConditions place @postParams))
+
+			 (!(Actions.setPostconditions place (VAL @postParams)))
+
 
                          )
                       (!(ArmActions.getFreeId @id))
@@ -370,7 +389,7 @@
                       (=>(Softmotion.request moveArm @smArm @id))
                       (!(GtpActions.handleReport Softmotion @id @gtpId))
 
-                      (!(DatabaseInterface.set (AGENT-STATEMENT (VAL @robotName) (VAL @robotName) pose OTHER)))
+                      (!(DatabaseInterface.set (AGENT-STATEMENT (VAL @robotName) (VAL @robotName) pose OTHER) @result))
 
                       (IF(?(EQUAL @subTrajId 0))
                          (^(ELAPSED-MTIME (MTIME) 500))

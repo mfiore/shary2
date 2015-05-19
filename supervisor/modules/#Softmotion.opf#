@@ -107,7 +107,7 @@
                                 )
   :body (
          (=>(Softmotion.freeId (+ @id 1)))
-         
+
          (!(= @parameters
                   (PR2SM_QSTR
                    (robotPart  @robotPart)
@@ -197,7 +197,7 @@
 
        (~>(Mhp.previousTask @a @b))
 	   (=>(Mhp.previousTask -1 -1))
-	   (!(SEM-V Softmotion.sem))
+	   (!(SEM-V Softmotion.semn))
 	 )
   )
  (defop |moveHead|
