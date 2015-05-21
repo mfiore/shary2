@@ -2,7 +2,7 @@ include "new-default.inc"
 include "semaphore.inc"
 
 load db "supervisor/Config.db"
-load db "supervisor/configuration/Pr2.db"
+load db "supervisor/configuration/Pr2Sim.db"
 
 
 load opf "supervisor/Tester.opf"
@@ -53,7 +53,7 @@ include "supervisor/robot/PathPlanner.sym"
 include "supervisor/robot/BaseActions.sym"
 
 load db "supervisor/robot/PlanManager.db"
-load db "supervisor/robot/PlannerInterface.db"
+;load db "supervisor/robot/PlannerInterface.db"
 load db "supervisor/robot/Robot.db"
 
 load db "supervisor/robot/PathPlanner.db"
@@ -83,11 +83,11 @@ load opf "supervisor/robot/ReportManager.opf"
 include "supervisor/domains/Actions.sym"
 
 load opf "supervisor/domains/Actions.opf"
+load opf "supervisor/domains/GregIcsrActions.opf"
 
-load db "supervisor/domains/Object.db"
 load db "supervisor/domains/Actions.db"
-
-
+load db "supervisor/domains/GregIcsrObjects.db"
+load db "supervisor/domains/GregIcsrActions.db"
 
 load db "supervisor/utilities/POMDP.db"
 

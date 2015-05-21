@@ -161,7 +161,7 @@
           (!(== (VAL @position) (. @x @y @z .)))
           (!(Spark.getFreeId @sparkId))
           (!(ReportManager.sub Spark.report @sparkId))
-          (=>(Spark.request placeObjectForSimu (VAL @object) @x @y @z 0 0 0 0 @sparkId))
+          (=>(Spark.request placeObjectForSimu (VAL @object) @x @y 0.75 0 0 0 0 @sparkId))
           (^(Spark.report (VAL @sparkId) @report))
           (!(ReportManager.unsub Spark.report @sparkId))
 

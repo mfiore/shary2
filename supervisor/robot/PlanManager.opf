@@ -73,7 +73,7 @@
                     ELSEIF(?(EQUAL @report NOPLAN))
                     (!(= @planningFailures (+ @planningFailures 1)))
 
-                    ELSEIF(?(EQUAL @report "OK"))
+                    ELSEIF(?(EQUAL @report OK))
                     (^(PlannerInterface.result @plan))
                     (~>(PlannerInterface.result (VAL @plan)))
 			    
@@ -280,7 +280,7 @@
                              )
 
                        ;;get the corresponding sphereId (this should exist since inferences are calculated independently from this module)
-                       (!(AgentActionMonitor.getSphereId (VAL @agent) (VAL @target) @sphereId))
+                       (!(AgentActionMonitor.getSphereId (VAL @agent) (VAL @target) (VAL @actionName) @sphereId))
 
                        ;;monitor the action
                        (=>(AgentActionMonitor.monitorAction @agent @actionId @actionName @actionParameters @sphereId))
@@ -353,6 +353,11 @@
                                         ;execute action
             (!(ExecutionManager.getFreeId @executionId))
             (!(ReportManager.sub ExecutionManager.report @executionId))
+
+
+
+            (!(= @actionParameters (CDR @actionParameters))) ;cut the agent parameter
+
             (=>(ExecutionManager.execute @actionName @actionParameters @executionId))
             (^(|| (ExecutionManager.report (VAL @executionId) @report) (PlanManager.stopAgent robot)))
             (IF(?(ExecutionManager.report (VAL @executionId) @report))

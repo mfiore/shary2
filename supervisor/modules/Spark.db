@@ -25,6 +25,9 @@
 ;;Spark.sphereParameter OBJECT_TYPE RADIUS MULTIPLIER associates a radius and a multiplier (used to define the size of the sphere) to a type of object 
 
  (Spark.sphereParameters PLACEMAT 0.25 1.0)
+  (Spark.sphereParameters PROCESSAREA 0.25 1.0)
+  (Spark.sphereParameters AREA 0.25 1.0)
+
  (Spark.sphereParameters TAPE 1.0 1.2)
 (Spark.sphereParameters BOTTLE 1.0 0.5)
 (Spark.sphereParameters BRACKET 1.0 1.2)

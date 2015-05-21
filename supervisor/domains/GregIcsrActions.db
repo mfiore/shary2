@@ -1,0 +1,26 @@
+(
+(Actions.activation applyOperation OUT)
+ (Actions.activation placeOnStack OUT)
+ 
+ (Actions.monitorParameter applyOperation 1)
+ (Actions.monitorParameter placeOnStack 2)
+ 
+
+ (Actions.nParameters applyOperation 2)
+ (Actions.nParameters placeOnStack 3)
+
+ (PlannerInterface.action hatp Pick take)
+ (PlannerInterface.action hatp Place place)
+ (PlannerInterface.action hatp PlaceOnStack placeOnStack)
+ (PlannerInterface.action hatp Apply applyOperation)
+ (PlannerInterface.parameterLinks hatp Pick (. 0 1 .))
+ (PlannerInterface.parameterLinks hatp Place (. 0 1 2 .))
+ (PlannerInterface.parameterLinks hatp PlaceOnStack (. 0 1 2 .))
+ (PlannerInterface.parameterLinks hatp Apply (. 0 1  .))
+
+(Acapela.translation take "take")
+(Acapela.translation place "place")
+(Acapela.translation placeOnStack "place on the stack")
+(Acapela.translation applyOperation "apply operation")
+
+)

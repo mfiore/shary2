@@ -1,0 +1,10 @@
+(
+	(Robot.name PR2_ROBOT)
+	
+
+	(Database.supervisorName OPRS_SUP)
+	(AsyncParseSparkFactOperationsPosterLoop 500)
+
+	
+
+)

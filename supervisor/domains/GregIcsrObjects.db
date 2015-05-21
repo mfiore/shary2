@@ -11,22 +11,42 @@
 
 
 (Object.type PR2_ROBOT ROBOT AGENT)
-(Object.type HERAKLES_HUMAN_1 HUMAN AGENT)
+(Object.type HERAKLES_HUMAN1 HUMAN AGENT)
 
 
-(Object.type Red_Cube Cube PICKABLE)
-(Object.type Blue_Cube Cube PICKABLE)
-(Object.type Green_Cube Cube PICKABLE)
+(Object.type Red_Cube CUBE PICKABLE)
+(Object.type Blue_Cube CUBE PICKABLE)
+(Object.type Green_Cube CUBE PICKABLE)
 
 
+(Object.type TABLE T SUPPORT)
+(Object.type TABLE_2 T SUPPORT)
 
-(Object.type CleaningArea ProcessArea PLACEMENT)
-(Object.type PolishingArea ProcessArea PLACEMENT)
-(Object.type StickersArea ProcessArea PLACEMENT)
-(Object.type SmoothingArea ProcessArea PLACEMENT)
-(Object.type GluingArea ProcessArea PLACEMENT)
 
-(Object.type StackArea Area PLACEMENT)
+(Object.type RagCleaningArea PROCESSAREA PLACEMENT)
+(Object.type PolishingArea PROCESSAREA PLACEMENT)
+(Object.type StickersArea PROCESSAREA PLACEMENT)
+(Object.type SmoothingArea PROCESSAREA PLACEMENT)
+(Object.type GluingArea PROCESSAREA PLACEMENT)
+
+(Object.type StackArea AREA STACK_PLACEMENT)
+
+
+(Acapela.translation RagCleaningArea "cleaning area")
+(Acapela.translation PolishingArea "polishing area")
+(Acapela.translation StickersArea "stickers area")
+(Acapela.translation SmoothingArea "smoothing area")
+(Acapela.translation GluingArea "gluing area")
+(Acapela.translation StackArea "stack area")
+(Acapela.translation TABLE "table one")
+(Acapela.translation TABLE_2 "table two")
+
+(Acapela.translation Red_Cube "red cube")
+(Acapela.translation Blue_Cube "blue cube")
+(Acapela.translation Green_Cube "green cube")
+
+(Acapela.translation PR2_ROBOT "robot")
+(Acapela.translation HERAKLES_HUMAN1 "human")
 
 (Object.type Clean clean OPERATION)
 (Object.type Polish polish OPERATION)
@@ -34,7 +54,18 @@
 (Object.type Smoothen smoothen OPERATION)
 (Object.type Glue glue OPERATION)
 
-(ProcessArea.type CleaningArea clean)
+(Object.actions STACK_PLACEMENT (. placeOnStack .))
+(Object.actions PLACEMENT (. place .))
+(Object.actions PICKABLE (. take applyOperation .))
+
+
+(Cube.operations Red_Cube Polish polish)
+(Cube.operations Red_Cube Glue_Red glue)
+(Cube.operations Green_Cube Smoothen smooth)
+(Cube.operations Green_Cube Glue_Green glue)
+(Cube.operations Blue_Cube Clean clean)
+
+(ProcessArea.type RagCleaningArea clean)
 (ProcessArea.type PolishingArea polish)
 (ProcessArea.type StickersArea stickers)
 (ProcessArea.type SmoothingArea smooth)

@@ -34,10 +34,11 @@
 (Acapela.isActive FALSE)
 (Waypoints.isActive FALSE)
 (PathPlanner.isActive TRUE)
-(ExecutionManager.isActive execution TRUE)
+(ExecutionManager.isActive execution SIM)
 (BaseActions.isActive FALSE)
+(MonitorManager.isActive TRUE)
 
-
+(Manipulation.moduleName GtpActions)
 ;;Joints
 (Robot.joints HEAD)
 (Robot.joints BASE)

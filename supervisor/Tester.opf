@@ -441,7 +441,7 @@
          (!(AgentActionMonitor.cleanMonitorSpheres))
          (!(AgentActionMonitor.calculateInferencesForAgents (. HERAKLES_HUMAN1 .)))
          (!(AgentActionMonitor.startMonitoringAgent HERAKLES_HUMAN1 ))
-                                         (=>(PlanManager.goal Clean (. .)))
+                                         (=>(PlanManager.goal BuildStack (. StackArea .)))
      ;;(=>(PlanManager.goal TravelTo (. HERAKLES_HUMAN1 STOCK_TABLE .)))
      ;(=>(PlanManager.goal HandleSurface (. ASSEMBLY_SURFACE_1 .)))
                                          (=>(PlanManager.newGoal TRUE))

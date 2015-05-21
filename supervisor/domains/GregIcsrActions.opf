@@ -2,62 +2,83 @@
 (
 
  (defop |ApplyOperationPreconditions|
-           :invocation(!(Actions.checkPreconditions applyOperation @parameters $return))
-           :body (
-                  (!(= agent (CAR(CAR @parameters))))
-                  (!(= @parameters (CDR @parameters)))
-                  (!(= @cube (CAR(CAR @parameters))))
-                  (!(= @parameters (CDR @parameters)))
-                  (!(= @operation (CAR(CAR @parameters))))
-                  (!(= @parameters (CDR @parameters)))
-
-                  (?(Robot.name @robotName))
-
-                  (!(DatabaseInterface.findList (AGENT-STATEMENT (VAL @robotName) (VAL @agent) hasInHad @o) (. @o .) @result))
-                  (IF(?(~(NULL @result)))
-                     (!(= $return FALSE))
-
-                     ELSE
-                     (!(DatabaseInterface.findList (AGENT-STATEMENT (VAL @robotName) (VAL @operation) done @s) (. @s .) @result))
-                     (!(= @status (CAR(CAR @result))))
-                     (IF(?(EQUAL @status true))
-                        (!(= $return FALSE))
-
-                        ELSE
-                        (!(DatabaseInterface.findList (AGENT-STATEMENT (VAL @robotName) (VAL @cube) isOn @p) (. @p .) @result))
-                        (IF(?(NULL @result))
-                           (!(= $return FALSE))
-
-                           ELSE
-                           (!(= @placement (CAR(CAR @result))))
-
-                           (?(Object.type (VAL @operation) @type OPERATION))
-                           (IF(?(ProcessArea.type (VAL @placement) (VAL @type)))
-                              (!(= $return TRUE))
-                              ELSE
-                              (!(= $return FALSE))
-                              )
-                           )
-                        )
-
-                     )
-                  )
-           )
-
- (defop |ApplyOperationPostconditions|
-   :invocation(!(Actions.setPostconditions applyOperation @parameters))
+   :invocation(!(Actions.checkPreconditions applyOperation @parameters $return))
    :body (
-          (!(= agent (CAR(CAR @parameters))))
+          (!(= @agent (CAR @parameters)))
           (!(= @parameters (CDR @parameters)))
-          (!(= @cube (CAR(CAR @parameters))))
-          (!(= @parameters (CDR @parameters)))
-          (!(= @operation (CAR(CAR @parameters))))
+          (!(= @cube (CAR @parameters)))
           (!(= @parameters (CDR @parameters)))
 
           (?(Robot.name @robotName))
-          (!(DatabaseInterface.set (AGENT-STATEMENT (VAL @robotName) (VAL @operation) done true)))
 
-          (!(AgentActionMonitor.cleanObjectMonitorSpheres @))
+
+
+          (!(DatabaseInterface.findList (AGENT-STATEMENT (VAL @robotName) (VAL @agent) hasInHad @o) (. @o .) @hasObject))
+          (!(DatabaseInterface.findList (AGENT-STATEMENT (VAL @robotName) (VAL @cube) isOn @p) (. @p .) @placementList))
+          (!(= @found FALSE))
+          (!(= @processArea NULL))
+          (WHILE(?(&(~(NULL @placementList)) (EQUAL @found FALSE)))
+                (!(= @placement (CAR(CAR @placementList))))
+                (!(= @placementList (CDR @placementList)))
+
+                (IF(?(Object.type (VAL @placement) PROCESSAREA PLACEMENT))
+                   (!(= @found TRUE))
+                   (!(= @processArea @placement))
+
+                   )
+                )
+
+          (IF(?(EQUAL @processArea NULL))
+             (!(= $return FALSE))
+
+
+             ELSE
+             (?(ProcessArea.type (VAL @processArea) @operationType))
+             (?(Cube.operations (VAL @cube) @operation (VAL @operationType)))
+             (!(DatabaseInterface.findList (AGENT-STATEMENT (VAL @robotName) (VAL @operation) isDone @s) (. @s .) @operationStatus))
+
+             (IF(?(&(EQUAL @hasObject (. .)) (EQUAL @operationStatus (. (. false .) .))  ))
+                (!(= $return TRUE))
+
+                ELSE
+                (!(= $return FALSE))
+                )
+             )
+          )
+   )
+ (defop |ApplyOperationPostconditions|
+   :invocation(!(Actions.setPostconditions applyOperation @parameters))
+   :body (
+          (!(= @agent (CAR @parameters)))
+          (!(= @parameters (CDR @parameters)))
+          (!(= @cube (CAR @parameters)))
+          (!(= @parameters (CDR @parameters)))
+
+
+          (?(Robot.name @robotName))
+
+          (!(DatabaseInterface.findList (AGENT-STATEMENT (VAL @robotName) (VAL @cube) isOn @p) (. @p .) @placementList))
+          (!(= @found FALSE))
+          (!(= @processArea NULL))
+          (WHILE(?(&(~(NULL @placementList)) (EQUAL @found FALSE)))
+                (!(= @placement (CAR(CAR @placementList))))
+                (!(= @placementList (CDR @placementList)))
+
+                (IF(?(Object.type (VAL @placement) PROCESSAREA PLACEMENT))
+                   (!(= @found TRUE))
+                   (!(= @processArea @placement))
+
+                   )
+                )
+
+          ;;here we are sure we have a process area (in the preconditions we didn't) so no need to check for null
+          (?(ProcessArea.type (VAL @processArea) @operationType))
+          (?(Cube.operations (VAL @cube) @operation (VAL @operationType)))
+
+
+          (!(DatabaseInterface.set (AGENT-STATEMENT (VAL @robotName) (VAL @operation) isDone true) @result))
+
+
 
           (!(DatabaseInterface.findList (AGENT-STATEMENT (VAL @robotName) (VAL @cube) isOn @p) (. @p .) @result))
 
@@ -74,16 +95,16 @@
  (defop |PlaceOnStackPreconditions|
    :invocation(!(Actions.checkPreconditions placeOnStack @parameters $return))
    :body (
-          (!(= agent (CAR(CAR @parameters))))
+          (!(= @agent (CAR @parameters)))
           (!(= @parameters (CDR @parameters)))
-          (!(= @cube (CAR(CAR @parameters))))
+          (!(= @cube (CAR @parameters)))
           (!(= @parameters (CDR @parameters)))
-          (!(= @processArea (CAR(CAR @parameters))))
+          (!(= @processArea (CAR @parameters)))
           (!(= @parameters (CDR @parameters)))
 
           (?(Robot.name @robotName))
 
-          (!(DatabaseInterface.find (AGENT-STATEMENT (VAL @robotName) hasInHand (VAL @cube)) @resultCube))
+          (!(DatabaseInterface.find (AGENT-STATEMENT (VAL @robotName) (VAL @agent) hasInHand (VAL @cube)) @resultCube))
           (!(= @resultCube (CAR @resultCube)))
           (IF(?(Cube.previous (VAL @cube) @previousCube))
 
@@ -93,7 +114,7 @@
           (!(= @resultTop TRUE))
           )
 
-          (IF(?(&(EQUAL @resultCube TRUE) (EQUAL @resultTop TRUE))
+          (IF(?(&(EQUAL @resultCube TRUE) (EQUAL @resultTop TRUE)))
                (!(= $return TRUE))
 
                ELSE
@@ -102,21 +123,29 @@
 
              )
           )
-   )
+
+
+
+
 
  (defop |PlaceOnStackPostconditions|
-   :invocation(!(Actions.setPostconditions placeOnStack @parameters $return))
+   :invocation(!(Actions.setPostconditions placeOnStack @parameters))
    :body (
-          (!(= agent (CAR(CAR @parameters))))
+          (!(= @agent (CAR @parameters)))
           (!(= @parameters (CDR @parameters)))
-          (!(= @cube (CAR(CAR @parameters))))
+          (!(= @cube (CAR @parameters)))
           (!(= @parameters (CDR @parameters)))
 
 
           (?(Robot.name @robotName))
 
           (!(DatabaseInterface.findList (AGENT-STATEMENT (VAL @robotName) StackArea top @t) (. @t .) @result ))
-          (!(= @top (CAR(CAR @result))))
+          (IF(?(~(NULL @result)))
+             (!(= @top (CAR(CAR @result))))
+
+             ELSE
+             (!(= @top StackArea))
+             )
 
           (!(Spark.getFreeId @sparkId))
           (!(ReportManager.sub Spark.report (VAL @sparkId)))
@@ -125,10 +154,52 @@
           (^(Spark.result (VAL @sparkId) @x @y @z @tx @ty @tz))
           (!(ReportManager.unsub Spark.report (VAL @sparkId)))
 
-          (!(= @position (. @x @y (+ @z 0.1))))
+          (!(= @position (. @x @y (+ @z 0.1) .)))
 
           (!(DatabaseInterface.set (AGENT-STATEMENT (VAL @robotName) StackArea top (VAL @cube)) @result))
-          (!(Actions.setPostconditions place (. (VAL @agent) (VAL @cube) StackArea (VAL @position))))
+          (!(Actions.setPostconditions place (. (VAL @agent) (VAL @cube) StackArea (VAL @position) .)))
+
+          )
+   )
+
+ (defop |PlaceOnStack|
+   :invocation(ExecutionManager.execute placeOnStack @parameters @executionId)
+   :body (
+          (?(Robot.name @robotName))
+          (!(= @cube (CAR @parameters)))
+          (!(= @parameters (CDR @parameters)))
+          (!(= @processArea (CAR @parameters)))
+
+          (!(= @actionParameters (. (VAL @robotName) (VAL @cube) (VAL @processArea) .)))
+          (!(Actions.checkPreconditions placeOnStack @actionParameters $return))
+          (IF(?(EQUAL $return TRUE))
+             (!(Actions.setPostconditions placeOnStack @actionParameters))
+             (=>(ExecutionManager.report (VAL @executionId) "OK"))
+
+             ELSE
+             (=>(ExecutionManager.report (VAL @executionId) "FAILURE"))
+             )
+
+          )
+   )
 
 
+ (defop |ApplyOperation|
+   :invocation(ExecutionManager.execute applyOperation @parameters @executionId)
+   :body (
+          (?(Robot.name @robotName))
+          (!(= @cube (CAR @parameters)))
+
+          (!(= @actionParameters (. (VAL @robotName) (VAL @cube) .)))
+          (!(Actions.checkPreconditions applyOperation @actionParameters $return))
+          (IF(?(EQUAL $return TRUE))
+             (!(Actions.setPostconditions applyOperation @actionParameters))
+             (=>(ExecutionManager.report (VAL @executionId) "OK"))
+
+             ELSE
+             (=>(ExecutionManager.report (VAL @executionId) "FAILURE"))
+
+             )
+          )
+   )
  )

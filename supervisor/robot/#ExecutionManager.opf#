@@ -1,6 +1,6 @@
 
 ;; -*-Lisp-*-
-;;author: Michelangelo Fiore
+;opt;author: Michelangelo Fiore
 ;;this module contains high-level actions like take an item, give, drop.
 (
 
@@ -185,10 +185,17 @@
    :invocation(ExecutionManager.execute take @parameters @executionId)
    :documentation "this procedure takes the object @object. @arm can be setted to one of the two arms (RIGHT or LEFT) or to NO_NAME. In that case the robot chooses the arm to compute the action"
    :body (
+
           (!(= @object (CAR @parameters)))
           (!(= @parameters (CDR @parameters)))
-          (!(= @arm (CAR(@parameters))))
-          (!(= @parameters (CDR @parameters)))
+
+          (IF(?(~(NULL @parameters)))
+             (!(= @arm (CAR @parameters)))
+             (!(= @parameters (CDR @parameters)))
+
+             ELSE
+             (!(= @arm NO_NAME))
+          )
 
           (?(Robot.name @robotName))
           (!(= @preCondParameters (. (VAL @robotName) (VAL @object) .)))
@@ -210,7 +217,7 @@
           (=>(ExecutionManager.isExecutingAction (VAL @executionId)))
 
           ;;we move to manipulation pose
-          (!(= @moveToPoseParams (. MANIP .)))
+          (!(= @moveToPoseParams (. MANIPULATION_RIGHT .)))
           (!(ExecutionManager.getFreeId @moveToPoseId))
           (=>(ExecutionManager.execute moveToPose @moveToPoseParams @moveToPoseId ))
           (!(ExecutionManager.handleReport ExecutionManager @moveToPoseId @executionId TRUE TRUE (. .)))
@@ -218,16 +225,16 @@
 
       ;;set the parameters for the monitor manager
 
-      (!(MonitorManager.getFreeId @monitorId))
+;      (!(MonitorManager.getFreeId @monitorId))
       ;;start the monitoring
-      (!(MonitorManager.monitorTarget @object "NO_NAME" HIGH @monitorId))
-      (^(|| (MonitorManager.isMonitoringTarget (VAL @monitorId)) (MonitorManager.report (VAL @monitorId) @monitorReport )))
-      (IF(?(~(MonitorManager.isMonitoringTarget (VAL @monitorId))))
-             ;;there is an error (for example the object is not there)
-             (!(ReportManager.publish ExecutionManager.report @executionId @monitorReport))
-             (~>(ExecutionManager.isExecutingAction (VAL @executionId)))
-             (!(FAILED))
-             )
+ ;     (!(MonitorManager.monitorTarget @object "NO_NAME" HIGH @monitorId))
+  ;    (^(|| (MonitorManager.isMonitoringTarget (VAL @monitorId)) (MonitorManager.report (VAL @monitorId) @monitorReport )))
+      ;; (IF(?(~(MonitorManager.isMonitoringTarget (VAL @monitorId))))
+      ;;        ;;there is an error (for example the object is not there)
+      ;;        (!(ReportManager.publish ExecutionManager.report @executionId @monitorReport))
+      ;;        (~>(ExecutionManager.isExecutingAction (VAL @executionId)))
+      ;;        (!(FAILED))
+      ;;        )
 
    
 	  ;;everything is good. Monitoring has started. We can choose an arm for take if needed
@@ -241,9 +248,9 @@
 
       ;;get the manipulation module (ex. GTP, MHP)
       (?(Manipulation.moduleName @moduleName))
-      (!(TERM-STRING-CAT @idCommand (@moduleName ".getFreeId")))
+      (!(= @idCommand (TERM-STRING-CAT @moduleName ".getFreeId")))
       (!(= @idCommand (MAKE-ATOM @idCommand)))
-      (!(TERM-STRING-CAT @requestCommand (@moduleName ".request")))
+      (!(= @requestCommand (TERM-STRING-CAT  @moduleName ".request")))
       (!(= @requestCommand (MAKE-ATOM @requestCommand)))
 	  ;; ;;plan and execute the trajectory
 
@@ -874,21 +881,21 @@
 
          (=>(ExecutionManager.isExecutingAction (VAL @executionId)))
 
-         (!(MonitorManager.getFreeId @monitorId))
+;         (!(MonitorManager.getFreeId @monitorId))
 
          ;;start the monitoring
-         (!(MonitorManager.monitorTarget (VAL @placement) "NO_NAME" HIGH (VAL @monitorId)))
-         (^(MonitorManager.isMonitoringTarget (VAL @monitorId)))
+ ;        (!(MonitorManager.monitorTarget (VAL @placement) "NO_NAME" HIGH (VAL @monitorId)))
+  ;       (^(MonitorManager.isMonitoringTarget (VAL @monitorId)))
 
          (!(ExecutionManager.getFreeId @poseId))
-         (=>(ExecutionManager.execute moveToPose (. MANIP .) @poseId))
+         (=>(ExecutionManager.execute moveToPose (. MANIPULATION_RIGHT .) @poseId))
          (!(ExecutionManager.handleReport ExecutionManager @poseId @executionId TRUE TRUE (. .)))
 
          ;;get the manipulation module (ex. GTP, MHP)
          (?(Manipulation.moduleName @moduleName))
-         (!(TERM-STRING-CAT @idCommand (@moduleName ".getFreeId")))
+         (!(= @idCommand (TERM-STRING-CAT  @moduleName ".getFreeId")))
          (!(= @idCommand (MAKE-ATOM @idCommand)))
-         (!(TERM-STRING-CAT @requestCommand (@moduleName ".request")))
+         (!(= @requestCommand (TERM-STRING-CAT @moduleName ".request")))
          (!(= @requestCommand (MAKE-ATOM @requestCommand)))
 
          (!(@idCommand @actionId))
@@ -919,9 +926,9 @@
 
          ;;get the manipulation module (ex. GTP, MHP)
          (?(Manipulation.moduleName @moduleName))
-         (!(TERM-STRING-CAT @idCommand (@moduleName ".getFreeId")))
+         (!(= @idcommand (TERM-STRING-CAT  @moduleName ".getFreeId")))
          (!(= @idCommand (MAKE-ATOM @idCommand)))
-         (!(TERM-STRING-CAT @requestCommand (@moduleName ".request")))
+         (!(= @requestCommand (TERM-STRING-CAT  @moduleName ".request")))
          (!(= @requestCommand (MAKE-ATOM @requestCommand)))
 
          (!(@idCommand @actionId))
@@ -944,9 +951,9 @@
 
          ;;get the manipulation module (ex. GTP, MHP)
          (?(Manipulation.moduleName @moduleName))
-         (!(TERM-STRING-CAT @idCommand (@moduleName ".getFreeId")))
+         (!(= @idCommand (TERM-STRING-CAT  @moduleName ".getFreeId")))
          (!(= @idCommand (MAKE-ATOM @idCommand)))
-         (!(TERM-STRING-CAT @requestCommand (@moduleName ".request")))
+         (!(= @requestCommand (TERM-STRING-CAT @moduleName ".request")))
          (!(= @requestCommand (MAKE-ATOM @requestCommand)))
 
          (!(@idCommand @actionId))
@@ -956,7 +963,8 @@
          (~>(ExecutionManager.isExecuting @executionId))
          (!(ReportManager.publish ExecutionManager.report  (VAL @executionId) "OK"))
 	 )
-)
+         )
+  )
 
 (defop |moveToPose|
   :invocation(ExecutionManager.execute moveToPose @parameters @executionId)
@@ -977,21 +985,19 @@
 
          ;;get the manipulation module (ex. GTP, MHP)
          (?(Manipulation.moduleName @moduleName))
-         (!(TERM-STRING-CAT @idCommand (@moduleName ".getFreeId")))
+         (!(= @idCommand (TERM-STRING-CAT @moduleName ".getFreeId")))
          (!(= @idCommand (MAKE-ATOM @idCommand)))
-         (!(TERM-STRING-CAT @requestCommand (@moduleName ".request")))
+         (!(= @requestCommand (TERM-STRING-CAT @moduleName ".request")))
          (!(= @requestCommand (MAKE-ATOM @requestCommand)))
 
          (!(@idCommand @actionId))
          (=>(@requestCommand moveToPose @pose @actionId))
-         (!(ExecutionManager.handleReport @moduleName @actionId @executionId TRUE TRUE (. .))
+         (!(ExecutionManager.handleReport @moduleName @actionId @executionId TRUE TRUE (. .)))
 
 
          (!(ReportManager.publish ExecutionManager.report  (VAL @executionId) "OK"))
-	 )
-         )
+     )
   )
-
 (defop |go| 
   :invocation (ExecutionManager.execute go @parameters  @executionId)
   :documentation "Operation to make the robot reach a destination. @goal is the node in the map the should be reached, @subgoal the item"
@@ -1083,9 +1089,9 @@
 
          ;;get the manipulation module (ex. GTP, MHP)
          (?(Manipulation.moduleName @moduleName))
-         (!(TERM-STRING-CAT @idCommand (@moduleName ".getFreeId")))
+         (!(= @idCommand (TERM-STRING-CAT @moduleName ".getFreeId")))
          (!(= @idCommand (MAKE-ATOM @idCommand)))
-         (!(TERM-STRING-CAT @requestCommand (@moduleName ".request")))
+         (!(= @requestCommand (TERM-STRING-CAT @moduleName ".request")))
          (!(= @requestCommand (MAKE-ATOM @requestCommand)))
 
 
@@ -1103,7 +1109,7 @@
 
          (!(@idCommand @actionId))
          (=>(@requestCommand moveToPose @confName @actionId))
-         (!(ExecutionManager.handleReport @moduleName @actionId @executionId TRUE TRUE (. .))
+         (!(ExecutionManager.handleReport @moduleName @actionId @executionId TRUE TRUE (. .)))
 
            (!(ReportManager.publish ExecutionManager.report @executionId "OK"))
          )

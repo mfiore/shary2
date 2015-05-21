@@ -185,10 +185,17 @@
    :invocation(ExecutionManager.execute take @parameters @executionId)
    :documentation "this procedure takes the object @object. @arm can be setted to one of the two arms (RIGHT or LEFT) or to NO_NAME. In that case the robot chooses the arm to compute the action"
    :body (
+
           (!(= @object (CAR @parameters)))
           (!(= @parameters (CDR @parameters)))
-          (!(= @arm (CAR @parameters)))
-          (!(= @parameters (CDR @parameters)))
+
+          (IF(?(~(NULL @parameters)))
+             (!(= @arm (CAR @parameters)))
+             (!(= @parameters (CDR @parameters)))
+
+             ELSE
+             (!(= @arm NO_NAME))
+          )
 
           (?(Robot.name @robotName))
           (!(= @preCondParameters (. (VAL @robotName) (VAL @object) .)))
