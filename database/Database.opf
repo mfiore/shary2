@@ -223,7 +223,8 @@ $unboundVariables= lisp-list containing the variables for which we want to find 
 	  (?(Database.supervisorName @supName))
 
 	     (!(Database.checkAndApplyDbRules @fact @newFactList))
-	     (=> (VAL @fact))	  
+         (=> (VAL @fact))
+
 	     (WHILE(?(~(NULL @newFactList)))
 		   (!(= @newFact (CAR @newFactList)))
 		   (!(= @newFactList (CDR @newFactList)))
@@ -236,7 +237,11 @@ $unboundVariables= lisp-list containing the variables for which we want to find 
               (!(SEND-MESSAGE @caller (Database.valueChange @event @value)))
               )
            )
+         (!(== (VAL @fact) (AGENT-STATEMENT @agent @subject @predicate @value)))
 
+         (IF(?(Database.checkChanges (AGENT-STATEMENT (VAL @agent) (VAL @subject) (VAL @predicate)) @event @caller))
+            (!(SEND-MESSAGE @caller (Database.valueChange @event @value)))
+            )
 	     
 	     (IF (? (toMonitor (VAL @fact) @event))
 		 (! (SEND-MESSAGE @supName @event))

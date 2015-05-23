@@ -1,0 +1,189 @@
+;; -*-Lisp-*-
+;;author: Michelangelo Fiore
+;;this files contains procedures related to action management.
+
+
+(
+
+
+ (defop |CleanPreconditions|
+   :invocation(!(Actions.checkPreconditions clean @parameters $return))
+   :body (
+          (!(= @agent CAR @parameters))
+          (!(= @parameters (CDR @parameters)))
+          (!(= @placement (CAR @parameters)))
+          (!(= @parameters (CDR @parameters)))
+
+          (?(Robot.name @robotName))
+
+
+          (!(DatabaseInterface.find (AGENT-STATEMENT (VAL @robotName) (VAL @placement) state DEFAULT) @result))
+          (IF(?(EQUAL @result (. TRUE .)))
+          (!(DatabaseInterface.findList (AGENT-STATEMENT (VAL @robotName) (VAL @agent) hasInHand @o) (. @o .) @result))
+          (IF(?(NULL @result))
+             (!(= $return TRUE))
+             ELSE
+             (!(= $return FALSE))
+             )
+          ELSE
+          (!(= $return FALSE))
+          )
+          )
+   )
+
+ (defop |CleanPostConditions|
+   :invocation(!(Actions.setPostconditions clean @parameters))
+   :body (
+          (!(= @agent (CAR @parameters)))
+          (!(= @parameters (CDR @parameters)))
+          (!(= @placement (CAR @parameters)))
+          (!(= @parameters (CDR @parameters)))
+
+          (?(Robot.name @robotName))
+          (!(DatabaseInterface.set (AGENT-STATEMENT (VAL @robotName) (VAL @placement) state CLEAN) @result))
+          )
+   )
+
+ (defop |GluePreconditions|
+   :invocation(!(Actions.checkPreconditions glue @parameters $return))
+   :body (
+          (!(= @agent (CAR @parameters)))
+          (!(= @parameters (CDR @parameters)))
+          (!(= @glueBottle (CAR @parameters)))
+          (!(= @parameters (CDR @parameters)))
+          (IF(?(NULL @parameters))
+             (!(= @placement @glueBottle))
+
+             ELSE
+             (!(= @placement (CAR @parameters)))
+             (!(= @parameters (CDR @parameters)))
+             )
+
+          (?(Robot.name @robotName))
+
+          (!(DatabaseInterface.find (AGENT-STATEMENT (VAL @robotName) (VAL @placement) state HIGHLIGHTED) @result ))
+
+          (IF(?(EQUAL @result (. TRUE .)))
+             (!(DatabaseInterface.findList (AGENT-STATEMENT (VAL @robotName) (VAL @agent) hasInHand @o) (. @o .) @result))
+             (IF(?(EQUAL @result (. (. GLUE_BOTTLE .).)))
+
+                   (!(= $return TRUE)) 
+                   ELSE 
+                   (!(= $return FALSE))
+                   )
+             ELSE
+             (!(= $return FALSE))
+             )
+          )
+   )
+
+ (defop |GluePostConditions|
+   :invocation(!(Actions.setPostconditions glue @parameters))
+   :body (
+          (!(= @agent (CAR @parameters)))
+          (!(= @parameters (CDR @parameters)))
+          (!(= @glueBottle (CAR @parameters)))
+          (!(= @parameters (CDR @parameters)))
+          (!(= @placement (CAR @parameters)))
+          (!(= @parameters (CDR @parameters)))
+
+          (?(Robot.name @robotName))
+          (!(DatabaseInterface.set (AGENT-STATEMENT (VAL @robotName) (VAL @placement) state GLUED) @result))
+          )
+   )
+
+
+ (defop |SaphariPointPreconditions|
+   :invocation(!(Actions.checkPreconditions saphariPointTo @parameters $return))
+   :body (
+          (!(= @agent (CAR @parameters)))
+          (!(= @parameters (CDR @parameters)))
+          (!(= @placement (CAR @parameters)))
+          (!(= @parameters (CDR @parameters)))
+
+          (?(Robot.name @robotName))
+
+          (IF(?(EQUAL @roobtName @agent))
+             (!(DatabaseInterface.find (AGENT-STATEMENT (VAL @robotName) (VAL @placement) state CLEAN) @result ))
+             (IF(?(EQUAL @result (. TRUE .)))
+                (!(= $return TRUE))
+                ELSE
+                (!(= $return FALSE))
+                )
+
+             ELSE
+             (!(= $return FALSE))
+             )
+          )
+   )
+
+ (defop |SaphariPointPostconditions|
+   :invocation(!(Actions.setPostconditions saphariPointTo @parameters $return))
+   :body (
+          (!(= @agent (CAR @parameters)))
+          (!(= @parameters (CDR @parameters)))
+          (!(= @placement (CAR @parameters)))
+          (!(= @parameters (CDR @parameters)))
+
+          (?(Robot.name @robotName))
+
+          (!(DatabaseInterface.set (AGENT-STATEMENT (VAL @robotName) (VAL @placement) state HIGHLIGHTED)))
+          )
+
+   )
+
+ (defop |InstallBracketPreconditions|
+   :invocation(!(Actions.checkPreconditions attachBracket @parameters $return))
+   :body (
+          (!(= @agent (CAR @parameters)))
+          (!(= @parameters (CDR @parameters)))
+          (!(= @bracket (CAR @parameters)))
+          (!(= @parameters (CDR @parameters)))
+          (!(= @placement (CAR @parameters)))
+          (!(= @parameters (CDR @parameters)))
+
+          (?(Robot.name @robotName))
+
+          (IF(?(Object.type (VAL @bracket) BRACKET @class))
+             (!(= @bracketCheck TRUE))
+             ELSE
+             (!(= @bracketCheck FALSE))
+             )
+          (!(DatabaseInterface.find (AGENT-STATEMENT (VAL @robotName) (VAL @agent) hasInHand (VAL @bracket)) @hasCheck))
+
+          (!(DatabaseInterface.find (AGENT-STATEMENT (VAL @robotName) (VAL @placement) state GLUED) @stateCheck))
+
+          (IF(?(& (EQUAL @bracketCheck TRUE) (EQUAL @hasCheck (. TRUE .)) (EQUAL @stateCheck (. TRUE .))))
+             (!(= $return TRUE))
+
+             ELSE
+             (!(= $return FALSE))
+             )
+          )
+   )
+
+ (defop |InstallBracketPostconditions|
+   :invocation(!(Actions.setPostconditions attachBracket @parameters))
+   :body (
+          (!(= @parametersCopy @parameters))
+
+          (!(= @agent (CAR @parameters)))
+          (!(= @parameters (CDR @parameters)))
+          (!(= @bracket (CAR @parameters)))
+          (!(= @parameters (CDR @parameters)))
+          (!(= @placement (CAR @parameters)))
+          (!(= @parameters (CDR @parameters)))
+
+          (?(Robot.name @robotName))
+
+
+          (!(Actions.setPostconditions place @parametersCopy))
+          (!(DatabaseInterface.set (AGENT-STATEMENT (VAL @robotName) (VAL @placement) state COMPLETE) @result) )
+
+
+          )
+
+   )
+
+
+ )

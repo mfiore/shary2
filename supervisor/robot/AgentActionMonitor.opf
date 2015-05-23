@@ -262,7 +262,7 @@
                                     (!(= @objectList (CDR @objectList)))
 
                                     (?(Object.type (VAL @anObject) @class @type))
-                                    (?(Object.actions (VAL @type) @actionList))   ;;get the associated actions to that objects
+                                    (?(Object.actions (VAL @class) @actionList))   ;;get the associated actions to that objects
 
                                     (IF(?(~(EQUAL @heldObject NO_NAME)))  ;;set parameters for the preconditions check
                                        (!(= @parameters (. (VAL @agent) (VAL @heldObject) (VAL @anObject) .) ))
@@ -275,9 +275,11 @@
                                           (!(= @anAction (CAR @actionList)))
                                           (!(= @actionList (CDR @actionList)))
 
-                                          (IF(?(Actions.nParameters (VAL @anAction) (VAL @nActualPar))) ;;if the associated action's parameters are equal to the current parameters
-                                             (!(Actions.checkPreconditions (VAL @anAction) @parameters @result))  ;;check the preconditions
-                                             (IF(?(EQUAL @result TRUE)) ;;if they are true add a monitor spheree
+                                          (?(Actions.nParameters (VAL @anAction) @nActionParameters))
+                                          (IF(?(||(EQUAL @nActionParameters @nActualPar) (< @nActionParameters @nActualPar))) ;;if the associated action's parameters are equal to the current parameters
+
+                                               (!(Actions.checkPreconditions (VAL @anAction) @parameters @result))  ;;check the preconditions
+                                               (IF(?(EQUAL @result TRUE)) ;;if they are true add a monitor spheree
                                                 (IF(?(~(AgentActionMonitor.sphere (VAL @agent) (VAL @anObject) (VAL @anAction) @id)))
                                                    (!(AgentActionMonitor.activateMonitorSpheres (. (VAL @anObject) .) (VAL @anAction) (VAL @agent)))
                                                    )
@@ -506,6 +508,8 @@
   :invocation(Database.valueChange (humanLocation @agent) @location)
   :documentation "reacts when the human changes his position (we register to this change when we start monitoring a human). Works the same as checkaction"
   :body (
+         (!(AgentActionMonitor.cleanAgentMonitorSpheres (VAL @agent)))
+         (!(AgentActionMonitor.calculateInferencesForAgents (. @agent .)))
          (IF(?(AgentActionMonitor.monitorMove (VAL @agent) (VAL @location) @actionId))
             (~>(AgentActionMonitor.monitorMove (VAL @agent) (VAL @location) (VAL @actionId)))
             (=>(AgentActionMonitor.actionCompleted (VAL @agent) (VAL @actionId)))
@@ -513,8 +517,7 @@
             ELSE
             (=>(AgentActionMonitor.unexpectedAction (VAL @agent)))
             )
-         (!(AgentActionMonitor.cleanAgentMonitorSpheres (VAL @agent)))
-         (!(AgentActionMonitor.calculateInferencesForAgents (. @agent .)))
+
 
          )
 

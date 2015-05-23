@@ -266,7 +266,8 @@
 
                     ;;movement actions and other actions are handled differently for now. Should change when we switch to TOASTER completely
                     (IF(?(Action.type (VAL @actionName) MOVEMENT))
-                       (=>(AgentActionMonitor.monitorMove @agent @actionParameters @actionId))
+                       (!(= @location (CAR(CDR @actionParameters))))
+                       (=>(AgentActionMonitor.monitorMove @agent @location @actionId))
 
                        ELSE
                        ;;necessary to understand which sphere is linked with the action
@@ -335,7 +336,7 @@
                      (=>(PlanManager.agentReport robot "STOPPED"))
                      (~>(PlanManager.isManagingAgent robot))
                      (!(FAILED))
-			 )
+                     )
                   (IF(?(~(PlanManager.actionReport (VAL @currentLink) "OK")))
                      (=>(PlanManager.agentReport robot "FAILURE"))
                      (~>(PlanManager.isManagingAgent robot))
@@ -345,42 +346,46 @@
                   )
             (!(== (VAL @actionToExecute) (. @actionName @actionParameters .)))
 
+            (IF(?(EQUAL @actionName undefined))
+               (=>(PlanManager.actionReport (VAL @actionId) "OK"))
+
+               ELSE
                                         ;verbalize action
-            (!(PlanManager.getActionString @actionName @actionParameters 0 @oldObject @followsHandover @actionString))
-            (!(Acapela.say @actionString))
-            (!(PRINT "ROBOT: "))
-            (!(PRINT @actionString))
+               (!(PlanManager.getActionString @actionName @actionParameters 0 @oldObject @followsHandover @actionString))
+               (!(Acapela.say @actionString))
+               (!(PRINT "ROBOT: "))
+               (!(PRINT @actionString))
                                         ;execute action
-            (!(ExecutionManager.getFreeId @executionId))
-            (!(ReportManager.sub ExecutionManager.report @executionId))
+               (!(ExecutionManager.getFreeId @executionId))
+               (!(ReportManager.sub ExecutionManager.report @executionId))
 
 
 
-            (!(= @actionParameters (CDR @actionParameters))) ;cut the agent parameter
+               (!(= @actionParameters (CDR @actionParameters))) ;cut the agent parameter
 
-            (=>(ExecutionManager.execute @actionName @actionParameters @executionId))
-            (^(|| (ExecutionManager.report (VAL @executionId) @report) (PlanManager.stopAgent robot)))
-            (IF(?(ExecutionManager.report (VAL @executionId) @report))
-               (!(ReportManager.unsub ExecutionManager.report @executionId))
-               (IF(?(||(~(EQUAL @report "OK")) (EQUAL @toReplan TRUE)))
-                  (=>(PlanManager.agentReport robot "FAILURE"))
+               (=>(ExecutionManager.execute @actionName @actionParameters @executionId))
+               (^(|| (ExecutionManager.report (VAL @executionId) @report) (PlanManager.stopAgent robot)))
+               (IF(?(ExecutionManager.report (VAL @executionId) @report))
+                  (!(ReportManager.unsub ExecutionManager.report @executionId))
+                  (IF(?(||(~(EQUAL @report "OK")) (EQUAL @toReplan TRUE)))
+                     (=>(PlanManager.agentReport robot "FAILURE"))
+                     (~>(PlanManager.isManagingAgent robot))
+                     (!(FAILED))
+                     )
+
+                  (=>( PlanManager.actionReport @actionId "OK"))
+
+
+                  ELSE
+                  (=>(ExecutionManager.stop @executionId))
+                  (^(ExecutionManager.report (VAL @executionId) @report))
+                  (!(ReportManager.unsub ExecutionManager.report @executionId))
+                  (=>(PlanManager.agentReport robot "STOPPED"))
                   (~>(PlanManager.isManagingAgent robot))
                   (!(FAILED))
                   )
-
-               (=>( PlanManager.actionReport @actionId "OK"))
-
-
-               ELSE
-               (=>(ExecutionManager.stop @executionId))
-               (^(ExecutionManager.report (VAL @executionId) @report))
-               (!(ReportManager.unsub ExecutionManager.report @executionId))
-               (=>(PlanManager.agentReport robot "STOPPED"))
-               (~>(PlanManager.isManagingAgent robot))
-               (!(FAILED))
                )
             )
-
           (!(ReportManager.publish PlanManager.agentReport robot "OK"))
 
 

@@ -395,16 +395,16 @@
 
 
           (?(Robot.name (VAL @robotName)))
-          (?(Object.type (VAL @agent) @class @type))
-          (?(Agents.maxObjects (VAL @class) @max))
+          ;(?(Object.type (VAL @agent) @class @type))
+          ;(?(Agents.maxObjects (VAL @class) @max))
 
-          (!(DatabaseInterface.findList (AGENT-STATEMENT (VAL @robotNAme) (VAL @agent) hasInHand @o) (. @o .) @result))
-          (IF(?(> (LENGTH @result) (- @max 1) ))
-             (!(= $return FALSE))
+          ;(!(DatabaseInterface.findList (AGENT-STATEMENT (VAL @robotNAme) (VAL @agent) hasInHand @o) (. @o .) @result))
+          ;(IF(?(> (LENGTH @result) (- @max 1) ))
+           ;  (!(= $return FALSE))
 
-             ELSE
+            ; ELSE
              (!(= $return TRUE))
-             )
+;             )
           )
    )
 
@@ -412,6 +412,7 @@
    :invocation(!(Actions.setPostconditions pointTo @parameters))
    :body (
           (!(== (VAL @parameters) (. @agent @location .)))
+          (!(DatabaseInterface.set (AGENT-STATEMENT PR2_ROBOT (VAL @location) state HIGHLIGHTED) @result))
           )
    )
 

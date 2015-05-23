@@ -1,0 +1,49 @@
+
+(
+ (Actions.activation clean OUT)
+ (Actions.activation glue OUT)
+ (Actions.activation attachBracket OUT)
+ 
+ (Actions.monitorParameter clean 1)
+ (Actions.monitorParameter glue 1)
+ (Actions.monitorParameter attachBracket 2)
+ 
+ (Actions.parameters carryTo 3 )
+ (Actions.nParameters clean 2)
+ (Actions.nParameters glue 2)
+ (Actions.nParameters undefined 0)
+ (Actions.nParameters attachBracket 3)
+
+
+ (PlannerInterface.action hatp TravelTo go)
+(PlannerInterface.action hatp Handover handover)
+ (PlannerInterface.action hatp Pick take)
+ (PlannerInterface.action hatp Place place)
+  (PlannerInterface.action hatp Clean clean)
+  (PlannerInterface.action hatp Glue glue)
+    (PlannerInterface.action hatp AttachBracket attachBracket)
+    (PlannerInterface.action hatp StartPointing pointTo)
+(PlannerInterface.action hatp StopPointing undefined)
+(PlannerInterface.action hatp CarryTo go)
+
+
+(PlannerInterface.parameterLinks hatp Pick (. 0 1 .))
+ (PlannerInterface.parameterLinks hatp Place (. 0 1 2 .))
+ (PlannerInterface.parameterLinks hatp Clean (. 0 1 .))
+ (PlannerInterface.parameterLinks hatp Glue (. 0 1 .))
+(PlannerInterface.parameterLinks hatp AttachBracket (. 0 1 2 .))
+(PlannerInterface.parameterLinks hatp StartPointing (. 0 1 .))
+(PlannerInterface.parameterLinks hatp StopPointing (.  .))
+(PlannerInterface.parameterLinks hatp CarryTo (. 0 2 .))
+(PlannerInterface.parameterLinks hatp TravelTo (. 0 1 .))
+
+(Acapela.translation take "take")
+(Acapela.translation place "place")
+(Acapela.translation clean "clean")
+(Acapela.translation glue "glue")
+(Acapela.translation attachBracket "attach the ")
+(Acapela.translation pointTo "point to")
+(Acapela.translation go "go to")
+
+
+)
