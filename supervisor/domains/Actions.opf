@@ -8,6 +8,7 @@
    :body (
           (?(Robot.name @robotName))
 
+	  
           (!(= @agent (CAR @parameters)))
           (!(= @parameters (CDR @parameters)))
           (!(= @object (CAR @parameters)))
@@ -116,7 +117,7 @@
    :invocation(!(Actions.setPostconditions place @parameters))
    :body (
           (?(Robot.name @robotName))
-          (!(== (VAL @parameters) (. @agent @object @placement @position .)))
+;          (!(== (VAL @parameters) (. @agent @object @placement @position .)))
 
           (!(= @agent (CAR @parameters)))
           (!(= @parameters (CDR @parameters)))
@@ -158,7 +159,13 @@
           (^(Spark.report (VAL @sparkId) @report))
           (!(ReportManager.unsub Spark.report @sparkId))
 
-          (!(== (VAL @position) (. @x @y @z .)))
+	  (!(Tester.breakpoint))
+
+	  (!(= @x (CAR @position)))
+	  (!(= @position (CDR @position)))
+	  (!(= @y (CAR @position)))
+;          (!(== (VAL @position) (. @x @y @z .)))
+
           (!(Spark.getFreeId @sparkId))
           (!(ReportManager.sub Spark.report @sparkId))
           (=>(Spark.request placeObjectForSimu (VAL @object) @x @y 0.75 0 0 0 0 @sparkId))

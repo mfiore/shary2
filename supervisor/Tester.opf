@@ -473,7 +473,7 @@
    :invocation(!(Tester.testPlace))
    :body (
 ;	  (!(Controller.initAll))
-	  (=>(ExecutionManager.execute place (. GREY_TAPE TABLE_4 .) 2))
+	  (=>(ExecutionManager.execute place (. BRACKET_1 STOCK_TABLE .) 2))
 	  )
    )
 
@@ -727,7 +727,7 @@
    :body (
 	  (!(Controller.initAll))
 
-      (=>(ExecutionManager.execute take (. GREY_TAPE RIGHT .) 0 ))
+      (=>(ExecutionManager.execute take (. BRACKET_1 RIGHT .) 0 ))
 
 	  )
    )

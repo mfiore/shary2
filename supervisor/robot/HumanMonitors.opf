@@ -1,0 +1,22 @@
+;; -*-Lisp-*-
+;;author: Michelangelo Fiore
+
+
+(
+
+(defop |SendObjectPosition|
+       :invocation(HumanMonitors.rosRequest getPose @object)
+       :body (
+	      (!(Spark.getFreeId @sparkId))
+	      (!(ReportManager.sub Spark.report (VAL @sparkId)))
+	      (=>(Spark.request getJointAbsPose @object NO_NAME @sparkId))
+	      (^(Spark.report (VAL @sparkId) @report))
+	      (!(ReportManager.unsub Spark.report (VAL @sparkId)))
+	      (^(Spark.result (VAL @sparkId) @x @y @z @tx @ty @tz))
+	      
+	      (!(SEND-MESSAGE human_monitors_requests (HumanMonitors.report (VAL @report))))
+	      (!(SEND-MESSAGE human_monitors_requests (HumanMonitors.result @x @y @z)))
+       )
+)
+
+)
