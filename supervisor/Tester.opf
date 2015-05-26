@@ -33,7 +33,7 @@
              (!(= @plan (CDR @plan)))
              (!(= @human (CAR @plan)))
 
-             (!(SEND-MESSAGE seed_plan_.is_listener (PlanManager.planResult @human)))
+             (!(SEND-MESSAGE seed_plan_listener (PlanManager.planResult @human)))
              )
           )
 
