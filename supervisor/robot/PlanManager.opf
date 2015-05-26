@@ -19,183 +19,180 @@
    :invocation(PlanManager.managePlans)
    :documentation "this is the main procedure of the Plan Manager. It's constantly running, receiving goals from the higher level, asking the planner for plans, breaking them into actions and sending those to the appropriate modules for execution"
    :body (
-	  (=>(PlanManager.isRunning TRUE))
+          (=>(PlanManager.isRunning TRUE))
 
-	  ;;get constants for op
-	  (?(PlanManager.maxPlanningTime @maxPlanningTime))  
-	  (?(PlanManager.maxPlanningFailures @maxPlanningFailures))
-	  (!(= @maxPlanningFailures 3))
-	  (?(PlanManager.timeToRetry @timeToRetry))
-	  (?(Robot.name @robotName))
+          ;;get constants for op
+          (?(PlanManager.maxPlanningTime @maxPlanningTime))
+          (?(PlanManager.maxPlanningFailures @maxPlanningFailures))
+          (!(= @maxPlanningFailures 3))
+          (?(PlanManager.timeToRetry @timeToRetry))
+          (?(Robot.name @robotName))
 
-      (WHILE(?(PlanManager.shouldRun TRUE))
-		;;wait for a new goal or for a stop
-            (^(|| (PlanManager.newGoal TRUE) (PlanManager.shouldRun FALSE) (AgentActionMonitor.unexpectedAction @agent)))
-            (IF(?(PlanManager.shouldRun FALSE))
-               (!(FAILED))
+          (WHILE(?(PlanManager.shouldRun TRUE))
+                ;;wait for a new goal or for a stop
+                (^(|| (PlanManager.newGoal TRUE) (PlanManager.shouldRun FALSE) (AgentActionMonitor.unexpectedAction @agent)))
+                (IF(?(PlanManager.shouldRun FALSE))
+                   (!(FAILED))
 
-               ELSEIF(?(PlanManager.newGoal TRUE))
-               (=>(PlanManager.newGoal FALSE)) ;we are treating the goal so it's no longer new
-               (?(PlanManager.goal @goal @parameters))
+                   ELSEIF(?(PlanManager.newGoal TRUE))
+                   (=>(PlanManager.newGoal FALSE)) ;we are treating the goal so it's no longer new
+                   (?(PlanManager.goal @goal @parameters))
 
-               ELSEIF(?(AgentActionMonitor.unexpectedAction @agent))
-               (~>(AgentActionMonitor.unexpectedAction @agente))
-               (PlanManager.chooseGoal @goal @parameters)
-               )
+                   ELSEIF(?(AgentActionMonitor.unexpectedAction @agent))
+                   (~>(AgentActionMonitor.unexpectedAction @agente))
+                   (PlanManager.chooseGoal @goal @parameters)
+                   )
 
-            (!(PlanManager.tellGoal @goal @parameters))
-            (!(= @planningFailures 0))
-            (!(= @status notStarted))
+                (!(PlanManager.tellGoal @goal @parameters))
+                (!(= @planningFailures 0))
+                (!(= @status notStarted))
                                         ;we loop until the plan is completed or we have reached the maximum number of failures
 
-		   (WHILE(?(& 
-			    (~(EQUAL @status completed)) 
-			    (< @planningFailures @maxPlanningFailures)
-			    ))
+                (WHILE(?(&
+                         (~(EQUAL @status completed))
+                         (< @planningFailures @maxPlanningFailures)
+                         ))
 
-                 (IF(?(PlanManager.planningModality @agent ROBOT))  ;if robot plans he warns the user that it is planning
-                    (IF(?(EQUAL @planningFailures 0))
-			       (!(Acapela.say "Let me think of a plan..."))
-			       ELSE
-			       (!(Acapela.say "Let me think of another plan.."))
-			       )
-                    (^(ELAPSED-TIME (TIME) 1))
-                    )
+                      (IF(?(PlanManager.planningModality @agent ROBOT))  ;if robot plans he warns the user that it is planning
+                         (IF(?(EQUAL @planningFailures 0))
+                            (!(Acapela.say "Let me think of a plan..."))
+                            ELSE
+                            (!(Acapela.say "Let me think of another plan.."))
+                            )
+                         (^(ELAPSED-TIME (TIME) 1))
+                         )
 
 
-                 (=>(PlannerInterface.getPlan (VAL @goal) (VAL @parameters)))   ;;we ask for a plan
-                 (^(PlannerInterface.report @report))
-                 (~>(PlannerInterface.report (VAL @report)))
+                      (=>(PlannerInterface.getPlan (VAL @goal) (VAL @parameters)))   ;;we ask for a plan
+                      (^(PlannerInterface.report @report))
+                      (~>(PlannerInterface.report (VAL @report)))
 
-                 (IF(?(EQUAL @report ACHIEVED))
-                    (!(= @status completed))
-			    
-                    ELSEIF(?(EQUAL @report NOPLAN))
-                    (!(= @planningFailures (+ @planningFailures 1)))
+                      (IF(?(EQUAL @report ACHIEVED))
+                         (!(= @status completed))
 
-                    ELSEIF(?(EQUAL @report OK))
-                    (^(PlannerInterface.result @plan))
-                    (~>(PlannerInterface.result (VAL @plan)))
-			    
-                    (IF(?(&(PlanManager.planningModality ROBOT) (PlanManager.shouldTellPlan TRUE)))  ;if the robot is leader for an agent it will verbalize the plan
-                       (!(PlanManager.tellPlan @plan))
-                       (!(Acapela.say "Let's start!"))
-                       )
+                         ELSEIF(?(EQUAL @report NOPLAN))
+                         (!(= @planningFailures (+ @planningFailures 1)))
 
-                    (IF(?(PlanManager.humanActionManagement TASK))
-                       (!(PlanManager.analyzeTree @planTree))
-                       (=>(PlanManager.monitorPlan))
-                       )
+                         ELSEIF(?(EQUAL @report OK))
+                         (^(PlannerInterface.result @plan))
+                         (~>(PlannerInterface.result (VAL @plan)))
 
-                    (WHILE(?(~(NULL @plan)))
+                         (IF(?(&(PlanManager.planningModality ROBOT) (PlanManager.shouldTellPlan TRUE)))  ;if the robot is leader for an agent it will verbalize the plan
+                            (!(PlanManager.tellPlan @plan))
+                            (!(Acapela.say "Let's start!"))
+                            )
+
+                         (IF(?(PlanManager.humanActionManagement TASK))
+                            (!(PlanManager.analyzeTree @planTree))
+                            (=>(PlanManager.monitorPlan))
+                            )
+
+                         (WHILE(?(~(NULL @plan)))
                                         ;get agent
-                          (!(= @anAgent (CAR @plan)))
-                          (!(= @plan (CDR @plan)))
-                          (!(== (VAL @anAgent) (. @agentName @agentType @agentActions  .)))
-                          (!(ReportManager.sub PlanManager.agentReport  @agentName))
-                          (=>(PlanManager.isSub PlanManager.agentReport @agentName))
+                               (!(= @anAgent (CAR @plan)))
+                               (!(= @plan (CDR @plan)))
+                               (!(== (VAL @anAgent) (. @agentName @agentType @agentActions  .)))
+                               (!(ReportManager.sub PlanManager.agentReport  @agentName))
+                               (=>(PlanManager.isSub PlanManager.agentReport @agentName))
 
 
-                          (IF(?(EQUAL @agentType HUMAN))
-                             (IF(?(PlanManager.humanActionManagement LEAF))
-                                (=>(PlanManager.manageHumanActions (VAL @agentName) (VAL @agentActions) ))
-                                )
-                             (=>(PlanManager.isManagingHuman (VAL @agentName)))
-                             ELSEIF(?(EQUAL @agentType ROBOT))
-                             (IF(?(EQUAL @agentName @robotName))
-                                (IF(?(PlanManager.selfActionManagement SEED))
-                                   (=>(PlanManager.manageRobotActionsSeed (VAL @agentActions)))
-                                   ELSE
-                                   (=>(PlanManager.manageRobotActions (VAL @agentActions)))
-                                )
-                                ELSE
-                                (=>(PlanManager.manageOtherRobotActions (VAL @agentName) (VAL @agentActions) ))
-                                )
-				     
-                             )
-                          )
-	    
-			    
-                ;;we wait for the report of an agent, for something unexpected to happen or for a stop request.
+                               (IF(?(EQUAL @agentType HUMAN))
+                                  (IF(?(PlanManager.humanActionManagement LEAF))
+                                     (=>(PlanManager.manageHumanActions (VAL @agentName) (VAL @agentActions) ))
+                                     )
+                                  (=>(PlanManager.isManagingHuman (VAL @agentName)))
+                                  ELSEIF(?(EQUAL @agentType ROBOT))
+                                  (IF(?(EQUAL @agentName @robotName))
+                                     (IF(?(PlanManager.selfActionManagement SEED))
+                                        (=>(PlanManager.manageRobotActionsSeed (VAL @agentActions)))
+                                        ELSE
+                                        (=>(PlanManager.manageRobotActions (VAL @agentActions)))
+                                        )
+                                     )
+                                  )
 
-                    (^(|| (PlanManager.agentReport @agent @report)  (PlanManager.stop) (AgentActionMonitor.unexpectedAction @agent)))
-			    
-                    (IF(?(AgentActionMonitor.unexpectedAction @agent))
-                       (!(PlanManager.chooseGoal @goal @parameters))
 
-                       (IF(?(PlanManager.planningModality (VAL @agent) ROBOT))   ;if robot was planning we switch to adapt and inform the user
-                          (!(Acapela.say "Do you want to do it in a different way? Let's see if I can help..."))
-                          (=>(PlanManager.planningModality (VAL @agent) ADAPTS))
-                          )
+                               ;;we wait for the report of an agent, for something unexpected to happen or for a stop request.
 
-                       (WHILE(?(PlanManager.isManagingAgent @anAgent))
-                             (=>(PlanManager.stopAgent (VAL @anAgent)))
-                             (^(PlanManager.agentReport (VAL @anAgent) @report))
-                             )
-                       ELSEIF(?(PlanManager.stop))
-                       (WHILE(?(PlanManager.isManagingAgent @anAgent))
-                             (=>(PlanManager.stopAgent (VAL @anAgent)))
-                             (^(PlanManager.agentReport (VAL @anAgent) @report))
-                             )
-                       (!(= @planningFailures @maxPlanningFailures))
+                               (^(|| (PlanManager.agentReport @agent @report)  (PlanManager.stop) (AgentActionMonitor.unexpectedAction @agent)))
 
-                       ELSEIF(?(PlanManager.agentReport @anAgent "FAILURE"))  ;if one of the agents fail we stop the other agent and replan
-                       (WHILE(?(PlanManager.isManagingAgent @otherAgent))
-                             (=>(PlanManager.stopAgent (VAL @otherAgent)))
-                             (^(PlanManager.agentReport (VAL @otherAgent) @report))
-                             )
-                       (!(= @planningFailures (+ @planningFailures 1)))
+                               (IF(?(AgentActionMonitor.unexpectedAction @agent))
+                                  (!(PlanManager.chooseGoal @goal @parameters))
 
-                       ELSEIF(?(PlanManager.agentReport @anAgent "OK"))   ;if one of the agents completes we wait for the other agent positive report
-                       (WHILE(?(PlanManager.isManagingAgent @otherAgent))
-                             (^(|| (PlanManager.agentReport (VAL @otherAgent) @report) (PlanManager.stop) (AgentActionMonitor.unexpectedAction @agent)))
+                                  (IF(?(PlanManager.planningModality (VAL @agent) ROBOT))   ;if robot was planning we switch to adapt and inform the user
+                                     (!(Acapela.say "Do you want to do it in a different way? Let's see if I can help..."))
+                                     (=>(PlanManager.planningModality (VAL @agent) ADAPTS))
+                                     )
 
-                             (IF(?(PlanManager.agentReport (VAL @otherAgent) "FAILURE"))
-                                (!(= @planningFailures (+ @planningFailures 1)))
+                                  (WHILE(?(PlanManager.isManagingAgent @anAgent))
+                                        (=>(PlanManager.stopAgent (VAL @anAgent)))
+                                        (^(PlanManager.agentReport (VAL @anAgent) @report))
+                                        )
+                                  ELSEIF(?(PlanManager.stop))
+                                  (WHILE(?(PlanManager.isManagingAgent @anAgent))
+                                        (=>(PlanManager.stopAgent (VAL @anAgent)))
+                                        (^(PlanManager.agentReport (VAL @anAgent) @report))
+                                        )
+                                  (!(= @planningFailures @maxPlanningFailures))
 
-                                ELSEIF(?(PlanManager.stop))
-                                (IF(?(PlanManager.isManagingAgent (VAL @otherAgent)))
-                                   (=>(PlanManager.stopAgent @otherAgent))
-                                   (^(PlanManager.agentReport (VAL @otherAgent) @report))
-                                   )
-                                (!(= @planningFailures @maxPlanningFailures))
+                                  ELSEIF(?(PlanManager.agentReport @anAgent "FAILURE"))  ;if one of the agents fail we stop the other agent and replan
+                                  (WHILE(?(PlanManager.isManagingAgent @otherAgent))
+                                        (=>(PlanManager.stopAgent (VAL @otherAgent)))
+                                        (^(PlanManager.agentReport (VAL @otherAgent) @report))
+                                        )
+                                  (!(= @planningFailures (+ @planningFailures 1)))
 
-                                ELSEIF(?(AgentActionMonitor.unexpectedAction @agent))
-                                (!(PRINT "Unexpected Action. Replanning"))
-                                (!(PlanManager.chooseGoal @goal @parameters))
-                                (IF(?(PlanManager.isManagingAgent (VAL @otherAgent)))
-                                   (=>(PlanManager.stopAgent @otherAgent))
-                                   (^(PlanManager.agentReport (VAL @otherAgent) @report))
-                                   )
-                                )
-                             )
-                       )
-                    (!(= @status completed))
-                    (WHILE(?(PlanManager.agentReport @agent @report))
-                          (~>(PlanManager.agentReport (VAL @agent) (VAL @report)))
-                          (IF(?(~(EQUAL @report "OK")))
-                             (!(= @status notCompleted))
-                             )
-				    
-                          )
-                    (IF(?(EQUAL @status notCompleted))
-                       (^(ELAPSED-TIME (TIME) @timeToRetry))
-                       )
-                    (!(PlanManager.clean))
-                    )
-                 )
-           (IF(?(EQUAL @status completed))
-              (=>(PlanManager.report "OK"))
-              (!(Acapela.say "Task completed"))
+                                  ELSEIF(?(PlanManager.agentReport @anAgent "OK"))   ;if one of the agents completes we wait for the other agent positive report
+                                  (WHILE(?(PlanManager.isManagingAgent @otherAgent))
+                                        (^(|| (PlanManager.agentReport (VAL @otherAgent) @report) (PlanManager.stop) (AgentActionMonitor.unexpectedAction @agent)))
 
-              ELSE
-              (!(Acapela.say "Abandoning Task"))
-              (=>(PlanManager.report FAILED))
-              )
-           )
+                                        (IF(?(PlanManager.agentReport (VAL @otherAgent) "FAILURE"))
+                                           (!(= @planningFailures (+ @planningFailures 1)))
 
-      (~>(PlanManager.isRunning TRUE))
-      )
+                                           ELSEIF(?(PlanManager.stop))
+                                           (IF(?(PlanManager.isManagingAgent (VAL @otherAgent)))
+                                              (=>(PlanManager.stopAgent @otherAgent))
+                                              (^(PlanManager.agentReport (VAL @otherAgent) @report))
+                                              )
+                                           (!(= @planningFailures @maxPlanningFailures))
+
+                                           ELSEIF(?(AgentActionMonitor.unexpectedAction @agent))
+                                           (!(PRINT "Unexpected Action. Replanning"))
+                                           (!(PlanManager.chooseGoal @goal @parameters))
+                                           (IF(?(PlanManager.isManagingAgent (VAL @otherAgent)))
+                                              (=>(PlanManager.stopAgent @otherAgent))
+                                              (^(PlanManager.agentReport (VAL @otherAgent) @report))
+                                              )
+                                           )
+                                        )
+                                  )
+                               (!(= @status completed))
+                               (WHILE(?(PlanManager.agentReport @agent @report))
+                                     (~>(PlanManager.agentReport (VAL @agent) (VAL @report)))
+                                     (IF(?(~(EQUAL @report "OK")))
+                                        (!(= @status notCompleted))
+                                        )
+
+                                     )
+                               (IF(?(EQUAL @status notCompleted))
+                                  (^(ELAPSED-TIME (TIME) @timeToRetry))
+                                  )
+                               (!(PlanManager.clean))
+                               )
+                         )
+                      (IF(?(EQUAL @status completed))
+                         (=>(PlanManager.report "OK"))
+                         (!(Acapela.say "Task completed"))
+
+                         ELSE
+                         (!(Acapela.say "Abandoning Task"))
+                         (=>(PlanManager.report FAILED))
+                         )
+                      )
+
+                (~>(PlanManager.isRunning TRUE))
+                )
+          )
    )
 
  (defop |clean|
@@ -274,13 +271,13 @@
                    (!(FAILED))
                    )
                 )
-          )
+
    (!(ReportManager.publish PlanManager.agentReport robot "OK"))
 
 
    (~>(PlanManager.isManagingAgent robot))
    )
-
+)
  ;; (defop |analyzeTree|
    ;;   :invocation(!(PlanManager.analyzePlanTree @tree))
    ;;   :body (
