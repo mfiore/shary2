@@ -30,6 +30,9 @@ load opf "supervisor/robot/BaseActions.opf"
 load opf "supervisor/robot/DatabaseInterface.opf"
 load opf "supervisor/robot/ReportManager.opf"
 
-load opf "supervisor/domains/Spencer.opf"
+load opf "supervisor/utilities/POMDP.opf"
+load db  "supervisor/utilities/POMDP.db"
 
-add (!(Tester.testSpencer))
+load opf "supervisor/domains/SpencerIcsrActions.opf"
+load db "supervisor/domains/SpencerIcsrActions.db"
+

@@ -27,7 +27,8 @@
    :body (
 	  (?(PlannerInterface.freeId hatp @id))       
 	  (=>(PlannerInterface.freeId hatp (+ @id 1)))
-	  (?(PlannerInterface.bridgeName hatp @hatp)) 
+      (?(PlannerInterface.bridgeName hatp @hatp))
+      (?(Robot.name @robotName))
 	  
 	  ;;send the request and wait for an answer
 	  (!(= @message (HATP-REQ
@@ -107,7 +108,7 @@
 		      (!(= @action (. (VAL @actionName) (VAL @actionParameters) .)))  
 		      (!(= @completeAction (. (VAL @action) (VAL @actionId) (VAL @actionLinks) .)))
 
-		      (IF(?(|| (EQUAL @actor PR2_ROBOT) (EQUAL @actionName handover)))
+              (IF(?(|| (EQUAL @actor (VAL @robotName)) (EQUAL @actionName handover)))
 			   (!(= @robotActions (CONS-TAIL (VAL @completeAction) @robotActions)))
 			 
 			   ELSE

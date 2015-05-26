@@ -53,7 +53,7 @@
 	  (IF(?(Robot.joints RIGHT_ARM))
 	     (!(ArmActions.init))
 	     )
-	  (!(HeadActions.init))
+      (!(HeadActions.init))
       (!(PlannerInterface.init))
       (IF(?(MonitorManager.isActive TRUE))
          (!(MonitorManager.init))

@@ -69,7 +69,7 @@
 
             (!(= @reportName2 (TERM-STRING-CAT (VAL @name) ".move.update")))
             (!(= @reportName2 (MAKE-ATOM @reportName2)))
-            (IF(?(Softmotion.isActive TRUE))
+            ;(IF(?(Softmotion.isActive TRUE))
 
                (!(SEND-MESSAGE @name (move euler @waypoints)))
                (!(= @nextLocation (CAR @waypoints)))
@@ -117,9 +117,9 @@
                (~>(@reportName1 @status))
                (~>(@reportName2 @status))
 
-               ELSE
-               (!(ReportManager.publish BaseActions.report @id "FAILURE"))
-               )
+ ;              ELSE
+;               (!(ReportManager.publish BaseActions.report @id "FAILURE"))
+              ; )
             ELSE
             (!(ReportManager.publish BaseActions.report @id "OK"))
             )
@@ -131,7 +131,7 @@
   :invocation(BaseActions.action stop @id)
   :documentation "halts the robot movement"
   :body (
-     (IF(?(Softmotion.isActive TRUE))
+     ;(IF(?(Softmotion.isActive TRUE))
         (?(BaseActions.bridgeName @name))
         (?(BaseActions.timeToWait @time))
 
@@ -144,7 +144,7 @@
 
         (!(ReportManager.publish BaseActions.report @id "OK"))
 
-        )
+        ;)
      (!(ReportManager.publish BaseActions.report @id "OK"))
 
 	 )

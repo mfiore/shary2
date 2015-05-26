@@ -1,0 +1,6 @@
+(
+
+    (POMDP.action guideModel 0 CONTINUE)
+    (POMDP.action guideModel 1 WAIT)
+    (POMDP.action guideModel 2 ABANDON)
+)

@@ -43,10 +43,10 @@
   :invocation(Database.setReachabilityFalse @object @caller)
   :documentation "Used to change the reachability of an object from the supervisor. This is used because sometimes (often) SPARK overestimates the capacity of the robot to reach objects"
   :body (
-	 (=>(AGENT-STATEMENT PR2_ROBOT (VAL @object) isReachable false))
-	 (~>(AGENT-STATEMENT PR2_ROBOT (VAL @object isReachable true)))
-	 (~>(AGENT-STATEMENT PR2_ROBOT (VAL @object) isReachableBy PR2_ROBOT))
-	 (~>(AGENT-STATEMENT HERAKLES_HUMAN1 (VAL @object) isReachableBy PR2_ROBOT))
+     (=>(AGENT-STATEMENT SPENCER_ROBOT (VAL @object) isReachable false))
+     (~>(AGENT-STATEMENT SPENCER_ROBOT (VAL @object isReachable true)))
+     (~>(AGENT-STATEMENT SPENCER_ROBOT (VAL @object) isReachableBy SPENCER_ROBOT))
+     (~>(AGENT-STATEMENT HERAKLES_HUMAN1 (VAL @object) isReachableBy SPENCER_ROBOT))
 	 (=>(Flag.ignoreReachability (VAL @object)))
 	 (!(SEND-MESSAGE @caller (Database.result (. OK .) )))
 	 
@@ -264,7 +264,7 @@ $unboundVariables= lisp-list containing the variables for which we want to find 
          (?(Robot.name @robotName))
          (!(== (VAL @fact) (AGENT-STATEMENT (VAL @robotName) @subject @predicate @value)))
          (IF(?(AGENT-STATEMENT (VAL @robotName) (VAL @subject) (VAL @predicate) @oldValue))
-            (!(Database.remove (AGENT-STATEMENT PR2_ROBOT @subject @predicate @oldValue)))
+            (!(Database.remove (AGENT-STATEMENT SPENCER_ROBOT @subject @predicate @oldValue)))
             )
          (=>(Database.add (VAL @fact) @caller))
          )
@@ -272,9 +272,9 @@ $unboundVariables= lisp-list containing the variables for which we want to find 
 (defop |setLocal|
   :invocation(!(Database.set @fact))
   :body (
-         (!(== (VAL @fact) (AGENT-STATEMENT PR2_ROBOT @subject @predicate @value)))
-         (IF(?(AGENT-STATEMENT PR2_ROBOT (VAL @subject) (VAL @predicate) @oldValue))
-            (!(Database.remove (AGENT-STATEMENT PR2_ROBOT @subject @predicate @oldValue)))
+         (!(== (VAL @fact) (AGENT-STATEMENT SPENCER_ROBOT @subject @predicate @value)))
+         (IF(?(AGENT-STATEMENT SPENCER_ROBOT (VAL @subject) (VAL @predicate) @oldValue))
+            (!(Database.remove (AGENT-STATEMENT SPENCER_ROBOT @subject @predicate @oldValue)))
             )
          (!(Database.add @fact))
          )
@@ -421,9 +421,9 @@ $unboundVariables= lisp-list containing the variables for which we want to find 
 	       (WHILE(?(~(NULL @request)))
 		     (!(= @predicate (CAR @request)))
 		     (!(= @request (CDR @request)))
-		     (!(= @result (ALL @someValue (AGENT-STATEMENT PR2_ROBOT (VAL @subject) (VAL @predicate) @someValue))))
+             (!(= @result (ALL @someValue (AGENT-STATEMENT SPENCER_ROBOT (VAL @subject) (VAL @predicate) @someValue))))
 		     (!(= @resultList (CONS-TAIL @result @resultList)))
-		   ;  (IF(?(AGENT-STATEMENT PR2_ROBOT (VAL @subject) (VAL @predicate) @value))
+           ;  (IF(?(AGENT-STATEMENT SPENCER_ROBOT (VAL @subject) (VAL @predicate) @value))
 		;	(!(= @result (CONS-TAIL @value @result)))
 		;	)
 		     
@@ -444,20 +444,20 @@ $unboundVariables= lisp-list containing the variables for which we want to find 
 	:documentation "clean GTP Facts in the database"
 	:body (
 		
-		(WHILE(?(AGENT-STATEMENT PR2_ROBOT @object1 isReachableBy @object2))
-			(~>(AGENT-STATEMENT PR2_ROBOT @object1 isReachableBy @object2))
+        (WHILE(?(AGENT-STATEMENT SPENCER_ROBOT @object1 isReachableBy @object2))
+            (~>(AGENT-STATEMENT SPENCER_ROBOT @object1 isReachableBy @object2))
 			)
-		(WHILE(?(AGENT-STATEMENT PR2_ROBOT @object1 isVisibleBy @object2))
-			(~>(AGENT-STATEMENT PR2_ROBOT @object1 isVisibleBy @object2))
+        (WHILE(?(AGENT-STATEMENT SPENCER_ROBOT @object1 isVisibleBy @object2))
+            (~>(AGENT-STATEMENT SPENCER_ROBOT @object1 isVisibleBy @object2))
 			)
-		(WHILE(?(AGENT-STATEMENT PR2_ROBOT @object1 isOn @object2))
-			(~>(AGENT-STATEMENT PR2_ROBOT @object1 isOn @object2))
+        (WHILE(?(AGENT-STATEMENT SPENCER_ROBOT @object1 isOn @object2))
+            (~>(AGENT-STATEMENT SPENCER_ROBOT @object1 isOn @object2))
 			)
-		(WHILE(?(AGENT-STATEMENT PR2_ROBOT @object1 isIn @object2))
-			(~>(AGENT-STATEMENT PR2_ROBOT @object1 isIn @object2))
+        (WHILE(?(AGENT-STATEMENT SPENCER_ROBOT @object1 isIn @object2))
+            (~>(AGENT-STATEMENT SPENCER_ROBOT @object1 isIn @object2))
 			)
-		(WHILE(?(AGENT-STATEMENT PR2_ROBOT @object1 isNextTo @object2))
-			(~>(AGENT-STATEMENT PR2_ROBOT @object1 isNextTo @object2))
+        (WHILE(?(AGENT-STATEMENT SPENCER_ROBOT @object1 isNextTo @object2))
+            (~>(AGENT-STATEMENT SPENCER_ROBOT @object1 isNextTo @object2))
 			)
 		
 		(!(SEND-MESSAGE @caller (Database.result (. OK .) )))
@@ -507,7 +507,7 @@ $unboundVariables= lisp-list containing the variables for which we want to find 
 			   (!(= @value (CAR @values)))
 			   (!(= @values (CDR @values)))
 			   
-			   (!(Database.add (AGENT-STATEMENT PR2_ROBOT @subject @predicate @value)))
+               (!(Database.add (AGENT-STATEMENT SPENCER_ROBOT @subject @predicate @value)))
 			   )
 		     )
 	       )

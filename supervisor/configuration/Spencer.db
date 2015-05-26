@@ -11,7 +11,7 @@
 (Waypoints.isActive FALSE)
 (PathPlanner.isActive FALSE)
 (ExecutionManager.isActive execution TRUE)
-(BaseActions.isActive SIM)
+(BaseActions.isActive TRUE)
 (Timer.isActive FALSE)
 
 )

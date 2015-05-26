@@ -9,210 +9,210 @@
 <g id="graph1" class="graph" transform="scale(1 1) rotate(0) translate(4 200)">
 <title>graphForClustersContents</title>
 <polygon fill="white" stroke="white" points="-4,5 -4,-200 6461,-200 6461,5 -4,5"/>
-<!-- node1704 -->
-<g id="node2" class="node"><title>node1704</title>
+<!-- node300 -->
+<g id="node2" class="node"><title>node300</title>
 <ellipse fill="#ffffcc" stroke="black" cx="253" cy="-152" rx="226.981" ry="43.8406"/>
 <text text-anchor="middle" x="253" y="-166.4" font-family="Times Roman,serif" font-size="14.00">TravelTo</text>
 <text text-anchor="middle" x="253" y="-148.4" font-family="Times Roman,serif" font-size="14.00">(HERAKLES_HUMAN1 WORK_LOCATION_1 )</text>
 <text text-anchor="middle" x="253" y="-130.4" font-family="Times Roman,serif" font-size="14.00">[0, 10]</text>
 </g>
-<!-- node1705 -->
-<g id="node5" class="node"><title>node1705</title>
+<!-- node301 -->
+<g id="node5" class="node"><title>node301</title>
 <ellipse fill="#ffffcc" stroke="black" cx="784" cy="-152" rx="241.831" ry="43.8406"/>
 <text text-anchor="middle" x="784" y="-166.4" font-family="Times Roman,serif" font-size="14.00">Clean</text>
 <text text-anchor="middle" x="784" y="-148.4" font-family="Times Roman,serif" font-size="14.00">(HERAKLES_HUMAN1 ASSEMBLY_SURFACE_1 )</text>
 <text text-anchor="middle" x="784" y="-130.4" font-family="Times Roman,serif" font-size="14.00">[10, 30]</text>
 </g>
-<!-- node1704&#45;&gt;node1705 -->
-<g id="edge13" class="edge"><title>node1704&#45;&gt;node1705</title>
+<!-- node300&#45;&gt;node301 -->
+<g id="edge13" class="edge"><title>node300&#45;&gt;node301</title>
 <path fill="none" stroke="#9a32cd" d="M480.117,-152C497.189,-152 514.477,-152 531.691,-152"/>
 <polygon fill="#9a32cd" stroke="#9a32cd" points="541.815,-152 531.815,-156.5 536.815,-152 531.815,-152 531.815,-152 531.815,-152 536.815,-152 531.815,-147.5 541.815,-152 541.815,-152"/>
 </g>
-<!-- node1706 -->
-<g id="node3" class="node"><title>node1706</title>
+<!-- node302 -->
+<g id="node3" class="node"><title>node302</title>
 <ellipse fill="#cce6ff" stroke="black" cx="253" cy="-44" rx="251.937" ry="43.8406"/>
 <text text-anchor="middle" x="253" y="-58.4" font-family="Times Roman,serif" font-size="14.00">Pick</text>
 <text text-anchor="middle" x="253" y="-40.4" font-family="Times Roman,serif" font-size="14.00">(PR2_ROBOT GLUE_BOTTLE PLACEMENT_ST_4 )</text>
 <text text-anchor="middle" x="253" y="-22.4" font-family="Times Roman,serif" font-size="14.00">[0, 10]</text>
 </g>
-<!-- node1707 -->
-<g id="node6" class="node"><title>node1707</title>
+<!-- node303 -->
+<g id="node6" class="node"><title>node303</title>
 <ellipse fill="#cce6ff" stroke="black" cx="784" cy="-44" rx="186.176" ry="43.8406"/>
 <text text-anchor="middle" x="784" y="-58.4" font-family="Times Roman,serif" font-size="14.00">TravelTo</text>
 <text text-anchor="middle" x="784" y="-40.4" font-family="Times Roman,serif" font-size="14.00">(PR2_ROBOT WORK_LOCATION_1 )</text>
 <text text-anchor="middle" x="784" y="-22.4" font-family="Times Roman,serif" font-size="14.00">[10, 20]</text>
 </g>
-<!-- node1706&#45;&gt;node1707 -->
-<g id="edge16" class="edge"><title>node1706&#45;&gt;node1707</title>
+<!-- node302&#45;&gt;node303 -->
+<g id="edge16" class="edge"><title>node302&#45;&gt;node303</title>
 <path fill="none" stroke="#9a32cd" d="M505.67,-44C533.052,-44 560.615,-44 587.193,-44"/>
 <polygon fill="#9a32cd" stroke="#9a32cd" points="597.329,-44 587.329,-48.5001 592.329,-44 587.329,-44.0001 587.329,-44.0001 587.329,-44.0001 592.329,-44 587.328,-39.5001 597.329,-44 597.329,-44"/>
 </g>
-<!-- node1709 -->
-<g id="node10" class="node"><title>node1709</title>
+<!-- node305 -->
+<g id="node10" class="node"><title>node305</title>
 <ellipse fill="#ffffcc" stroke="black" cx="1927" cy="-46" rx="302.141" ry="43.8406"/>
 <text text-anchor="middle" x="1927" y="-60.4" font-family="Times Roman,serif" font-size="14.00">Pick</text>
 <text text-anchor="middle" x="1927" y="-42.4" font-family="Times Roman,serif" font-size="14.00">(HERAKLES_HUMAN1 GLUE_BOTTLE PLACEMENT_WL1_1 )</text>
 <text text-anchor="middle" x="1927" y="-24.4" font-family="Times Roman,serif" font-size="14.00">[30, 40]</text>
 </g>
-<!-- node1705&#45;&gt;node1709 -->
-<g id="edge14" class="edge"><title>node1705&#45;&gt;node1709</title>
+<!-- node301&#45;&gt;node305 -->
+<g id="edge14" class="edge"><title>node301&#45;&gt;node305</title>
 <path fill="none" stroke="#9a32cd" d="M1018.4,-140.985C1179.01,-132.208 1396.76,-117.892 1588,-97 1629.49,-92.4674 1673.69,-86.591 1716,-80.4471"/>
 <polygon fill="#9a32cd" stroke="#9a32cd" points="1726.13,-78.9649 1716.89,-84.8645 1721.19,-79.6883 1716.24,-80.4118 1716.24,-80.4118 1716.24,-80.4118 1721.19,-79.6883 1715.59,-75.9592 1726.13,-78.9649 1726.13,-78.9649"/>
 </g>
-<!-- node1719 -->
-<g id="node11" class="node"><title>node1719</title>
+<!-- node315 -->
+<g id="node11" class="node"><title>node315</title>
 <ellipse fill="#cce6ff" stroke="black" cx="1927" cy="-152" rx="201.025" ry="43.8406"/>
 <text text-anchor="middle" x="1927" y="-166.4" font-family="Times Roman,serif" font-size="14.00">StartPointing</text>
 <text text-anchor="middle" x="1927" y="-148.4" font-family="Times Roman,serif" font-size="14.00">(PR2_ROBOT ASSEMBLY_SURFACE_1 )</text>
 <text text-anchor="middle" x="1927" y="-130.4" font-family="Times Roman,serif" font-size="14.00">[30, 31]</text>
 </g>
-<!-- node1705&#45;&gt;node1719 -->
-<g id="edge15" class="edge"><title>node1705&#45;&gt;node1719</title>
+<!-- node301&#45;&gt;node315 -->
+<g id="edge15" class="edge"><title>node301&#45;&gt;node315</title>
 <path fill="none" stroke="#9a32cd" d="M1026.05,-152C1230.37,-152 1520,-152 1715.24,-152"/>
 <polygon fill="#9a32cd" stroke="#9a32cd" points="1725.34,-152 1715.34,-156.5 1720.34,-152 1715.34,-152 1715.34,-152 1715.34,-152 1720.34,-152 1715.34,-147.5 1725.34,-152 1725.34,-152"/>
 </g>
-<!-- node1708 -->
-<g id="node8" class="node"><title>node1708</title>
+<!-- node304 -->
+<g id="node8" class="node"><title>node304</title>
 <ellipse fill="#cce6ff" stroke="black" cx="1325" cy="-44" rx="261.837" ry="43.8406"/>
 <text text-anchor="middle" x="1325" y="-58.4" font-family="Times Roman,serif" font-size="14.00">Place</text>
 <text text-anchor="middle" x="1325" y="-40.4" font-family="Times Roman,serif" font-size="14.00">(PR2_ROBOT GLUE_BOTTLE PLACEMENT_WL1_1 )</text>
 <text text-anchor="middle" x="1325" y="-22.4" font-family="Times Roman,serif" font-size="14.00">[20, 30]</text>
 </g>
-<!-- node1707&#45;&gt;node1708 -->
-<g id="edge17" class="edge"><title>node1707&#45;&gt;node1708</title>
+<!-- node303&#45;&gt;node304 -->
+<g id="edge17" class="edge"><title>node303&#45;&gt;node304</title>
 <path fill="none" stroke="#9a32cd" d="M970.56,-44C996.955,-44 1024.53,-44 1052.15,-44"/>
 <polygon fill="#9a32cd" stroke="#9a32cd" points="1062.32,-44 1052.32,-48.5001 1057.32,-44 1052.32,-44.0001 1052.32,-44.0001 1052.32,-44.0001 1057.32,-44 1052.32,-39.5001 1062.32,-44 1062.32,-44"/>
 </g>
-<!-- node1708&#45;&gt;node1709 -->
-<g id="edge18" class="edge"><title>node1708&#45;&gt;node1709</title>
+<!-- node304&#45;&gt;node305 -->
+<g id="edge18" class="edge"><title>node304&#45;&gt;node305</title>
 <path fill="none" stroke="#9a32cd" d="M1587.73,-44.8729C1596.59,-44.9023 1605.49,-44.9319 1614.41,-44.9615"/>
 <polygon fill="#9a32cd" stroke="#9a32cd" points="1624.48,-44.9949 1614.46,-49.4616 1619.48,-44.9783 1614.48,-44.9616 1614.48,-44.9616 1614.48,-44.9616 1619.48,-44.9783 1614.49,-40.4616 1624.48,-44.9949 1624.48,-44.9949"/>
 </g>
-<!-- node1708&#45;&gt;node1719 -->
-<g id="edge19" class="edge"><title>node1708&#45;&gt;node1719</title>
+<!-- node304&#45;&gt;node315 -->
+<g id="edge19" class="edge"><title>node304&#45;&gt;node315</title>
 <path fill="none" stroke="#9a32cd" d="M1501.24,-76.6835C1541.57,-84.0886 1584.26,-91.8691 1624,-99 1667.74,-106.848 1715.05,-115.193 1759,-122.883"/>
 <polygon fill="#9a32cd" stroke="#9a32cd" points="1768.91,-124.616 1758.28,-127.326 1763.98,-123.755 1759.06,-122.894 1759.06,-122.894 1759.06,-122.894 1763.98,-123.755 1759.83,-118.461 1768.91,-124.616 1768.91,-124.616"/>
 </g>
-<!-- node1720 -->
-<g id="node13" class="node"><title>node1720</title>
+<!-- node316 -->
+<g id="node13" class="node"><title>node316</title>
 <ellipse fill="#ffffcc" stroke="black" cx="2508" cy="-63" rx="241.831" ry="43.8406"/>
 <text text-anchor="middle" x="2508" y="-77.4" font-family="Times Roman,serif" font-size="14.00">Glue</text>
 <text text-anchor="middle" x="2508" y="-59.4" font-family="Times Roman,serif" font-size="14.00">(HERAKLES_HUMAN1 ASSEMBLY_SURFACE_1 )</text>
 <text text-anchor="middle" x="2508" y="-41.4" font-family="Times Roman,serif" font-size="14.00">[40, 60]</text>
 </g>
-<!-- node1709&#45;&gt;node1720 -->
-<g id="edge20" class="edge"><title>node1709&#45;&gt;node1720</title>
+<!-- node305&#45;&gt;node316 -->
+<g id="edge20" class="edge"><title>node305&#45;&gt;node316</title>
 <path fill="none" stroke="#9a32cd" d="M2223.88,-54.6868C2235.56,-55.0283 2247.21,-55.3694 2258.78,-55.7079"/>
 <polygon fill="#9a32cd" stroke="#9a32cd" points="2268.93,-56.0047 2258.8,-60.2102 2263.93,-55.8584 2258.93,-55.7121 2258.93,-55.7121 2258.93,-55.7121 2263.93,-55.8584 2259.06,-51.2141 2268.93,-56.0047 2268.93,-56.0047"/>
 </g>
-<!-- node1719&#45;&gt;node1720 -->
-<g id="edge21" class="edge"><title>node1719&#45;&gt;node1720</title>
+<!-- node315&#45;&gt;node316 -->
+<g id="edge21" class="edge"><title>node315&#45;&gt;node316</title>
 <path fill="none" stroke="#9a32cd" d="M2092.33,-126.675C2160.97,-116.16 2241.14,-103.879 2312.66,-92.9237"/>
 <polygon fill="#9a32cd" stroke="#9a32cd" points="2322.69,-91.3869 2313.48,-97.3493 2317.75,-92.1441 2312.8,-92.9012 2312.8,-92.9012 2312.8,-92.9012 2317.75,-92.1441 2312.12,-88.4531 2322.69,-91.3869 2322.69,-91.3869"/>
 </g>
-<!-- node1721 -->
-<g id="node16" class="node"><title>node1721</title>
+<!-- node317 -->
+<g id="node16" class="node"><title>node317</title>
 <ellipse fill="#cce6ff" stroke="black" cx="3089" cy="-152" rx="201.025" ry="43.8406"/>
 <text text-anchor="middle" x="3089" y="-166.4" font-family="Times Roman,serif" font-size="14.00">StopPointing</text>
 <text text-anchor="middle" x="3089" y="-148.4" font-family="Times Roman,serif" font-size="14.00">(PR2_ROBOT ASSEMBLY_SURFACE_1 )</text>
 <text text-anchor="middle" x="3089" y="-130.4" font-family="Times Roman,serif" font-size="14.00">[60, 61]</text>
 </g>
-<!-- node1719&#45;&gt;node1721 -->
-<g id="edge22" class="edge"><title>node1719&#45;&gt;node1721</title>
+<!-- node315&#45;&gt;node317 -->
+<g id="edge22" class="edge"><title>node315&#45;&gt;node317</title>
 <path fill="none" stroke="#9a32cd" d="M2128.74,-152C2338.1,-152 2664.14,-152 2877.16,-152"/>
 <polygon fill="#9a32cd" stroke="#9a32cd" points="2887.22,-152 2877.22,-156.5 2882.22,-152 2877.22,-152 2877.22,-152 2877.22,-152 2882.22,-152 2877.22,-147.5 2887.22,-152 2887.22,-152"/>
 </g>
-<!-- node1722 -->
-<g id="node15" class="node"><title>node1722</title>
+<!-- node318 -->
+<g id="node15" class="node"><title>node318</title>
 <ellipse fill="#ffffcc" stroke="black" cx="3089" cy="-46" rx="302.141" ry="43.8406"/>
 <text text-anchor="middle" x="3089" y="-60.4" font-family="Times Roman,serif" font-size="14.00">Place</text>
 <text text-anchor="middle" x="3089" y="-42.4" font-family="Times Roman,serif" font-size="14.00">(HERAKLES_HUMAN1 GLUE_BOTTLE PLACEMENT_WL1_1 )</text>
 <text text-anchor="middle" x="3089" y="-24.4" font-family="Times Roman,serif" font-size="14.00">[60, 70]</text>
 </g>
-<!-- node1720&#45;&gt;node1722 -->
-<g id="edge24" class="edge"><title>node1720&#45;&gt;node1722</title>
+<!-- node316&#45;&gt;node318 -->
+<g id="edge24" class="edge"><title>node316&#45;&gt;node318</title>
 <path fill="none" stroke="#9a32cd" d="M2747.25,-55.9996C2758.74,-55.6633 2770.34,-55.3239 2781.98,-54.9834"/>
 <polygon fill="#9a32cd" stroke="#9a32cd" points="2792.21,-54.6839 2782.35,-59.4746 2787.22,-54.8302 2782.22,-54.9765 2782.22,-54.9765 2782.22,-54.9765 2787.22,-54.8302 2782.09,-50.4784 2792.21,-54.6839 2792.21,-54.6839"/>
 </g>
-<!-- node1720&#45;&gt;node1721 -->
-<g id="edge23" class="edge"><title>node1720&#45;&gt;node1721</title>
+<!-- node316&#45;&gt;node317 -->
+<g id="edge23" class="edge"><title>node316&#45;&gt;node317</title>
 <path fill="none" stroke="#9a32cd" d="M2693.43,-91.4049C2764.02,-102.218 2844.17,-114.495 2913.78,-125.159"/>
 <polygon fill="#9a32cd" stroke="#9a32cd" points="2923.97,-126.72 2913.4,-129.654 2919.03,-125.963 2914.08,-125.206 2914.08,-125.206 2914.08,-125.206 2919.03,-125.963 2914.77,-120.757 2923.97,-126.72 2923.97,-126.72"/>
 </g>
-<!-- node1763 -->
-<g id="node26" class="node"><title>node1763</title>
+<!-- node359 -->
+<g id="node26" class="node"><title>node359</title>
 <ellipse fill="#ffffcc" stroke="black" cx="5525" cy="-99" rx="288" ry="43.8406"/>
 <text text-anchor="middle" x="5525" y="-113.4" font-family="Times Roman,serif" font-size="14.00">Pick</text>
 <text text-anchor="middle" x="5525" y="-95.4" font-family="Times Roman,serif" font-size="14.00">(HERAKLES_HUMAN1 BRACKET_1 PLACEMENT_WL1_2 )</text>
 <text text-anchor="middle" x="5525" y="-77.4" font-family="Times Roman,serif" font-size="14.00">[101, 111]</text>
 </g>
-<!-- node1722&#45;&gt;node1763 -->
-<g id="edge26" class="edge"><title>node1722&#45;&gt;node1763</title>
+<!-- node318&#45;&gt;node359 -->
+<g id="edge26" class="edge"><title>node318&#45;&gt;node359</title>
 <path fill="none" stroke="#9a32cd" d="M3386.35,-54.2012C3568.89,-58.5484 3807.45,-63 4019,-63 4019,-63 4019,-63 4481,-63 4738.84,-63 5032.29,-74.1032 5242.27,-83.9771"/>
 <polygon fill="#9a32cd" stroke="#9a32cd" points="5252.51,-84.4612 5242.31,-88.4843 5247.52,-84.2252 5242.53,-83.9893 5242.53,-83.9893 5242.53,-83.9893 5247.52,-84.2252 5242.74,-79.4943 5252.51,-84.4612 5252.51,-84.4612"/>
 </g>
-<!-- node1760 -->
-<g id="node18" class="node"><title>node1760</title>
+<!-- node356 -->
+<g id="node18" class="node"><title>node356</title>
 <ellipse fill="#cce6ff" stroke="black" cx="3586" cy="-147" rx="157.184" ry="43.8406"/>
 <text text-anchor="middle" x="3586" y="-161.4" font-family="Times Roman,serif" font-size="14.00">TravelTo</text>
 <text text-anchor="middle" x="3586" y="-143.4" font-family="Times Roman,serif" font-size="14.00">(PR2_ROBOT STOCK_TABLE )</text>
 <text text-anchor="middle" x="3586" y="-125.4" font-family="Times Roman,serif" font-size="14.00">[61, 71]</text>
 </g>
-<!-- node1721&#45;&gt;node1760 -->
-<g id="edge25" class="edge"><title>node1721&#45;&gt;node1760</title>
+<!-- node317&#45;&gt;node356 -->
+<g id="edge25" class="edge"><title>node317&#45;&gt;node356</title>
 <path fill="none" stroke="#9a32cd" d="M3290.43,-149.974C3332.94,-149.546 3377.35,-149.099 3418.45,-148.686"/>
 <polygon fill="#9a32cd" stroke="#9a32cd" points="3428.55,-148.584 3418.59,-153.184 3423.55,-148.634 3418.55,-148.685 3418.55,-148.685 3418.55,-148.685 3423.55,-148.634 3418.5,-144.185 3428.55,-148.584 3428.55,-148.584"/>
 </g>
-<!-- node1761 -->
-<g id="node20" class="node"><title>node1761</title>
+<!-- node357 -->
+<g id="node20" class="node"><title>node357</title>
 <ellipse fill="#cce6ff" stroke="black" cx="4019" cy="-139" rx="237.795" ry="43.8406"/>
 <text text-anchor="middle" x="4019" y="-153.4" font-family="Times Roman,serif" font-size="14.00">Pick</text>
 <text text-anchor="middle" x="4019" y="-135.4" font-family="Times Roman,serif" font-size="14.00">(PR2_ROBOT BRACKET_1 PLACEMENT_ST_1 )</text>
 <text text-anchor="middle" x="4019" y="-117.4" font-family="Times Roman,serif" font-size="14.00">[71, 81]</text>
 </g>
-<!-- node1760&#45;&gt;node1761 -->
-<g id="edge28" class="edge"><title>node1760&#45;&gt;node1761</title>
+<!-- node356&#45;&gt;node357 -->
+<g id="edge28" class="edge"><title>node356&#45;&gt;node357</title>
 <path fill="none" stroke="#9a32cd" d="M3743.24,-144.095C3752.58,-143.922 3762.07,-143.747 3771.65,-143.57"/>
 <polygon fill="#9a32cd" stroke="#9a32cd" points="3781.66,-143.385 3771.74,-148.069 3776.66,-143.477 3771.66,-143.57 3771.66,-143.57 3771.66,-143.57 3776.66,-143.477 3771.58,-139.071 3781.66,-143.385 3781.66,-143.385"/>
 </g>
-<!-- node1762 -->
-<g id="node22" class="node"><title>node1762</title>
+<!-- node358 -->
+<g id="node22" class="node"><title>node358</title>
 <ellipse fill="#cce6ff" stroke="black" cx="4481" cy="-138" rx="186.176" ry="43.8406"/>
 <text text-anchor="middle" x="4481" y="-152.4" font-family="Times Roman,serif" font-size="14.00">TravelTo</text>
 <text text-anchor="middle" x="4481" y="-134.4" font-family="Times Roman,serif" font-size="14.00">(PR2_ROBOT WORK_LOCATION_1 )</text>
 <text text-anchor="middle" x="4481" y="-116.4" font-family="Times Roman,serif" font-size="14.00">[81, 91]</text>
 </g>
-<!-- node1761&#45;&gt;node1762 -->
-<g id="edge29" class="edge"><title>node1761&#45;&gt;node1762</title>
+<!-- node357&#45;&gt;node358 -->
+<g id="edge29" class="edge"><title>node357&#45;&gt;node358</title>
 <path fill="none" stroke="#9a32cd" d="M4257.78,-138.483C4266.57,-138.464 4275.35,-138.445 4284.06,-138.426"/>
 <polygon fill="#9a32cd" stroke="#9a32cd" points="4294.25,-138.404 4284.26,-142.926 4289.25,-138.415 4284.25,-138.426 4284.25,-138.426 4284.25,-138.426 4289.25,-138.415 4284.24,-133.926 4294.25,-138.404 4294.25,-138.404"/>
 </g>
-<!-- node1756 -->
-<g id="node24" class="node"><title>node1756</title>
+<!-- node352 -->
+<g id="node24" class="node"><title>node352</title>
 <ellipse fill="#cce6ff" stroke="black" cx="4952" cy="-136" rx="248.194" ry="43.8406"/>
 <text text-anchor="middle" x="4952" y="-150.4" font-family="Times Roman,serif" font-size="14.00">Place</text>
 <text text-anchor="middle" x="4952" y="-132.4" font-family="Times Roman,serif" font-size="14.00">(PR2_ROBOT BRACKET_1 PLACEMENT_WL1_2 )</text>
 <text text-anchor="middle" x="4952" y="-114.4" font-family="Times Roman,serif" font-size="14.00">[91, 101]</text>
 </g>
-<!-- node1762&#45;&gt;node1756 -->
-<g id="edge30" class="edge"><title>node1762&#45;&gt;node1756</title>
+<!-- node358&#45;&gt;node352 -->
+<g id="edge30" class="edge"><title>node358&#45;&gt;node352</title>
 <path fill="none" stroke="#9a32cd" d="M4667.49,-137.208C4676.08,-137.172 4684.76,-137.135 4693.48,-137.098"/>
 <polygon fill="#9a32cd" stroke="#9a32cd" points="4703.74,-137.054 4693.76,-141.597 4698.74,-137.075 4693.74,-137.097 4693.74,-137.097 4693.74,-137.097 4698.74,-137.075 4693.72,-132.597 4703.74,-137.054 4703.74,-137.054"/>
 </g>
-<!-- node1756&#45;&gt;node1763 -->
-<g id="edge27" class="edge"><title>node1756&#45;&gt;node1763</title>
+<!-- node352&#45;&gt;node359 -->
+<g id="edge27" class="edge"><title>node352&#45;&gt;node359</title>
 <path fill="none" stroke="#9a32cd" d="M5185.06,-120.951C5206.06,-119.595 5227.45,-118.213 5248.77,-116.837"/>
 <polygon fill="#9a32cd" stroke="#9a32cd" points="5258.89,-116.183 5249.2,-121.318 5253.9,-116.506 5248.91,-116.828 5248.91,-116.828 5248.91,-116.828 5253.9,-116.506 5248.62,-112.337 5258.89,-116.183 5258.89,-116.183"/>
 </g>
-<!-- node1764 -->
-<g id="node28" class="node"><title>node1764</title>
+<!-- node360 -->
+<g id="node28" class="node"><title>node360</title>
 <ellipse fill="#ffffcc" stroke="black" cx="6153" cy="-99" rx="302.141" ry="43.8406"/>
 <text text-anchor="middle" x="6153" y="-113.4" font-family="Times Roman,serif" font-size="14.00">AttachBracket</text>
 <text text-anchor="middle" x="6153" y="-95.4" font-family="Times Roman,serif" font-size="14.00">(HERAKLES_HUMAN1 BRACKET_1 ASSEMBLY_SURFACE_1 )</text>
 <text text-anchor="middle" x="6153" y="-77.4" font-family="Times Roman,serif" font-size="14.00">[111, 131]</text>
 </g>
-<!-- node1763&#45;&gt;node1764 -->
-<g id="edge31" class="edge"><title>node1763&#45;&gt;node1764</title>
+<!-- node359&#45;&gt;node360 -->
+<g id="edge31" class="edge"><title>node359&#45;&gt;node360</title>
 <path fill="none" stroke="#9a32cd" d="M5813.73,-99C5822.41,-99 5831.12,-99 5839.83,-99"/>
 <polygon fill="#9a32cd" stroke="#9a32cd" points="5850.05,-99 5840.05,-103.5 5845.05,-99 5840.05,-99.0001 5840.05,-99.0001 5840.05,-99.0001 5845.05,-99 5840.05,-94.5001 5850.05,-99 5850.05,-99"/>
 </g>

@@ -39,6 +39,10 @@
 (MonitorManager.isActive TRUE)
 
 (Manipulation.moduleName GtpActions)
+
+(PlanManager.humanActionManagement LEAF)
+(PlanManager.selfActionManagement SEED)
+
 ;;Joints
 (Robot.joints HEAD)
 (Robot.joints BASE)

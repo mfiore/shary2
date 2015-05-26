@@ -106,13 +106,13 @@
                                 (IF(?(PlanManager.selfActionManagement SEED))
                                    (=>(PlanManager.manageRobotActionsSeed (VAL @agentActions)))
                                    ELSE
-                                   (=>(PlanManager.manageRobotActions (VAL @agentActions)))
-                                )
-                                ELSE
-                                (=>(PlanManager.manageOtherRobotActions (VAL @agentName) (VAL @agentActions) ))
-                                )
-				     
-                             )
+                                   (=>(PlanManager.manageRobotActions (VAL @agentActions)))33333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333333330222222222222222222222222222222222222222222222222222222222
+
+                                   ..........................................................++
+
+                                   +
+                                   +++++++999999999988
+                                   )
                           )
 	    
 			    

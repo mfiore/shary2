@@ -5,38 +5,52 @@
 (
 
 (defop |init|
-  :invocation (!(POMDP.init @name @xState $action $yState))
+  :invocation (!(POMDP.init @name @xState $action))
   :documentation "Creates a new POMDP and inits it with @xState, returning $action. "
   :body (
 	 (?(POMDP.timeToWait @time))
-	 (!(= @message (init @xState)))
-	 (!(SEND-MESSAGE @name @message))
-	 (^(|| (POMDP.response @name @tempAction $yState) (ELAPSED-TIME (TIME) @time )))
-	 (IF(?(~(BOUNDP @tempAction)))
-	    (!(= $action -1))
-	    
-	    ELSE
-	    (?(POMDP.action (VAL @name) (VAL @tempAction) $action))
-	   
-	    )
-	 	 
-	 )
+     (!(= @message (controlpipe.update  1 @xState " ")))
+     (!(SEND-MESSAGE @name @message))
+
+     (!(= @reportName (TERM-STRING-CAT @name ".report")))
+     (!(= @reportName (MAKE-ATOM @reportName)))
+     (!(= @resultName (TERM-STRING-CAT @name ".result")))
+     (!(= @resultName (MAKE-ATOM @resultName)))
+     (^(|| (@reportName @report) (ELAPSED-TIME (TIME) @time )))
+     (IF(?(EQUAL @report OK))
+        (^(@resultName @tempAction))
+        (?(POMDP.action (VAL @name) (VAL @tempAction) $action))
+
+        ELSE
+        (!(= $action -1))
+        )
+
+     )
+
   )
 
+
 (defop |update|
-  :invocation (!(POMDP.update @name @xState @obs $action $yState))
+  :invocation (!(POMDP.update @name @xState @obs $action))
   :documentation "Updates the pomdp @name with @xState and y@State and returns $action"
   :body (
-	 (?(POMDP.timeToWait @time))
-	 (!(= @message (update @obs @xState)))
-	 (!(SEND-MESSAGE @name @message))
-	 (^(|| (POMDP.response @name @tempAction $yState) (ELAPSED-TIME (TIME) @time)))
-	 (IF(?(~(BOUNDP @tempAction)))
-	    (!(= $action -1))	    
-	    
-	    ELSE
-	    (?(POMDP.action (VAL @name) (VAL @tempAction) $action))
-	    )
+         (?(POMDP.timeToWait @time))
+         (!(= @message (controlpipe.update 2 @xState @obs)))
+         (!(SEND-MESSAGE @name @message))
+
+         (!(= @reportName (TERM-STRING-CAT @name ".report")))
+         (!(= @reportName (MAKE-ATOM @reportName)))
+         (!(= @resultName (TERM-STRING-CAT @name ".result")))
+         (!(= @resultName (MAKE-ATOM @resultName)))
+         (^(|| (@reportName @report) (ELAPSED-TIME (TIME) @time )))
+         (IF(?(EQUAL @report OK))
+            (^(@resultName @tempAction))
+            (?(POMDP.action (VAL @name) (VAL @tempAction) $action))
+
+            ELSE
+            (!(= $action -1))
+            )
+
 	 )
   
   )

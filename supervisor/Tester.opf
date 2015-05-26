@@ -5,7 +5,39 @@
 ;system.
 
 
+
 (
+
+ (defop |testRecursion|
+   :invocation(!(Tester.testRecursion @i))
+   :body (
+          (!(PRINT @i))
+          (IF(?(< @i 5))
+             (!(Tester.testRecursion (+ @i 1)))
+             )
+          )
+
+   )
+
+ (defop |testPlanAttention|
+   :invocation(!(Tester.testPlanAttentional))
+   :body (
+          (!(PlannerInterface.init))
+          (=>(PlannerInterface.getPlan HandleSurface  (. ASSEMBLY_SURFACE_1 .) ))  ;;we ask for a plan
+          (^(PlannerInterface.report @report))
+          (~>(PlannerInterface.report (VAL @report)))
+          (IF(?(EQUAL @report OK))
+             (^(PlannerInterface.result @plan))
+             (~>(PlannerInterface.result (VAL @plan)))
+             (!(= @robot (CAR @plan)))
+             (!(= @plan (CDR @plan)))
+             (!(= @human (CAR @plan)))
+
+             (!(SEND-MESSAGE attentional (Plan.result @human)))
+             )
+          )
+
+   )
 
 
  (defop |testMapSwitch|

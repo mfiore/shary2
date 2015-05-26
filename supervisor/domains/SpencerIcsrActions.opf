@@ -1,0 +1,92 @@
+
+;; -*-Lisp-*-
+;;author: Michelangelo Fiore
+;;this module contains high-level actions like take an item, give, drop.
+
+(
+
+ (defop |guideObservations|
+   :invocation(!(IcsrGuide.getObservations $obs))
+   :body (
+          (?(Robot.name @robotName))
+
+          (!(DatabaseInterface.findList (AGENT-STATEMENT (VAL @robotName) Human_Centroid distance @d) (. @d .) @result))
+          (!(= @distance (CAR(CAR @result))))
+
+          (IF(?(EQUAL @distance outOfRange))
+             (!(= @orientation unknown))
+             (!(= @deltaDistance increasing))
+             (!(= @isMoving unknown))
+
+             ELSE
+             (!(DatabaseInterface.findList (AGENT-STATEMENT (VAL @robotName) Human_Centroid deltaDistanceSpencer @dd) (. @dd .) @result))
+             (IF(?(~(NULL @result)))
+                (!(= @deltaDistance (CAR(CAR @result))))
+
+                ELSE
+                (!(= @deltaDistance stable))
+                )
+
+             (!(DatabaseInterface.findList (AGENT-STATEMENT (VAL @robotName) Human_Centroid isFacing @o) (. @o .) @result))
+             (IF(?(~(NULL @result)))
+                (!(= @orientation(CAR(CAR @result))))
+
+                ELSE
+                (!(= @orientation facingRobot))
+                )
+
+             (!(DatabaseInterface.findList (AGENT-STATEMENT (VAL @robotName) Human_Centroid isMoving @im) (. @im .) @result))
+             (IF(?(~(NULL @result)))
+                (!(= @isMoving (CAR(CAR @result))))
+
+                ELSE
+                (!(= @isMoving true))
+                )
+             )
+
+
+          (!(= $obs (TERM-STRING-CAT @deltaDistance @distance @orientation @isMoving)))
+
+          )
+   )
+    (defop |icsrGuide|
+           :invocation(ExecutionManager.execute icsrGuide @executionId)
+           :body (
+                  (!(= @goal (. 0 0 0 .)))
+                  (!(= @base (. 16 5 0 .)))
+
+                  (?(Robot.name @robotName))
+
+                  (!(= @timer "ok"))
+                  (!(= @isMoving FALSE))
+
+                  (!(POMDP.init guideModel (VAL @timer) @guideAction))
+
+
+                  (WHILE(?(~(EQUAL @guideAction ABANDON)))
+                        (IF(?(EQUAL @guideAction CONTINUE))
+                           (IF(?(EQUAL @isMoving FALSE))
+                              (!(= @isMoving TRUE))
+                              (!(BaseActions.getFreeId @goId))
+                              (=>(BaseActions.action move (. @goal .) @goId))
+                              )
+
+                           ELSEIF(?(EQUAL @guideAction WAIT))
+                           (IF(?(EQUAL @isMoving TRUE))
+                              (=>(BaseActions.stop @goId))
+                              (^(BaseActions.report (VAL @goId) @report))
+                              (~>(BaseActions.report (VAL @goId) (VAL @report)))
+                              )
+                           )
+
+                        (^(ELAPSED-TIME (TIME) 1))
+                        (!(IcsrGuide.getObservations @obs))
+                        (!(POMDP.update guideModel (VAL @timer) (VAL @obs) @guideAction))
+                        )
+                  (=>(BaseActions.stop @goId))
+                  (^(BaseActions.report (VAL @goId) @report))
+                  (~>(BaseActions.report (VAL @goId) (VAL @report)))
+                  )
+           )
+
+)

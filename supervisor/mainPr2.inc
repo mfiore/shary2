@@ -54,7 +54,7 @@ include "supervisor/robot/BaseActions.sym"
 
 load db "supervisor/robot/PlanManager.db"
 ;load db "supervisor/robot/PlannerInterface.db"
-load db "supervisor/robot/Robot.db"
+;load db "supervisor/robot/Robot.db"
 
 load db "supervisor/robot/PathPlanner.db"
 load db "supervisor/robot/BaseActions.db"
