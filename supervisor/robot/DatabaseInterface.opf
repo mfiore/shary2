@@ -122,13 +122,13 @@ $unboundVariables= lisp-list containing the variables for which we want to find 
    )
 )
  (defop |addMonitor|
-   :invocation (!(DatabaseInterface.addMonitor $factToMonitor $event $result))
+   :invocation (!(DatabaseInterface.addMonitor $factsToMonitor $event $result))
    :documentation "this procedure sets up a monitor for a given fact. When this fact is first added to the Database it returns $eventName to the current kernel. $fact and $event are both composed terms"
    :body (
 	  (!(SEM-P DatabaseInterface.sem))
 	  (? (ONTO_NAME $ONTO_NAME))
 	  (? (SUP_NAME $SUP_NAME))
-	  (!(SEND-MESSAGE $ONTO_NAME (Database.addMonitor (VAL $factToMonitor) (VAL $event) $SUP_NAME)))
+	  (!(SEND-MESSAGE $ONTO_NAME (Database.addMonitor (VAL $factsToMonitor) (VAL $event) $SUP_NAME)))
 	  (!(DatabaseInterface.getResult $result))
 	  (!(SEM-V DatabaseInterface.sem))
 	  

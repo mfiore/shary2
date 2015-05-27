@@ -12,6 +12,7 @@ declare be Database.registerToChanges
 declare be Database.cancelRegisterToChanges
 declare be Database.set
 declare be Database.addSetRemoveFacts
+declare ff Database.freeId 1
 
 declare ff Database.lastAgent 0
 declare cwp AGENT-STATEMENT 

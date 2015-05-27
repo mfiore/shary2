@@ -7,6 +7,24 @@
 
 (
 
+
+  (defop |getMonitorId|
+    :invocation (!(Database.getMonitorId $returnId))
+    :body (
+      (IF(?(Database.freeId @id))
+        (!(= $returnId @id ))
+        (=>(Database.freeId (+ @id 1)))
+
+        ELSE
+        (!(= $returnId 0))
+        (=>(Database.freeId 1))
+
+        )
+
+      )
+
+    )
+
  (defop |registerConnection|
    :invocation(Database.connect @name)
    :body (
@@ -215,9 +233,35 @@ $unboundVariables= lisp-list containing the variables for which we want to find 
 
 
 
+ (defop |checkMonitoring|
+  :invocation(!(Database.checkMonitoring @receivedFact))
+  :body (
+   (?(Robot.name @robotName))
+   (?(Database.supervisorName @supName))
 
+   (IF(?(toMonitor (VAL @receivedFact) @monitorId))
+     (!(= @ok TRUE))
+     (?(monitorList @factList (VAL @monitorId) @event))
+     (WHILE(?(&(EQUAL @ok TRUE) (~(NULL @factList))))
+       (!(= @ok FALSE))
 
+       (!(= @fact (CAR @factList)))
+       (!(= @factList (CDR @factList)))
 
+       (!(== (VAL @fact) (AGENT-STATEMENT (VAL @robotName) @subject @predicate @value)))
+       (IF(?(AGENT-STATEMENT (VAL @robotName) (VAL @subject) (VAL @predicate) (VAL @value)))
+        (!(= @ok TRUE))
+        )
+       )
+     (IF(?(EQUAL @ok TRUE))
+      (!(SEND-MESSAGE (VAL @supName) (VAL @event)))
+      )
+
+     )
+
+   )
+
+  )
  
  (defop |addLocal|
    :invocation (!(Database.add @fact))
@@ -231,9 +275,8 @@ $unboundVariables= lisp-list containing the variables for which we want to find 
 		   (!(= @newFact (CAR @newFactList)))
 		   (!(= @newFactList (CDR @newFactList)))
 		   (=>(VAL @newFact))
-		   (IF(? (toMonitor (VAL @newFact) @event))
-		      (! (SEND-MESSAGE @supName @event))
-              )
+           (!(Database.checkMonitoring @newFact))
+
            (!(== (VAL @newFact) (AGENT-STATEMENT @agent @subject @predicate @value)))
            (IF(?(Database.checkChanges (AGENT-STATEMENT (VAL @agent) (VAL @subject) (VAL @predicate)) @event @caller))
               (!(SEND-MESSAGE @caller (Database.valueChange @event @value)))
@@ -244,10 +287,9 @@ $unboundVariables= lisp-list containing the variables for which we want to find 
          (IF(?(Database.checkChanges (AGENT-STATEMENT (VAL @agent) (VAL @subject) (VAL @predicate)) @event @caller))
             (!(SEND-MESSAGE @caller (Database.valueChange @event @value)))
             )
-	     
-	     (IF (? (toMonitor (VAL @fact) @event))
-		 (! (SEND-MESSAGE @supName @event))
-		 )
+
+         (!(Database.checkMonitoring @fact))
+
 
          (IF(?(Database.isConnected @name))
             (!(SEND-MESSAGE @name (Database.nfacts 1)))
@@ -303,15 +345,11 @@ $unboundVariables= lisp-list containing the variables for which we want to find 
 	 (WHILE(?(~(NULL @newFactList)))
 	       (!(= @newFact (CAR @newFactList)))
 	       (!(= @newFactList (CDR @newFactList)))
-	       (IF(? (toMonitor (~(VAL @newFact)) @event))
-		  (! (SEND-MESSAGE @supName @event))
-		  )
+           ;(!(Database.checkMonitoring @newFact))
 ;	       (!(PRINT @newFact))
 	       (~>(VAL @newFact))
 	       )
-	 (IF(? (toMonitor (~(VAL @fact)) @event))
-	    (! (SEND-MESSAGE @supName @event))
-	    )
+     ;(!(Database.checkMonitoring @false))
 ;	 (!(PRINT @fact))
 	 (~> (VAL @fact))
      (IF(?(Database.isConnected @name))
@@ -350,28 +388,41 @@ $unboundVariables= lisp-list containing the variables for which we want to find 
          )
   )
  (defop |monitorFact|
-   :invocation (Database.addMonitor @factToMonitor @event @caller)
+   :invocation (Database.addMonitor @factsToMonitor @event @caller)
    :documentation "this procedure sets up a monitor for a given fact. When this fact is first added to the Database it returns $eventName to the current kernel. $fact and $event are both composed terms"
    :body (
 	  
-	  (IF (?(toMonitor (VAL @factToMonitor) @anEvent))
+      (IF (?(monitorList (VAL @factsToMonitor) @anEvent))
 	      (!(SEND-MESSAGE @caller (Database.result (. ERROR .))))
 	      
-	      ELSE
-	      (=> (toMonitor (VAL @factToMonitor) (VAL @event)))
+          ELSE
+          (!(Database.getMonitorId @monitorId))
+          (=>(monitorList (VAL @factsToMonitor) (VAL @monitorId) (VAL @event)))
+          (WHILE(?(~(NULL @factsToMonitor)))
+                (!(= @aFact (CAR @factsToMonitor)))
+                (!(= @factsToMonitor (CDR @factsToMonitor)))
+                (=> (toMonitor (VAL @aFact) (VAL @monitorId)))
+                )
+
 	      (!(SEND-MESSAGE @caller (Database.result (. OK .))))
 	      
 	      )	  
 	  )
    )
  (defop |removeMonitorFact|
-   :invocation (Database.removeMonitor @factToMonitor @caller)
+   :invocation (Database.removeMonitor @factsToMonitor @caller)
    :documentation "this procedure removes a monitor for a given fact."
    :body (
-	  
-	  (~> (toMonitor (VAL @factToMonitor) @event))
-	  (!(SEND-MESSAGE @caller (Database.result (. OK .))))	  
-	  )
+
+          (?(monitorList (VAL @factsToMonitor) @monitorId @event))
+          (~>(monitorList (VAL @factsToMonitor) (VAL @monitorId) (VAL @event)))
+
+          (WHILE(?(toMonitor @fact (VAL @monitorId)))
+                (~>(toMonitor (VAL @fact) (VAL @monitorId)))
+                )
+
+          (!(SEND-MESSAGE @caller (Database.result (. OK .))))
+          )
    )
 
 

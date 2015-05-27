@@ -16,15 +16,15 @@
 
 
  (PlannerInterface.action hatp TravelTo go)
-(PlannerInterface.action hatp Handover handover)
+ (PlannerInterface.action hatp Handover handover)
  (PlannerInterface.action hatp Pick take)
  (PlannerInterface.action hatp Place place)
-  (PlannerInterface.action hatp Clean clean)
-  (PlannerInterface.action hatp Glue glue)
-    (PlannerInterface.action hatp AttachBracket attachBracket)
-    (PlannerInterface.action hatp StartPointing pointTo)
-(PlannerInterface.action hatp StopPointing undefined)
-(PlannerInterface.action hatp CarryTo go)
+ (PlannerInterface.action hatp Clean clean)
+ (PlannerInterface.action hatp Glue glue)
+ (PlannerInterface.action hatp AttachBracket attachBracket)
+ (PlannerInterface.action hatp StartPointing pointTo)
+ (PlannerInterface.action hatp StopPointing undefined)
+ (PlannerInterface.action hatp CarryTo go)
 
 
 (PlannerInterface.parameterLinks hatp Pick (. 0 1 .))

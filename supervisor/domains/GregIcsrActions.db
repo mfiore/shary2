@@ -8,15 +8,71 @@
 
  (Actions.nParameters applyOperation 2)
  (Actions.nParameters placeOnStack 3)
+ (Actions.nParameters applyOperation 2)
+ (Actions.nParameters buildStack 0)
+ (Actions.nParameters handle 3)
+ (Actions.nParameters applyFirstOperations 2)
+ (Actions.nParameters applySecondOperations 2)
+ (Actions.nParameters applyOperationMethod 2)
+
 
  (PlannerInterface.action hatp Pick take)
  (PlannerInterface.action hatp Place place)
  (PlannerInterface.action hatp PlaceOnStack placeOnStack)
  (PlannerInterface.action hatp Apply applyOperation)
+ (PlannerInterface.action hatp BuildStack buildStack)
+ (PlannerInterface.action hatp Handle handle)
+ (PlannerInterface.action hatp ApplyFirstOperations applyFirstOperations)
+ (PlannerInterface.action hatp ApplySecondOperations applySecondOperations)
+ (PlannerInterface.action hatp ApplyOperation applyOperationMethod)
+
  (PlannerInterface.parameterLinks hatp Pick (. 0 1 .))
  (PlannerInterface.parameterLinks hatp Place (. 0 1 2 .))
  (PlannerInterface.parameterLinks hatp PlaceOnStack (. 0 1 2 .))
- (PlannerInterface.parameterLinks hatp Apply (. 0 1  .))
+ (PlannerInterface.parameterLinks hatp Apply (. 0 1 .))
+ (PlannerInterface.parameterLinks hatp BuildStack (. 0 .))
+ (PlannerInterface.parameterLinks hatp Handle (. 0 1 2 .))
+ (PlannerInterface.parameterLinks hatp ApplyFirstOperations (. 0 1 .))
+ (PlannerInterface.parameterLinks hatp ApplySecondOperations (. 0 1 .))
+ (PlannerInterface.parameterLinks hatp ApplyOperation (. 0 1 2 .))
+ 
+
+ (Actions.monitorInformation pick (. (SUBJECT TYPE ID 0 PREDICATE hasInHand VALUE TYPE ID 1) .) 60 )
+ (Actions.monitorInformation place (. (SUBJECT TYPE ID 1 PREDICATE isOn VALUE TYPE ID 2) .) 60)
+ (Actions.monitorInformation placeOnStack (. (SUBJECT TYPE ID 1 PREDICATE isOn VALUE TYPE SYMBOL StackArea) .) 60)
+ (Actions.monitorInformation applyOperation (. (SUBJECT TYPE ID 1 PREDICATE isDone VALUE TYPE SYMBOL true) .) 60)
+ (Actions.monitorInformation buildStack (. (SUBJECT TYPE SYMBOL Green_Cube  PREDICATE isOn VALUE TYPE SYMBOL StackArea ) 
+ 	                                       (SUBJECT TYPE SYMBOL Red_Cube  PREDICATE isOn  VALUE TYPE SYMBOL StackArea) 
+ 	                                       (SUBJECT TYPE SYMBOL Blue_Cube PREDICATE isOn  VALUE TYPE SYMBOL STACK_AREA) .) )
+ (Actions.monitorInformation handle (. (SUBJECT TYPE ID 1 PREDICATE isOnStack VALUE TYPE SYMBOL TRUE)
+ 									    .) 60)
+ (Actions.monitorInformation applyOperationMethod (. (SUBJECT TYPE ID 1 PREDICATE isDone VALUE TYPE SYMBOL true) .) 60)
+
+
+ (Actions.monitorInformationParameters applyFirstOperations (. 1 .))
+ (Actions.monitorInformationParameters applySecondOperations (. 1 .))
+ (Actions.monitorInformation applyFirstOperations  (. Green_Cube .) (. (SUBJECT TYPE SYMBOL Smoothen PREDICATE isDone VALUE TYPE SYMBOL true) .) 60)
+ (Actions.monitorInformation applyFirstOperations (. Red_Cube .)(.(SUBJECT TYPE SYMBOL Polish PREDICATE isDone VALUE TYPE SYMBOL true) .) 60)
+ (Actions.monitorInformation applyFirstOperations (. Blue_Cube .)(. (SUBJECT TYPE SYMBOL Clean PREDICATE isDone VALUE TYPE SYMBOL true) .) 60)
+ (Actions.monitorInformation applySecondOperations (. Red_Cube .)(. (SUBJECT TYPE
+  SYMBOL Glue_Red PREDICATE isDone VALUE TYPE SYMBOL true) .) 60)
+ (Actions.monitorInformation applySecondOperations (. Green_Cube .)(. (SUBJECT TYPE SYMBOL Glue_Green PREDICATE isDone VALUE TYPE SYMBOL true) .) 60)
+
+
+ (Actions.knowledgeParametersType take (. TYPE .))
+ (Actions.knowledgeParametersType place (. TYPE TYPE .))
+ (Actions.knowledgeParametersType placeOnStack (. CLASS CLASS .))
+ (Actions.knowledgeParametersType apply (. VALUE .))
+ (Actions.knowledgeParametersType buildStack (. .))
+ (Actions.knowledgeParametersType handle (. VALUE TYPE .))
+ (Actions.knowledgeParametersType applyFirstOperations (. VALUE .))
+ (Actions.knowledgeParametersType applySecondOperations (. VALUE .))
+ (Actions.knowledgeParametersType applyOperationMethod (. VALUE CLASS  .))
+
+
+
+
+
 
 (Acapela.translation take "take")
 (Acapela.translation place "place")

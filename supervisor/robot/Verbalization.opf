@@ -1,0 +1,52 @@
+;; -*-Lisp-*-
+;;author: Michelangelo Fiore
+;;this files contains procedures to manage plans in the supervision 
+
+(
+
+(defop	|Greet|
+	:invocation(!(Verbalization.greet))
+	:body (
+		(?(Verbalization.bridgeName @bridgeName))
+		(!(SEND-MESSAGE @bridgeName (Verbalization.request init_speech)))
+
+		)
+	)
+(defop |InitPlan|
+	:invocation(!(Verbalization.initPlan))
+	:body (
+		(?(Verbalization.bridgeName @bridgeName))
+		(!(SEND-MESSAGE @bridgeName (Verbalization.request init_plan)))
+		)
+	)
+(defop |VerbalizeCurrentPlan|
+	:invocation(!(Verbalization.verbalizePlan))
+	:body (
+		(?(Verbalization.bridgeName @bridgeName))
+		(!(SEND-MESSAGE @bridgeName (Verbalization.request verbalize_current_plan)))
+		)
+	)
+(defop |VerbalizeReplan|
+	:invocation(!(Verbalization.verbalizeReplan))
+	:body (
+		(?(Verbalization.bridgeName @bridgeName))
+		(!(SEND-MESSAGE @bridgeName (Verbalization.request replan)))
+		)
+
+	)
+(defop |VerbalizeStartAction|
+	:invocation(!(Verbalization.verbalizeStartAction @actionId))
+	:body (
+		(?(Verbalization.bridgeName @bridgeName))
+		(!(SEND-MESSAGE @bridgeName (Verbalization.request init_execution @actionId)))
+		)
+
+	)
+(defop |VerbalizeEndAction|
+	:invocation(!(Verbalization.verbalizeEndAction @actionId))
+	:body (
+		(?(Verbalization.bridgeName @bridgeName))
+		(!(SEND-MESSAGE @bridgeName (Verbalization.request end_execution @actionId)))
+		)
+	)
+)

@@ -21,6 +21,130 @@
 	  )
    )
 
+
+ (defop |parseHatpTree|
+ 	:invocation(!(PlannerInterface.parseHatpTree @root $parsedTree))
+ 	:body(
+ 		(?(Robot.name @robotName))
+ 		;(!(Tester.breakpoint))
+ 		(!(== (VAL @root) (TASK
+ 			(TYPE @taskType)
+ 			(TASK-ID @taskId)
+ 			(TASK-NAME @hatpTaskName)
+ 			(ACTORS @actorList)
+ 			(PARAMETERS @parameters)
+ 			(SUBNODES @subNodes)
+ 			)
+ 		))
+ 		(IF(?(PlannerInterface.action hatp (VAL @hatpTaskName) @taskName))   
+ 			(?(PlannerInterface.parameterLinks hatp (VAL @hatpTaskName) @parameterLinks))
+ 			(?(Actions.nParameters (VAL @taskName) @n))
+
+ 			(!(= @i 0))
+ 			(!(= @actionParameters (. .)))
+ 			(WHILE(?(< @i @n))
+ 				(!(= @aLink (CAR @parameterLinks)))
+ 				(!(= @parameterLinks (CDR @parameterLinks)))
+
+ 				(!(PlanManager.getParameter @parameters @aLink @aParameter))
+ 				(!(= @actionParameters (CONS-TAIL (VAL @aParameter) @actionParameters)))
+
+ 				(!(= @i (+ @i 1)))
+ 				)
+ 			)
+ 		
+ 		(!(= @subNodesList (. .)))
+ 		(WHILE(?(~(NULL @subNodes)))
+ 			(!(= @node (CAR @subNodes)))
+ 			(!(= @subNodes (CDR @subNodes)))
+ 			(!(PlannerInterface.parseHatpTree @node @subTree))
+
+ 			(!(= @subNodesList (CONS-TAIL (VAL @subTree) @subNodesList)))
+ 			)
+ 		(!(= $parsedTree (TASK
+ 			 (TYPE (VAL @taskType))
+ 			 (TASK-ID (VAL @taskId))
+ 			 (TASK-NAME (VAL @taskName))
+ 			 (ACTORS (VAL @actorList))
+ 			 (PARAMETERS (VAL @parameters))
+ 			 (SUBNODES (VAL @subNodesList))
+ 			)
+
+ 			))
+ 		)
+	)
+	
+ 	(defop |parseStreams|
+ 		:invocation(!(PlannerInterface.parseStreams @actionList @linkList $streamPlan))
+ 		:body (
+ 			(?(Robot.name @robotName))
+ 			(WHILE(?(~(NULL @actionList)))
+ 				(!(= @currentAction (CAR @actionList))) ;get the current action
+ 				(!(= @actionList (CDR @actionList)))
+ 				(!(== (VAL @currentAction) (ACTION 
+ 					(ACTION-ID @actionId)
+ 					(ACTION-NAME @hatpActionName)
+ 					(ACTOR @actor)
+ 					(START-TIME @startTime)
+ 					(END-TIME @endTime)
+ 					(PARAMETERS @parameters)
+ 					)))
+
+           (IF(?(PlannerInterface.action hatp (VAL @hatpActionName) @actionName))    ;convert the action name from the domain name of hatp to the supervisor domain
+
+           	(?(PlannerInterface.parameterLinks hatp (VAL @hatpActionName) @parameterLinks))
+
+              ;;get the size of the parameters
+              (?(Actions.nParameters (VAL @actionName) @n))
+
+              (!(= @i 0))
+              (!(= @actionParameters (. .)))
+              ;;the parameters of the HATP actions can be in a different order (and also a different number) from the parameters used by supervision. The Db contains a mapping of the indexs.
+              ;;We use this mapping now to create a list of parameters in the correct order
+              
+
+
+              (WHILE(?(< @i @n))
+              	(!(= @aLink (CAR @parameterLinks)))
+ 				(!(= @parameterLinks (CDR @parameterLinks)))
+
+ 				(!(PlanManager.getParameter @parameters @aLink @aParameter))
+ 				(!(= @actionParameters (CONS-TAIL (VAL @aParameter) @actionParameters)))
+              	(!(= @i (+ @i 1)))
+              	)
+
+              ;;now we need to scan the LINK-LIST. Since HATP provides a single link list for all the domain while we want that each actions has a list of preconditions we need to scan this list for every action
+		      ;;so we create a backup to update.
+		      (!(= @tempLinkList (VAL @linkList)))                    
+		      (!(= @actionLinks (. .)))
+		      (WHILE(?(~(NULL @tempLinkList)))
+		      	(!(= @currentLink (CAR @tempLinkList)))
+		      	(!(= @tempLinkList (CDR @tempLinkList)))
+			    (!(== (VAL @currentLink) (LINK @id1 @id2)))  ;the format in HATP is @id2 follows @id1
+			    (IF(?(EQUAL @id2 @actionId))   ;if @id2 is the current action
+			       (!(= @actionLinks (CONS-TAIL (VAL @id1) @actionLinks))) ;we add @id1 to the list of preconditions for the aaction
+			       )
+			    )
+		      
+		      
+		      (!(= @action (. (VAL @actionName) (VAL @actionParameters) .)))  
+		      (!(= @completeAction (. (VAL @action) (VAL @actionId) (VAL @actionLinks) .)))
+		      
+		      (IF(?(|| (EQUAL @actor (VAL @robotName)) (EQUAL @actionName handover)))
+		      	(!(= @robotActions (CONS-TAIL (VAL @completeAction) @robotActions)))
+		      	
+		      	ELSE
+		      	(!(= @humanActions (CONS-TAIL (VAL @completeAction) @humanActions)))
+		      	)
+		      
+		      )
+	)
+
+	(!(= $streamPlan (. (VAL @robotName) ROBOT (VAL @robotActions) .) (. HERAKLES_HUMAN1 HUMAN (VAL @humanActions) .)))
+
+	)
+	)
+
  (defop |getHatpPlan|
    :invocation(!(PlannerInterface.getHatpPlan @goal @parameters))
    :documentation "calls HATP to obtain a plan"
@@ -51,75 +175,10 @@
 	     (!(= @robotActions (. .)))  
 	     (!(= @humanActions (. .)))
 	     
-	     (WHILE(?(~(NULL @actionList)))
-
-		   (!(= @currentAction (CAR @actionList))) ;get the current action
-		   (!(= @actionList (CDR @actionList)))
-		   (!(== (VAL @currentAction) (ACTION 
-					       (ACTION-ID @actionId)
-					       (ACTION-NAME @hatpActionName)
-					       (ACTOR @actor)
-					       (START-TIME @startTime)
-					       (END-TIME @endTime)
-					       (PARAMETERS @parameters)
-					       )))
-		   
-           (IF(?(PlannerInterface.action hatp (VAL @hatpActionName) @actionName))    ;convert the action name from the domain name of hatp to the supervisor domain
-
-              (?(PlannerInterface.parameterLinks hatp (VAL @hatpActionName) @parameterLinks))
-
-              ;;get the size of the parameters
-              (?(Actions.nParameters (VAL @actionName) @n))
-
-              (!(= @i 0))
-              (!(= @actionParameters (. .)))
-              ;;the parameters of the HATP actions can be in a different order (and also a different number) from the parameters used by supervision. The Db contains a mapping of the indexs.
-              ;;We use this mapping now to create a list of parameters in the correct order
-              (WHILE(?(< @i @n))
-                    (!(= @parameterLinksCopy @parameterLinks))
-                    (!(= @parametersCopy @parameters))
-                    (WHILE(?(~(NULL @parameterLinksCopy)))
-                          (!(= @aLink (CAR @parameterLinksCopy)))
-                          (!(= @parameterLinksCopy (CDR @parameterLinksCopy)))
-                          (!(= @aParameter (CAR @parametersCopy)))
-                          (!(= @parametersCopy (CDR @parametersCopy)))
-
-                          (IF(?(EQUAL @aLink @i))
-                             (!(= @actionParameters (CONS-TAIL (VAL @aParameter) @actionParameters)))
-                             )
-                          )
-                    (!(= @i (+ @i 1)))
-                    )
-
-              ;;now we need to scan the LINK-LIST. Since HATP provides a single link list for all the domain while we want that each actions has a list of preconditions we need to scan this list for every action
-		      ;;so we create a backup to update.
-		      (!(= @tempLinkList (VAL @linkList)))                    
-		      (!(= @actionLinks (. .)))
-		      (WHILE(?(~(NULL @tempLinkList)))
-			    (!(= @currentLink (CAR @tempLinkList)))
-			    (!(= @tempLinkList (CDR @tempLinkList)))
-			    (!(== (VAL @currentLink) (LINK @id1 @id2)))  ;the format in HATP is @id2 follows @id1
-			    (IF(?(EQUAL @id2 @actionId))   ;if @id2 is the current action
-			       (!(= @actionLinks (CONS-TAIL (VAL @id1) @actionLinks))) ;we add @id1 to the list of preconditions for the aaction
-			       )
-			    )
-		      
-		   
-		      (!(= @action (. (VAL @actionName) (VAL @actionParameters) .)))  
-		      (!(= @completeAction (. (VAL @action) (VAL @actionId) (VAL @actionLinks) .)))
-
-              (IF(?(|| (EQUAL @actor (VAL @robotName)) (EQUAL @actionName handover)))
-			   (!(= @robotActions (CONS-TAIL (VAL @completeAction) @robotActions)))
-			 
-			   ELSE
-			   (!(= @humanActions (CONS-TAIL (VAL @completeAction) @humanActions)))
-			   )
-			 
-			 )
-	     )
+	 
 		   
 	     )
-	     (=>(PlannerInterface.result (. (. PR2_ROBOT ROBOT (VAL @robotActions) .) (. HERAKLES_HUMAN1 HUMAN (VAL @humanActions) .) .)))  ;we have a result
+	     (=>(PlannerInterface.result (.  .)))  ;we have a result
 	     )
 	  )
    )

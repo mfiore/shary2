@@ -84,7 +84,7 @@
           (!(SEM-P AgentActionMonitor.sem))
           (!(= @sphereId 0))
           ;;we take a random object and agent to set the parameters for the update sphere monitor procedure
-          (?(Object.type @object @type @class))
+          (?(Object.type @object @type PICKABLE))
           (?(Object.type @agent HUMAN AGENT))
           (WHILE(?(< @sphereId 10))   ;from 0 to 10 (indexes of the monitor spheres in spark)
                 (!(Spark.getFreeId @sparkId))
@@ -101,6 +101,7 @@
                 (!(= @sphereId (+ @sphereId 1)))
                 )
           (!(SEM-V AgentActionMonitor.sem))
+          
           )
 
    )
