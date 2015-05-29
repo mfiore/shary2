@@ -155,7 +155,12 @@
            (sphereType  @type))	 
 	      ))
 	 
+	 (IF(?(Spark.isActive BASE TRUE))
 	 (!(GenomInterface.handleRequest SPARK SPARK_UPDATESPHEREMONITOR  (Spark.stop (VAL @id)) (FALSE) (FALSE) 300 (VAL @param) @report @result))
+     
+     ELSE
+     (!(= @report "OK"))
+	 )
      (!(ReportManager.publish Spark.report (VAL @id) (VAL @report)))
 
 	 (!(SEM-V Spark.sem))

@@ -94,8 +94,6 @@
                          (IF(?(PlanManager.humanActionManagement TASK))
                             (!(PlanManager.analyzePlanTree @planTree @monitorActions))
                             (=>(PlanManager.monitorPlan HERAKLES_HUMAN1 @monitorActions))
-                     
-                      
                             )
 
                          (WHILE(?(~(NULL @plan)))
@@ -110,10 +108,6 @@
                                (IF(?(EQUAL @agentType HUMAN))
                                   (IF(?(PlanManager.humanActionManagement LEAF))
                                      (=>(PlanManager.manageHumanActions (VAL @agentName) (VAL @agentActions) ))
-                                   
-                                     ELSEIF(?(PlanManager.humanActionManagement SEED))
-                                     (=>(PlanManager.manageHumanActionsSeed (VAL @agentName) (VAL @agentActions) ))
-
                                      )
                                   (=>(PlanManager.isManagingHuman (VAL @agentName)))
                                   ELSEIF(?(EQUAL @agentType ROBOT))
@@ -241,136 +235,60 @@
 
    )
 
- (defop |manageHumanActionsSeed|
-    :invocation(PlanManager.manageHumanActionsSeed @actions)
-    :body (
-         (!(= @oldObject NULL)) ;;this is just used for the getactionstring procedure, which gives different strings when we are doing more than one action with the same object.
-
-         (IF(?(~(NULL @actions)))
-            (=>(PlanManager.isManagingAgent @agent))
-            (!(= @tempActions (VAL @actions)))
-            ;;loop until every action has been executed or we receive a stop command
-            (WHILE(?(&
-                     (~(NULL @actions))
-                     (~(PlanManager.agentReport (VAL @agent) @report))
-                     ))
-                  (!(= @action (CAR @actions)))
-                  (!(= @actions (CDR @actions)))
-                  (!(== (VAL @action) (. @actionToExecute @actionId @actionLinks .)))
-
-                  (!(== (VAL @actionToExecute) (. @actionName @actionParameters .)))
-
-                  (!(PlanManager.getActionString @actionName @actionParameters 0 @oldObject @followsHandover @actionString))
-               
-
-                  ;;movement actions and other actions are handled differently for now. Should change when we switch to TOASTER completely
-                  (IF(?(Action.type (VAL @actionName) MOVEMENT))
-                     (!(= @location (CAR(CDR @actionParameters))))
-                     (=>(AgentActionMonitor.monitorMove @agent @location @actionId))
-
-                     ELSE
-                     ;;necessary to understand which sphere is linked with the action
-                     (?(Actions.monitorParameter (VAL @actionName) @n))
-                     (!(= @i 0))
-                     (!(= @tempActionParameters (VAL @actionParameters)))
-                     (WHILE(?(~(> (VAL @i) (VAL @n))))
-                           (!(= @target (CAR @tempActionParameters)))
-                           (!(= @tempActionParameters (CDR @tempActionParameters)))
-                           (!(= @i (+ (VAL @i) 1)))
-                           )
-
-                     ;;get the corresponding sphereId (this should exist since inferences are calculated independently from this module)
-                     (!(AgentActionMonitor.getSphereId (VAL @agent) (VAL @target) (VAL @actionName) @sphereId))
-
-                     ;;monitor the action
-                     (=>(AgentActionMonitor.monitorAction @agent @actionId @actionName @actionParameters @sphereId))
-                     )
-                  (^(|| (AgentActionMonitor.actionCompleted (VAL @agent) (VAL @actionId))
-                     (PlanManager.stopAgent (VAL @agent))))  ;wait until we complete the action or we have a stopAgent (unexpectedAction is handled in planmanager)
-
-                  (IF(?(AgentActionMonitor.actionCompleted (VAL @agent) (VAL @actionId)))
-                     (~>(AgentActionMonitor.actionCompleted (VAL @agent) (VAL @actionId)))
-                     (=>(PlanManager.actionReport @actionId "OK"))
-
-                     ELSEIF(?(PlanManager.stopAgent (VAL @agent)))
-                     (~>(PlanManager.stopAgent (VAL @agent)))
-                     (=>(PlanManager.agentReport @agent "STOPPED"))
-                     (~>(PlanManager.isManagingAgent (VAL @agent)))
-
-                     (!(FAILED))
-                     )
-
-                  )
-            (=>(PlanManager.agentReport @agent "OK"))
-            (~>(PlanManager.isManagingAgent (VAL @agent)))
-            )
-      )
-
-  )
 
 
-(defop |manageRobotActionsSeed|
+ (defop |manageRobotactionsSeed|
    :invocation(PlanManager.manageRobotActionsSeed @actions)
    :body (
-      (?(PlanManager.seedBridge @seedName))
-      (!(SEND-MESSAGE @seedName (PlanManager.seedPlan (. PR2_ROBOT ROBOT @actions .))))
+          (?(PlanManager.seedBridge @seedName))
+          (!(SEND-MESSAGE @seedName @actions))
 
-   ;;(!(SEND-MESSAGE @seedName (PlanManager.seedPlan (. PR2_ROBOT ROBOT (. (. (. take (. PR2_ROBOT BRACKET_1 .) .) 324 (. .) .) .) .))))
-      (!(= @seedReport (TERM-STRING-CAT @seedName ".report")))
-      (!(= @seedReport (MAKE-ATOM @seedReport)))
+          (!(= @seedReport (TERM-STRING-CAT @seedName ".report")))
+          (!(= @seedReport (MAKE-ATOM @seedReport)))
 
-      (?(Robot.name @robotName))
+          (?(Robot.name @robotName))
 
-      (!(= @done FALSE))
-      (WHILE(?(EQUAL @done FALSE))
-        (=>(PlanManager.isManagingAgent robot))
+          (!(= @done FALSE))
+          (WHILE(?(EQUAL @done FALSE))
+                (=>(PlanManager.isManagingAgent robot))
 
-       ;(!(SEND-MESSAGE @seedName (Seed.getAction)))
-        (^(AttentionalInterface.execute @seedAction @seedActionParameters @returnDest))
-      ;;execute action
-      (IF(?(EQUAL @done FALSE)))
-      (!(ExecutionManager.getFreeId @executionId))
-      (!(ReportManager.sub ExecutionManager.report @executionId))
+                (!(SEND-MESSAGE @seedName (Seed.getAction)))
+                (^(@seedReport @seedAction @seedActionParameters @actionId @done))
+                                        ;execute action
+                (!(ExecutionManager.getFreeId @executionId))
+                (!(ReportManager.sub ExecutionManager.report @executionId))
 
-      (=>(ExecutionManager.execute @seedAction @seedActionParameters @executionId))
-      (^(|| (ExecutionManager.report (VAL @executionId) @report) (PlanManager.stopAgent robot)))
-      (IF(?(ExecutionManager.isActive execution SIM))
-        (^(ELAPSED-TIME (TIME) 3))
-        )
-      (IF(?(ExecutionManager.report (VAL @executionId) @report))
-         (!(ReportManager.unsub ExecutionManager.report @executionId))
-         (IF(?(~(EQUAL @report "OK")))
-            (=>(PlanManager.agentReport robot "FAILURE"))
-            (~>(PlanManager.isManagingAgent robot))
-            (!(FAILED))
-            
-            ELSE
-            (!(SEND-MESSAGE (VAL @returnDest) (AttentionalInterface.report OK)))
-            (^(AttentionalInterface.isDone @done))
+                (=>(ExecutionManager.execute @seedAction @seedActionParameters @executionId))
+                (^(|| (ExecutionManager.report (VAL @executionId) @report) (PlanManager.stopAgent robot)))
 
-            )
+                (IF(?(ExecutionManager.report (VAL @executionId) @report))
+                   (!(ReportManager.unsub ExecutionManager.report @executionId))
+                   (IF(?(~(EQUAL @report "OK")))
+                      (=>(PlanManager.agentReport robot "FAILURE"))
+                      (~>(PlanManager.isManagingAgent robot))
+                      (!(FAILED))
+                      )
 
-        ;(IF(?(~(EQUAL @actionId -1)))
-        ;(=>( PlanManager.actionReport @actionId "OK"))
-        ;)
+                   (IF(?(~(EQUAL @actionId -1)))
+                      (=>( PlanManager.actionReport @actionId "OK"))
+                      )
 
-      ELSE
-      (=>(ExecutionManager.stop @executionId))
-      (^(ExecutionManager.report (VAL @executionId) @report))
-      (!(ReportManager.unsub ExecutionManager.report @executionId))
-      (=>(PlanManager.agentReport robot "STOPPED"))
-      (~>(PlanManager.isManagingAgent robot))
-      (!(FAILED))
-      )
-      )
+                   ELSE
+                   (=>(ExecutionManager.stop @executionId))
+                   (^(ExecutionManager.report (VAL @executionId) @report))
+                   (!(ReportManager.unsub ExecutionManager.report @executionId))
+                   (=>(PlanManager.agentReport robot "STOPPED"))
+                   (~>(PlanManager.isManagingAgent robot))
+                   (!(FAILED))
+                   )
+                )
+
+          (!(ReportManager.publish PlanManager.agentReport robot "OK"))
 
 
-    (!(ReportManager.publish PlanManager.agentReport robot "OK"))
-
-
-    (~>(PlanManager.isManagingAgent robot))
-    )
-)
+          (~>(PlanManager.isManagingAgent robot))
+          )
+   )
 
  (defop |findStart|
    :invocation(!(PlanManager.findStart @tree $startId))

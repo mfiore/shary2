@@ -467,12 +467,14 @@
 
             ELSE ;;if not we simulate the postconditions
 
-            (?(AgentActionMonitor.sphere @agent @object @action (VAL @sphereId)))
+            (?(AgentActionMonitor.sphere @agentName @objectName @actionName (VAL @sphereId)))
+            (?(AgentActionMonitor.monitorAction (VAL @agentName) @actionId (VAL @actionName) @actionParameters (VAL @sphereId)))
+
 
             ;;get the coordinates of the object
             (!(Spark.getFreeId @sparkId))
             (!(ReportManager.sub Spark.report @sparkId))
-            (=>(Spark.request getJointAbsPose @object NO_NAME @sparkId))
+            (=>(Spark.request getJointAbsPose @objectName NO_NAME @sparkId))
             (^(Spark.report (VAL @sparkId) @report))
             (^(Spark.result (VAL @sparkId) @x @y @z @yaw @pitch @roll))
             (!(ReportManager.unsub Spark.report @sparkId))
@@ -480,16 +482,18 @@
 
             (!(DatabaseInterface.findList (AGENT-STATEMENT (VAL @robotName) (VAL @agentName) hasInHand @o) (. o .) @result))
             (IF(?(~(NULL @result)))
-               (?(Object.type (VAL @object) @type @class))
-               (?(Object.height (VAL @type) @zplacement))
+               (?(Object.type (VAL @objectName) @type @class))
+               ;(?(Object.height (VAL @type) @zplacement))
 
                   (!(= @heldObject (CAR(CAR @result))))
-                  (!(= @parameters (. (VAL @agentName) (VAL @heldObject) (VAL @objectName) RIGHT (. (VAL @x) (VAL @y) (VAL @zplacement) .) .)))
+                  (!(= @parameters (. (VAL @agentName) (VAL @heldObject) (VAL @objectName) RIGHT (. (VAL @x) (VAL @y) 0.7 .) .)))
                   ELSE
                   (!(= @parameters (. (VAL @agentName) (VAL @objectName) RIGHT .)))
                   )
 
             (!(Actions.setPostconditions (VAL @actionName) (VAL @parameters)))
+            (~>(AgentActionMonitor.monitorAction (VAL @agentName) @actionId (VAL @actionName) @actionParameters (VAL @sphereId)))
+            (=>(AgentActionMonitor.actionCompleted (VAL @agentName) (VAL @actionId)))
             (!(AgentActionMonitor.calculateInferencesForAgents (. @agentName .)))
             )
 

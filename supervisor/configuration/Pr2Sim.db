@@ -8,6 +8,8 @@
 (ONTO_NAME OPRS_DB)  
 
 
+(Seed.bridgeName )
+
 
 ;;STARTING ROBOT BEHAVIOR
 (PlanManager.shouldTellPlan FALSE)	;; if TRUE will tell the plan to the user
@@ -29,7 +31,7 @@
 (Gtp.isActive FALSE)
 (Viman.isActive TRUE)
 (Spark.isActive factsManagement FALSE)
-(Spark.isActive monitorSpheres TRUE)
+(Spark.isActive monitorSpheres FALSE)
 (Spark.isActive base TRUE)
 (Acapela.isActive FALSE)
 (Waypoints.isActive FALSE)
@@ -40,7 +42,7 @@
 
 (Manipulation.moduleName GtpActions)
 
-(PlanManager.humanActionManagement LEAF)
+(PlanManager.humanActionManagement SEED)
 (PlanManager.selfActionManagement SEED)
 
 ;;Joints

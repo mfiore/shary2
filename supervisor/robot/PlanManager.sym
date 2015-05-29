@@ -9,6 +9,8 @@ declare be PlanManager.managePlans
 declare cwp PlanManager.stop
 declare cwp PlanManager.actionTold 
 declare ff PlanManager.planningModality 0
+declare be AttentionalInterface.execute
+declare be AttentionalInterface.isDone
 
 
 ;manage plans

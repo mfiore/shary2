@@ -5,4 +5,6 @@
  (PlanManager.shouldRun TRUE)
  (PlanManager.isRunning FALSE)
  
+ (PlanManager.seedBridge seed_plan_listener)
+
 )

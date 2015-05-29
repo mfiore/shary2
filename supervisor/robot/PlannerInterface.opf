@@ -78,6 +78,9 @@
  		:invocation(!(PlannerInterface.parseStreams @actionList @linkList $streamPlan))
  		:body (
  			(?(Robot.name @robotName))
+ 			(!(= @humanActions (. .)))
+ 			(!(= @robotActions (. .)))
+
  			(WHILE(?(~(NULL @actionList)))
  				(!(= @currentAction (CAR @actionList))) ;get the current action
  				(!(= @actionList (CDR @actionList)))
@@ -140,11 +143,11 @@
 		      )
 	)
 
-	(!(= $streamPlan (. (VAL @robotName) ROBOT (VAL @robotActions) .) (. HERAKLES_HUMAN1 HUMAN (VAL @humanActions) .)))
+	(!(= $streamPlan (. (. (VAL @robotName) ROBOT (VAL @robotActions) .) (. HERAKLES_HUMAN1 HUMAN (VAL @humanActions) .) .)))
 
 	)
 	)
-
+  
  (defop |getHatpPlan|
    :invocation(!(PlannerInterface.getHatpPlan @goal @parameters))
    :documentation "calls HATP to obtain a plan"
@@ -165,19 +168,26 @@
 	  (^(HATP-REP 
 	     (REQ-ID (VAL @id))
 	     (REPORT @report)
+	     (STREAMS
 	     (ACTION-LIST @actionList)
-	     (LINK-LIST @linkList)))
-
+	     (LINK-LIST @linkList)
+	  	  )
+	  	  (TREE 
+	  	  	(TASK-LIST @taskList)
+	  	  	(LINK-LIST @treeLinkList)
+	  	  )
+	  	  ))
 	  
 	  (=>(PlannerInterface.report @report))  ;send the report
 	  (IF(?(EQUAL @report OK))  ;if everything is okay we get the plan
 	     ;;for now we plan just for an human and a robot but we could generalize it in the future
-	     (!(= @robotActions (. .)))  
-	     (!(= @humanActions (. .)))
 	     
+	     (!(PlannerInterface.parseStreams @actionList @linkList @streamPlan))
+		 ;(!(PlannerInterface.parsedTree @taskList @treeLinkList @parsedTree))	     
 	 
 		   
-	     )
+	     (=>(PlannerInterface.result @streamPlan))
+	     ELSE
 	     (=>(PlannerInterface.result (.  .)))  ;we have a result
 	     )
 	  )

@@ -29,7 +29,7 @@
       (IF(?(Gtp.isActive TRUE))
 	     (!(GtpActions.init))
 	     )
-      (IF(?(Spark.isActive base TRUE))
+      (IF(?(||(Spark.isActive base SIM) (Spark.isActive base TRUE)))
 	     (!(Spark.init))
 	     (!(AgentActionMonitor.init))
 	     )

@@ -8,6 +8,23 @@
 
 (
 
+
+(defop |TestPlanSaphariIcsr|
+  :invocation(!(Tester.testPlanSaphariIcsr))
+  :body (
+    (!(Controller.initAll))
+     (!(AgentActionMonitor.cleanMonitorSpheres))
+     (!(AgentActionMonitor.calculateInferencesForAgents (. HERAKLES_HUMAN1 .)))
+     (!(AgentActionMonitor.startMonitoringAgent HERAKLES_HUMAN1 ))
+     (=>(PlanManager.goal HandleSurface (. ASSEMBLY_SURFACE_1 .)))
+     (=>(PlanManager.newGoal TRUE))
+     (=>(PlanManager.managePlans))  
+
+    )
+
+  )
+
+
 (defop |testPlanGregIcsr|
   :invocation(!(Tester.testPlanGregIcsr))
   :body (
