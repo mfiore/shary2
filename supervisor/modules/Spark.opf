@@ -53,36 +53,36 @@
   :body (
 
          (!(SEM-P Spark.sem))
-         (=>(Spark.freeId (+ @id 1)))
+         (IF(?(Spark.isActive BASE TRUE))
+         	(=>(Spark.freeId (+ @id 1)))
 
-         (!(= @param (STRUCT_SPARK_JOINT_ABS_POS_PARAM
-                      (robotName
-                       (name  (TERM-STRING-CAT @name)))
+         	(!(= @param (STRUCT_SPARK_JOINT_ABS_POS_PARAM
+         		(robotName
+         			(name  (TERM-STRING-CAT @name)))
 
-                      (jointName
-                       (name  (TERM-STRING-CAT @joint)))
-                      )))
+         		(jointName
+         			(name  (TERM-STRING-CAT @joint)))
+         		)))
 
-         (!(GenomInterface.handleRequest SPARK SPARK_GETJOINTABSPOSE (Spark.stop (VAL @id)) (FALSE) (FALSE) 300 (VAL @param) @report @result))
-         (!(ReportManager.publish Spark.report (VAL @id) (VAL @report)))
+         	(!(GenomInterface.handleRequest SPARK SPARK_GETJOINTABSPOSE (Spark.stop (VAL @id)) (FALSE) (FALSE) 300 (VAL @param) @report @result))
+         	(!(ReportManager.publish Spark.report (VAL @id) (VAL @report)))
 
-         (IF(?(EQUAL @report "OK"))
-                                        ;(IF(?(Spark.sim FALSE))
-            (!(== (VAL @result)  (POM_EULER
-                                  (yaw  @yaw)
-                                  (pitch  @pitch)
-                                  (roll  @roll)
-                                  (x  @x)
-                                  (y  @y)
-                                  (z  @z))
-                  ))
-            (=>(Spark.result (VAL @id) (VAL @x) (VAL @y) (VAL @z) (VAL @yaw) (VAL @pitch) (VAL @roll)))
+         	(IF(?(EQUAL @report "OK"))
+         		(!(== (VAL @result)  (POM_EULER
+         			(yaw  @yaw)
+					(pitch  @pitch)
+					(roll  @roll)
+					(x  @x)
+					(y  @y)
+					(z  @z))
+				))
+				(=>(Spark.result (VAL @id) (VAL @x) (VAL @y) (VAL @z) (VAL @yaw) (VAL @pitch) (VAL @roll)))
+				)       
+				ELSE
+				(=>(Spark.report (VAL @id) "OK"))
+				(=>(Spark.result (VAL @id) 0 0 0 0 0 0))
+				)
 
-                                        ;ELSE
-                                        ;(=>(Spark.result (VAL @id) 0 0 0 0 0 0)
-                                        ;  )
-          ;  )
-         )
   (!(SEM-V Spark.sem))
 
 
