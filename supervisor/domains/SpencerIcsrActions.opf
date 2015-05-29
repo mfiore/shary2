@@ -30,9 +30,15 @@
              (!(DatabaseInterface.findList (AGENT-STATEMENT (VAL @robotName) Human_Centroid isFacing @o) (. @o .) @result))
              (IF(?(~(NULL @result)))
                 (!(= @orientation(CAR(CAR @result))))
+                (IF(?(EQUAL @orientation pr2))
+                  (!(= @orientation towardRobot))
+                  
+                  ELSE
+                  (!(= @orientation other))
+                  )
 
                 ELSE
-                (!(= @orientation facingRobot))
+                (!(= @orientation towardRobot))
                 )
 
              (!(DatabaseInterface.findList (AGENT-STATEMENT (VAL @robotName) Human_Centroid isMoving @im) (. @im .) @result))
@@ -52,7 +58,7 @@
     (defop |icsrGuide|
            :invocation(ExecutionManager.execute icsrGuide @executionId)
            :body (
-                  (!(= @goal (. 1 4 0 .)))
+                  (!(= @goal (. 2 4 0 .)))
                   (!(= @base (. 5 3.5 0 .)))
 
                   (?(Robot.name @robotName))
@@ -68,6 +74,7 @@
                            (IF(?(EQUAL @isMoving FALSE))
                               (!(= @isMoving TRUE))
                               (!(BaseActions.getFreeId @goId))
+                              (!(ReportManager.sub BaseActions.report @goId))
                               (=>(BaseActions.action move (. @goal .) @goId))
                               )
 
@@ -76,6 +83,7 @@
                               (=>(BaseActions.stop @goId))
                               (^(BaseActions.report (VAL @goId) @report))
                               (~>(BaseActions.report (VAL @goId) (VAL @report)))
+                              (!(BaseActions.unsub BaseActions.report (VAL @goId)))
                               )
                            )
 
