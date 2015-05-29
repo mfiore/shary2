@@ -502,18 +502,25 @@
   :body (
          (?(Robot.name @robotName))
 
-         (!(= @type (CAR @parameters)))
+         (!(= @agent1 (CAR @parameters)))
          (!(= @parameters (CDR @parameters)))
-         (!(= @object (CAR @parameters)))
+         (!(= @agent2 (CAR @parameters)))
          (!(= @parameters (CDR @parameters)))
-         (!(= agent (CAR @parameters)))
+         (!(= object (CAR @parameters)))
          (!(= @parameters (CDR @parameters)))
 
-         (IF(?(EQUAL @type GRAB))
-            (!(= @preCondParameters (. (VAL @agent) (VAL @object) (VAL @robotName) .)))
-            ELSE
-            (!(= @preCondParameters (. (VAL @robotName) (VAL @object) (VAL @agent) .)))
-            )
+         (IF(?(EQUAL @agent1 (VAL @robotName)))
+          (!(= @agent @agent2))
+          (!(= @type GIVE))
+          (!(= @preCondParameters (. (VAL @agent) (VAL @object) (VAL @robotName) .)))
+
+
+          ELSE
+          (!(= @agent @agent1))
+          (!(= @type GRAB))
+          (!(= @preCondParameters (. (VAL @robotName) (VAL @object) (VAL @agent) .)))
+
+          )
 
          (!(Actions.checkPreconditions handover @preCondParameters @result))
          (IF(?(EQUAL @result FALSE))
