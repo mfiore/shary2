@@ -52,7 +52,9 @@
 (Object.type Polish polish OPERATION)
 (Object.type Stickers stickers OPERATION)
 (Object.type Smoothen smoothen OPERATION)
-(Object.type Glue glue OPERATION)
+(Object.type Glue_Green glue OPERATION)
+(Object.type Glue_Red glue OPERATION)
+
 
 (Object.actions STACK_PLACEMENT (. placeOnStack .))
 (Object.actions PLACEMENT (. place .))

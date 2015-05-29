@@ -263,7 +263,7 @@
                                     (!(= @objectList (CDR @objectList)))
 
                                     (?(Object.type (VAL @anObject) @class @type))
-                                    (?(Object.actions (VAL @class) @actionList))   ;;get the associated actions to that objects
+                                    (?(Object.actions (VAL @type) @actionList))   ;;get the associated actions to that objects
 
                                     (IF(?(~(EQUAL @heldObject NO_NAME)))  ;;set parameters for the preconditions check
                                        (!(= @parameters (. (VAL @agent) (VAL @heldObject) (VAL @anObject) .) ))

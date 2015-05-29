@@ -62,7 +62,7 @@
  (Actions.knowledgeParametersType take (. TYPE .))
  (Actions.knowledgeParametersType place (. TYPE TYPE .))
  (Actions.knowledgeParametersType placeOnStack (. CLASS CLASS .))
- (Actions.knowledgeParametersType apply (. VALUE .))
+ (Actions.knowledgeParametersType applyOperation (. VALUE .))
  (Actions.knowledgeParametersType buildStack (. .))
  (Actions.knowledgeParametersType handle (. VALUE TYPE .))
  (Actions.knowledgeParametersType applyFirstOperations (. VALUE .))

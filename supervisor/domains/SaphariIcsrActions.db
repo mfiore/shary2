@@ -36,6 +36,8 @@
 (PlannerInterface.parameterLinks hatp StopPointing (.  .))
 (PlannerInterface.parameterLinks hatp CarryTo (. 0 2 .))
 (PlannerInterface.parameterLinks hatp TravelTo (. 0 1 .))
+(PlannerInterface.parameterLinks hatp Handover (. 0 1 2 .))
+
 
 (Acapela.translation take "take")
 (Acapela.translation place "place")

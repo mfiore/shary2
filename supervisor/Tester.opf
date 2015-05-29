@@ -8,6 +8,14 @@
 
 (
 
+(defop |TestSpencerIcsr|
+  :invocation(!(Tester.TestSpencerIcsr))
+  :body (
+    (!(DatabaseInterface.init))
+    (!(BaseActions.init))
+    (=>(ExecutionManager.execute icsrGuide 0))
+    )
+  )
 
 (defop |TestPlanSaphariIcsr|
   :invocation(!(Tester.testPlanSaphariIcsr))

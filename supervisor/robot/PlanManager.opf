@@ -81,8 +81,9 @@
                          (!(= @planningFailures (+ @planningFailures 1)))
 
                          ELSEIF(?(EQUAL @report OK))
-                         (^(PlannerInterface.result @plan))
+                         (^(PlannerInterface.result @plan @planTree))
                          (~>(PlannerInterface.result (VAL @plan)))
+
 
 
                          (!(Verbalization.verbalizePlan))
@@ -92,7 +93,12 @@
                                         ; )
 
                          (IF(?(PlanManager.humanActionManagement TASK))
+
+                            (!(= @monitorActions (. .)))
                             (!(PlanManager.analyzePlanTree @planTree @monitorActions))
+
+
+
                             (=>(PlanManager.monitorPlan HERAKLES_HUMAN1 @monitorActions))
                      
                       
@@ -383,6 +389,7 @@
                              (ACTORS @actorList)
                              (PARAMETERS @parameters)
                              (SUBNODES @subNodes)
+                             (LINK-LIST @linkList)
                              )
                 ))
 
@@ -407,6 +414,7 @@
                              (ACTORS @actorList)
                              (PARAMETERS @parameters)
                              (SUBNODES @subNodes)
+                             (LINK-LIST @linkList)
                              )
                 ))
 
@@ -451,20 +459,154 @@
                              (ACTORS @actorList)
                              (PARAMETERS @parameters)
                              (SUBNODES @subNodes)
+                             (LINK-LIST @linkList)
                              )
                 ))
           (IF(?(NULL @subNodes))
              (=>(PlanManager.subNodeLink @id @taskId))
              ELSE
              (WHILE(?(~(NULL @subNodes)))
-                   (!(= @sn (CAR @subNodes))))
-             (!(PlanManager.linkSubNodes @sn @id))
+                   (!(= @sn (CAR @subNodes)))
+                   (!(= @subNodes (CDR @subNodes)))
+                   (!(PlanManager.linkSubNodes @sn @id))
              )
           )
    )
+   )
 
+ (defop |getAllLeaves|
+    :invocation(!(PlanManager.getAllLeaves @tree $leaves))
+    :body (
+      (?(Robot.name @robotName))
+       (!(== (VAL @tree) (TASK
+        (TYPE @taskType)
+        (TASK-ID @taskId)
+        (TASK-NAME @taskName)
+        (ACTORS @actorList)
+        (PARAMETERS @parameters)
+        (SUBNODES @subNodes)
+        (LINK-LIST @linkList)
+        )
+       ))
+       (!(= @tempLeaves (. .)))
+       (IF(?(EQUAL @taskType ACTION))
+        (!(= $leaves  (. @tree .)))
+        ;(!(= $leaves (CONS-TAIL (VAL @tree) @tempLeaves)))
+        
+        ELSE
+        (!(= @tempLeaves (. .)))
+        (WHILE(?(~(NULL @subNodes)))
+          (!(= @node (CAR @subNodes)))
+          (!(= @subNodes (CDR @subNodes)))
+          (!(PlanManager.getAllLeaves @node @newLeaves))
+          (!(= @tempLeaves (LIST-UNION (VAL @newLeaves) (VAL @tempLeaves))))
+          )
+          (!(= $leaves @tempLeaves)) 
+        )
 
+       )
+    )
 
+(defop |checkTreeLinks|
+  :invocation(!(PlanManager.checkTreeLinks @tree $isLinkedToRobotReturn))
+  :body (
+      (?(Robot.name @robotName))
+    (!(PlanManager.getAllLeaves @tree @leaves))
+
+    (!(= @isLinkedToRobotTemp FALSE))
+    (IF(?(~(NULL @leaves)))
+      (!(= @middleSonListLength (LENGTH @leaves)))
+      (!(= @middleSonListLength (- @middleSonListLength 1)))
+      (!(= @i 1))
+      (WHILE(?(< @i @middleSonListLength))
+        (!(= @i (+ @i 1)))
+        (!(= @aLeaf (CAR @leaves)))
+        (!(= @leaves (CDR @leaves)))
+        (!(== (VAL @aLeaf) (TASK
+          (TYPE @taskType)
+          (TASK-ID @taskId)
+          (TASK-NAME @taskName)
+          (ACTORS @actorList)
+          (PARAMETERS @parameters)
+          (SUBNODES @subNodes)
+          (LINK-LIST @linkList)
+          )
+        ))
+
+        (WHILE(?(& 
+          (~(NULL @linkList)) 
+          (EQUAL @isLinkedToRobotTemp FALSE) 
+           
+          ))
+          (!(= @aLink (CAR @linkList)))
+          (!(= @linkList (CDR @linkList)))
+          (IF(?(PlanManager.actorAction (VAL @robotName) (VAL @aLink)))
+            (!(= @isLinkedToRobotTemp TRUE))
+            )       
+          )
+        )
+      ) 
+      (!(= $isLinkedToRobotReturn @isLinkedToRobotTemp))
+    )
+
+  )
+; (defop |checkTreeLinks|
+;   :invocation (!(PlanManager.checkTreeLinks @tree @isMiddleSon $isLinkedToRobotReturn))
+;   :body (
+;            (?(Robot.name @robotName))
+;            (!(== (VAL @tree) (TASK
+;                             (TYPE @taskType)
+;                             (TASK-ID @taskId)
+;                             (TASK-NAME @taskName)
+;                             (ACTORS @actorList)
+;                             (PARAMETERS @parameters)
+;                             (SUBNODES @subNodes)
+;                             (LINK-LIST @linkList)
+;                             )
+;            ))
+;            (!(= @isLinkedToRobotTemp FALSE))
+;            (!(Tester.breakpoint))
+
+;            (IF(?(&(EQUAL @taskType ACTION) (EQUAL @isMiddleSon TRUE)))
+;             (WHILE(?(&(~(NULL @linkList) (EQUAL @isLinkedToRobotTemp FALSE))))
+;               (!(= @aLink (CAR @linkList)))
+;               (!(= @linkList (CDR @linkList)))
+;               (IF(?(PlanManager.actorAction (VAL @robotName) (VAL @aLink)))
+;                 (!(= @isLinkedToRobotTemp TRUE))
+;                 )
+;               )
+
+          
+;             ELSEIF(?(EQUAL @taskType METHOD))
+;             (IF(?(~(NULL @subNodes)))
+;               ;;cut first and last son
+;               (!(= @firstSon (CAR @subNodes)))
+;               (!(= @subNodes (CDR @subNodes)))
+;               (!(PlanManager.checkTreeLinks @firstSon FALSE @isLinkedToRobotTemp))
+;               (IF(?(EQUAL @isLinkedToRobotTemp FALSE))
+;                 (!(= @middleSonListLength (LENGTH @subNodes)))
+;                 (!(= @middleSonListLength (- @middleSonListLength 1)))
+;                 (!(= @i 0))
+;                 (WHILE(?(&(< @i @middleSonListLength)(EQUAL @isLinkedToRobotTemp FALSE)))
+;                   (!(= @middleSon (CAR @subNodes)))
+;                   (!(= @subNodes (CDR @subNodes)))
+;                   (!(PlanManager.checkTreeLinks @middleSon TRUE @isLinkedToRobotTemp))                
+
+;                   (!(= @i (+ @i 1)))
+;                   )
+;                 (IF(?(EQUAL @isLinkedToRobotTemp FALSE))
+;                   (!(= @lastSon (CAR @subNodes)))
+;                   (!(= @subNodes (CDR @subNodes)))
+;                   (!(PlanManager.checkTreeLinks @lastSon FALSE @isLinkedToRobotTemp))
+;                   )
+
+;                 )
+;                 )
+;               (!(= $isLinkedToRobotRetun @isLinkedToRobotTemp))
+
+;               )
+;            )
+;         )
 (defop |analyzePlanTree|
   :invocation(!(PlanManager.analyzePlanTree @tree $monitorList))
   :documentation "For now this doesn't work for actions with more than one human"
@@ -477,6 +619,7 @@
                             (ACTORS @actorList)
                             (PARAMETERS @parameters)
                             (SUBNODES @subNodes)
+                            (LINK-LIST @linkList)
                             )
                ))
 
@@ -503,7 +646,7 @@
             (WHILE(?(~(NULL @subNodes)))
                   (!(= @subNode (CAR @subNodes)))
                   (!(= @subNodes (CDR @subNodes)))
-                  (!(PlanManager.analyzePlanTree @subNode @tempMonitorList))
+                  (!(PlanManager.analyzePlanTree @subNode  @tempMonitorList))
                   )
 
             ELSEIF(?(EQUAL @hasRobot TRUE))
@@ -546,19 +689,24 @@
                      (!(= @ok FALSE))
                      )
                   )
-            (IF(?(EQUAL @ok TRUE))
-               (!(= @tempMonitorList (CONS-TAIL (. (VAL @taskName) (VAL @taskId) (VAL @parameters) .) @tempMonitorList)))
-               (IF(?(PlanManager.wasRobot TRUE))
-                  (?(PlanManager.lastRobotLeaf @robotTaskId))
-                  (=>(PlanManager.taskLink (VAL @taskId) (VAL @robotTaskId)))
-                  )
-               (!(PlanManager.linkSubNodes (VAL @tree) @taskId))
 
+            (IF(?(EQUAL @ok TRUE))
+               (!(PlanManager.checkTreeLinks (VAL @tree) @isLinkedToRobot))
+              (IF(?(EQUAL @isLinkedToRobot FALSE))
+
+               (!(= @tempMonitorList (CONS-TAIL (. (VAL @taskName) (VAL @taskId) (VAL @parameters) .) @tempMonitorList)))
+
+               (IF(?(PlanManager.wasRobot TRUE))
+                (?(PlanManager.lastRobotLeaf @robotTaskId))
+                (=>(PlanManager.taskLink (VAL @taskId) (VAL @robotTaskId)))
+                )
+               (!(PlanManager.linkSubNodes (VAL @tree) @taskId))
+               )
                ELSE
                (WHILE(?(~(NULL @subNodes)))
                      (!(= @subNode (CAR @subNodes)))
                      (!(= @subNodes (CDR @subNodes)))
-                     (!(PlanManager.analyzePlanTree @subNode @tempMonitorList))
+                     (!(PlanManager.analyzePlanTree @subNode  @tempMonitorList))
                      )
                )
             (~>(PlanManager.wasRobot TRUE))
@@ -587,7 +735,7 @@
   )
 
 (defop |monitorPlan|
-  :invocation (!(PlanManager.monitorPlan @agent @taskList))
+  :invocation (PlanManager.monitorPlan @agent @taskList)
   :body (
          (?(Robot.name @robotName))
          (WHILE(?(&(~(NULL @taskList )) (~(PlanManager.stopAgent (VAL @agent)))))

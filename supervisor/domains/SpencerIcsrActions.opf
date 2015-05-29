@@ -52,12 +52,12 @@
     (defop |icsrGuide|
            :invocation(ExecutionManager.execute icsrGuide @executionId)
            :body (
-                  (!(= @goal (. 0 0 0 .)))
-                  (!(= @base (. 16 5 0 .)))
+                  (!(= @goal (. 1 4 0 .)))
+                  (!(= @base (. 5 3.5 0 .)))
 
                   (?(Robot.name @robotName))
 
-                  (!(= @timer "ok"))
+                  (!(= @timer ok))
                   (!(= @isMoving FALSE))
 
                   (!(POMDP.init guideModel (VAL @timer) @guideAction))
@@ -81,6 +81,7 @@
 
                         (^(ELAPSED-TIME (TIME) 1))
                         (!(IcsrGuide.getObservations @obs))
+                        (!(= @obs (MAKE-ATOM @obs)))
                         (!(POMDP.update guideModel (VAL @timer) (VAL @obs) @guideAction))
                         )
                   (=>(BaseActions.stop @goId))

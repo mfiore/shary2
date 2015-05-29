@@ -23,7 +23,7 @@
 
 
  (defop |parseHatpTree|
- 	:invocation(!(PlannerInterface.parseHatpTree @root $parsedTree))
+ 	:invocation(!(PlannerInterface.parseHatpTree @root @linkList $parsedTree))
  	:body(
  		(?(Robot.name @robotName))
  		;(!(Tester.breakpoint))
@@ -36,6 +36,7 @@
  			(SUBNODES @subNodes)
  			)
  		))
+ 		
  		(IF(?(PlannerInterface.action hatp (VAL @hatpTaskName) @taskName))   
  			(?(PlannerInterface.parameterLinks hatp (VAL @hatpTaskName) @parameterLinks))
  			(?(Actions.nParameters (VAL @taskName) @n))
@@ -52,22 +53,38 @@
  				(!(= @i (+ @i 1)))
  				)
  			)
- 		
+
+
  		(!(= @subNodesList (. .)))
  		(WHILE(?(~(NULL @subNodes)))
  			(!(= @node (CAR @subNodes)))
  			(!(= @subNodes (CDR @subNodes)))
- 			(!(PlannerInterface.parseHatpTree @node @subTree))
+ 			(!(PlannerInterface.parseHatpTree @node @linkList @subTree))
 
  			(!(= @subNodesList (CONS-TAIL (VAL @subTree) @subNodesList)))
  			)
- 		(!(= $parsedTree (TASK
+
+ 		;;now we need to scan the LINK-LIST. Since HATP provides a single link list for all the domain while we want that each actions has a list of preconditions we need to scan this list for every action
+		;;so we create a backup to update.
+		(!(= @tempLinkList (VAL @linkList)))                    
+		(!(= @actionLinks (. .)))
+		(WHILE(?(~(NULL @tempLinkList)))
+			(!(= @currentLink (CAR @tempLinkList)))
+			(!(= @tempLinkList (CDR @tempLinkList)))
+			    (!(== (VAL @currentLink) (LINK @id1 @id2)))  ;the format in HATP is @id2 follows @id1
+			    (IF(?(EQUAL @id2 @taskId))   ;if @id2 is the current action
+			       (!(= @actionLinks (CONS-TAIL (VAL @id1) @actionLinks))) ;we add @id1 to the list of preconditions for the aaction
+			       )
+			    )
+		(!(= $parsedTree (TASK
  			 (TYPE (VAL @taskType))
  			 (TASK-ID (VAL @taskId))
  			 (TASK-NAME (VAL @taskName))
  			 (ACTORS (VAL @actorList))
  			 (PARAMETERS (VAL @parameters))
  			 (SUBNODES (VAL @subNodesList))
+ 			 (LINK-LIST @actionLinks)
+
  			)
 
  			))
@@ -106,6 +123,8 @@
               ;;We use this mapping now to create a list of parameters in the correct order
               
 
+              (=>(PlanManager.actorAction (VAL @actor) (VAL @actionId)))
+              	
 
               (WHILE(?(< @i @n))
               	(!(= @aLink (CAR @parameterLinks)))
@@ -182,11 +201,13 @@
 	  (IF(?(EQUAL @report OK))  ;if everything is okay we get the plan
 	     ;;for now we plan just for an human and a robot but we could generalize it in the future
 	     
+	     (!(= @taskList (CAR @taskList)))
 	     (!(PlannerInterface.parseStreams @actionList @linkList @streamPlan))
-		 ;(!(PlannerInterface.parsedTree @taskList @treeLinkList @parsedTree))	     
+		 
+		 (!(PlannerInterface.parseHatpTree @taskList @linkList @parsedTree))	     
 	 
 		   
-	     (=>(PlannerInterface.result @streamPlan))
+	     (=>(PlannerInterface.result @streamPlan @parsedTree))
 	     ELSE
 	     (=>(PlannerInterface.result (.  .)))  ;we have a result
 	     )

@@ -32,7 +32,7 @@
 (Viman.isActive TRUE)
 (Spark.isActive factsManagement FALSE)
 (Spark.isActive monitorSpheres FALSE)
-(Spark.isActive base TRUE)
+(Spark.isActive base SIM)
 (Acapela.isActive FALSE)
 (Waypoints.isActive FALSE)
 (PathPlanner.isActive TRUE)
@@ -42,8 +42,8 @@
 
 (Manipulation.moduleName GtpActions)
 
-(PlanManager.humanActionManagement SEED)
-(PlanManager.selfActionManagement SEED)
+(PlanManager.humanActionManagement TASK)
+(PlanManager.selfActionManagement STANDARD)
 
 ;;Joints
 (Robot.joints HEAD)
