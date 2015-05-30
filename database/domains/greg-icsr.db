@@ -1,3 +1,4 @@
+
 (
     (AGENT-STATEMENT PR2_ROBOT Green_Cube isOn TABLE)
     (AGENT-STATEMENT PR2_ROBOT Blue_Cube isOn TABLE)
