@@ -43,8 +43,11 @@
          (!(= @resultName (TERM-STRING-CAT @name ".result")))
          (!(= @resultName (MAKE-ATOM @resultName)))
          (^(|| (@reportName @report) (ELAPSED-TIME (TIME) @time )))
+	(~>(@reportName (VAL @report)))
          (IF(?(EQUAL @report OK))
             (^(@resultName @tempAction))
+	    (~>(@resultName (VAL @tempAction)))
+          
             (?(POMDP.action (VAL @name) (VAL @tempAction) $action))
 
             ELSE

@@ -30,12 +30,12 @@
              (!(DatabaseInterface.findList (AGENT-STATEMENT (VAL @robotName) Human_Centroid isFacing @o) (. @o .) @result))
              (IF(?(~(NULL @result)))
                 (!(= @orientation(CAR(CAR @result))))
-                (IF(?(EQUAL @orientation pr2))
+               ; (IF(?(EQUAL @orientation pr2))
                   (!(= @orientation towardRobot))
                   
-                  ELSE
-                  (!(= @orientation other))
-                  )
+              ;    ELSE
+               ;   (!(= @orientation other))
+                ;  )
 
                 ELSE
                 (!(= @orientation towardRobot))
@@ -65,9 +65,10 @@
 
                   (!(= @timer ok))
                   (!(= @isMoving FALSE))
-
+			
+		  (^(ELAPSED-TIME (TIME) 5))
                   (!(POMDP.init guideModel (VAL @timer) @guideAction))
-
+		  (!(= @nWait 0))
 
                   (WHILE(?(~(EQUAL @guideAction ABANDON)))
                         (IF(?(EQUAL @guideAction CONTINUE))
@@ -80,11 +81,13 @@
 
                            ELSEIF(?(EQUAL @guideAction WAIT))
                            (IF(?(EQUAL @isMoving TRUE))
+			      (!(= @nWait (+ @nWait 1)))
                               (=>(BaseActions.stop @goId))
                               (^(BaseActions.report (VAL @goId) @report))
                               (~>(BaseActions.report (VAL @goId) (VAL @report)))
-                              (!(BaseActions.unsub BaseActions.report (VAL @goId)))
-                              )
+                              (!(ReportManager.unsub BaseActions.report (VAL @goId)))
+                              (!(= @isMoving FALSE))
+		      )
                            )
 
                         (^(ELAPSED-TIME (TIME) 1))
@@ -92,6 +95,7 @@
                         (!(= @obs (MAKE-ATOM @obs)))
                         (!(POMDP.update guideModel (VAL @timer) (VAL @obs) @guideAction))
                         )
+		  (!(PRINT @nWait))
                   (=>(BaseActions.stop @goId))
                   (^(BaseActions.report (VAL @goId) @report))
                   (~>(BaseActions.report (VAL @goId) (VAL @report)))
