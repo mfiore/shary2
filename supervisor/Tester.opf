@@ -24,9 +24,14 @@
      (!(AgentActionMonitor.cleanMonitorSpheres))
      (!(AgentActionMonitor.calculateInferencesForAgents (. HERAKLES_HUMAN1 .)))
      (!(AgentActionMonitor.startMonitoringAgent HERAKLES_HUMAN1 ))
-     (=>(PlanManager.goal HandleSurface (. ASSEMBLY_SURFACE_1 .)))
-     (=>(PlanManager.newGoal TRUE))
-     (=>(PlanManager.managePlans))  
+     (=>(PlanManager.manageRobotActionsSeed  (. (. (. place (. PR2_ROBOT BRACKET_1 STOCK_TABLE .) .) 1 (. .) .)  .)  ))
+
+
+     ;(=>(PlanManager.goal HandleSurface (. ASSEMBLY_SURFACE_1 .)))
+ ;    (=>(PlanManager.newGoal TRUE))
+  ;   (=>(PlanManager.managePlans))  
+
+
 
     )
 

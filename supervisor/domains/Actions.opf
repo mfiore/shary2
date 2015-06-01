@@ -200,23 +200,30 @@
              (!(= $return FALSE))
              ELSE
              (?(Object.type (VAL @agent2) @class @type))
-             (?(Agents.maxObjects (VAL @class) @max))
+             ;(?(Agents.maxObjects (VAL @class) @max))
 
 
              (!(DatabaseInterface.findList (AGENT-STATEMENT (VAL @robotName) (VAL @agent2) hasInHand @o) (. @o .) @result))
-             (!(= @numObjects (LENGTH @result)))
+             (IF(?(~(NULL @result)))
+              (!(= $result FALSE))
 
-             (IF(?(> @numObjects (- @max 1)))
-                (!(= $return FALSE))
+              ELSE
+              (!(= $return TRUE))
 
-                ELSE
-                (!(= $return TRUE))
-                )
-             )
+              )
+             ;(!(= @numObjects (LENGTH @result)))
+
+             ; (IF(?(> @numObjects (- @max 1)))
+                ; (!(= $return FALSE))
+
+                ; ELSE
+                ; (!(= $return TRUE))
+                ; )
+             ; )
 
           )
    )
-
+)
  (defop |handoverPostconditions|
    :invocation(!(Actions.setPostconditions handover @parameters))
    :body (

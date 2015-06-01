@@ -339,9 +339,9 @@
       (!(ReportManager.sub ExecutionManager.report @executionId))
 
       (=>(ExecutionManager.execute @seedAction @seedActionParameters @executionId))
-      (^(|| (ExecutionManager.report (VAL @executionId) @report) (PlanManager.stopAgent robot)))
+      (^(|| (ExecutionManager.report (VAL @executionId) @report) (PlanManager.stopAgent robot) (AttentionalInterface.stop)))
       (IF(?(ExecutionManager.isActive execution SIM))
-        (^(ELAPSED-TIME (TIME) 3))
+        (^(ELAPSED-TIME (TIME) 10))
         )
       (IF(?(ExecutionManager.report (VAL @executionId) @report))
          (!(ReportManager.unsub ExecutionManager.report @executionId))
@@ -364,9 +364,13 @@
       (=>(ExecutionManager.stop @executionId))
       (^(ExecutionManager.report (VAL @executionId) @report))
       (!(ReportManager.unsub ExecutionManager.report @executionId))
-      (=>(PlanManager.agentReport robot "STOPPED"))
-      (~>(PlanManager.isManagingAgent robot))
-      (!(FAILED))
+      (IF(?(AttentionalInterface.stop))
+        (~>(AttentionalInterface.stop))
+        ELSE
+        (=>(PlanManager.agentReport robot "STOPPED"))
+        (~>(PlanManager.isManagingAgent robot))
+        (!(FAILED))
+        )
       )
       )
 
@@ -607,6 +611,40 @@
 ;               )
 ;            )
 ;         )
+
+
+(defop |getKnowledgeParameters|
+  :invocation(!(PlanManager.getKnowledgeParameters @taskName $returnParameters))
+  :body (
+    (!(= @knowledgeParameters (. .)))
+    (?(Actions.knowledgeParametersType (VAL @taskName) @knowledgeParametersTypes))
+    (IF(?(~(NULL @parameters)))
+     (!(= @tempActionParameters @parameters))
+                     (!(= @aParameter (CAR @tempActionParameters)))  ;skip the actor parameter.
+                     (!(= @tempActionParameters (CDR @tempActionParameters)))
+                     )
+    (WHILE(?(~(NULL @knowledgeParametersTypes)))
+      (!(= @kpt (CAR @knowledgeParametersTypes)))
+      (!(= @knowledgeParametersTypes (CDR @knowledgeParametersTypes)))
+      (!(= @aParameter (CAR @tempActionParameters)))
+      (!(= @tempActionParameters (CDR @tempActionParameters)))
+
+      (?(Object.type (VAL @aParameter) @class @type))
+      (IF(?(EQUAL @kpt CLASS))
+       (!(= @aKnowledgeParameter @class))
+
+       ELSEIF(?(EQUAL @kpt TYPE))
+       (!(= @aKnowledgeParameter @type))
+
+       ELSE
+       (!(= @aKnowledgeParameter @aParameter))
+       )
+      (!(= @knowledgeParameters (CONS-TAIL (VAL @aKnowledgeParameter) @knowledgeParameters)))
+      )
+    (!(= @knowledgeParameters (CONS-TAIL (VAL @taskName) @knowledgeParameters)))
+    (!(= $returnParameters @knowledgeParameters))
+    )
+  )
 (defop |analyzePlanTree|
   :invocation(!(PlanManager.analyzePlanTree @tree $monitorList))
   :documentation "For now this doesn't work for actions with more than one human"
@@ -658,33 +696,8 @@
                   (!(= @anHuman (CAR @humanList)))
                   (!(= @humanList (CDR @humanList)))
 
-                  (!(= @knowledgeParameters (. .)))
-                  (?(Actions.knowledgeParametersType (VAL @taskName) @knowledgeParametersTypes))
-                  (IF(?(~(NULL @parameters)))
-                     (!(= @tempActionParameters @parameters))
-                     (!(= @aParameter (CAR @tempActionParameters)))  ;skip the actor parameter.
-                     (!(= @tempActionParameters (CDR @tempActionParameters)))
-                     )
-                  (WHILE(?(~(NULL @knowledgeParametersTypes)))
-                        (!(= @kpt (CAR @knowledgeParametersTypes)))
-                        (!(= @knowledgeParametersTypes (CDR @knowledgeParametersTypes)))
-                        (!(= @aParameter (CAR @tempActionParameters)))
-                        (!(= @tempActionParameters (CDR @tempActionParameters)))
-
-                        (?(Object.type (VAL @aParameter) @class @type))
-                        (IF(?(EQUAL @kpt CLASS))
-                           (!(= @aKnowledgeParameter @class))
-
-                           ELSEIF(?(EQUAL @kpt TYPE))
-                           (!(= @aKnowledgeParameter @type))
-
-                           ELSE
-                           (!(= @aKnowledgeParameter @aParameter))
-                           )
-                        (!(= @knowledgeParameters (CONS-TAIL (VAL @aKnowledgeParameter) @knowledgeParameters)))
-                        )
-
-                  (!(DatabaseInterface.find (AGENT-STATEMENT (VAL @robotName) (VAL @anHuman) knows (VAL @taskName) (VAL @knowledgeParameters) PRACTICAL) @result))
+                  (!(PlanManager.getKnowledgeParameters (VAL @taskName) @knowledgeParameters))
+                  (!(DatabaseInterface.find (AGENT-STATEMENT (VAL @robotName) (VAL @anHuman) (VAL @knowledgeParameters) PRACTICAL) @result))
                   (IF(?(EQUAL @result (. FALSE .)))
                      (!(= @ok FALSE))
                      )
@@ -797,6 +810,15 @@
                   (~>(PlanManager.taskAchieved))
                   (=>(PlanManager.actionReport (VAL @actionId) "OK"))
                   (!(Verbalization.verbalizeEndAction @actionId))
+                  (!(PlanManager.getKnowledgeParameters @actionName @knowledgeParameters))
+                  (!(DatabaseInterface.findList (AGENT-STATEMENT @robotName @agent @knowledgeParameters @l) (. @l .) @result))
+                  (!(= @oldLevel (CAR(CAR @result))))
+
+                  (!(DatabaseInterface.set (AGENT-STATEMENT @robotName @agent @knowledgeParameters PRACTICAL) @result))
+                  (!(SEND-MESSAGE DatabaseInterface (Database.nfacts 2)))
+                  (!(SEND-MESSAGE DatabaseInterface (DatabaseInterface.operation updateKnowledge remove (AGENT-STATEMENT @robotName @agent @knowledgeParameters @oldLevel))))
+                  (!(SEND-MESSAGE DatabaseInterface (DatabaseInterface.operation updateKnowledge add (AGENT-STATEMENT @robotName @agent @knowledgeParameters PRACTICAL))))
+
                   (WHILE(?(PlanManager.subNodeLink (VAL @actionId) @subNodeLink))
                         (=>(PlanManager.actionCompleted (VAL @subNodeLink)))
                         (~>(PlanManager.subNodeLink (VAL @actionId) (VAL @subNodeLink)))
@@ -804,11 +826,11 @@
 
                   ELSEIF(?(PlanManager.stopAgent (VAL @agent)))
                   (~>(PlanManager.stopAgent (VAL @agent)))
-                  (=>(PlanManager.agentReport (VAL @agentName) "STOPPED"))
+                  (=>(PlanManager.agentReport (VAL @agent) "STOPPED"))
                   (!(FAILED))
 
                   ELSE
-                  (=>(PlanManager.agentReport (VAL @agentName) "FAILURE"))
+                  (=>(PlanManager.agentReport (VAL @agent) "FAILURE"))
                   (!(FAILED))
                   )
                )
