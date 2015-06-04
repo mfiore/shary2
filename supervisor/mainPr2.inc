@@ -2,7 +2,7 @@ include "new-default.inc"
 include "semaphore.inc"
 
 load db "supervisor/Config.db"
-load db "supervisor/configuration/Pr2Sim.db"
+load db "supervisor/configuration/Pr2.db"
 
 
 load opf "supervisor/Tester.opf"
@@ -83,17 +83,17 @@ load opf "supervisor/robot/ReportManager.opf"
 include "supervisor/domains/Actions.sym"
 
 load opf "supervisor/domains/Actions.opf"
-;load opf "supervisor/domains/SaphariIcsrActions.opf"
+load opf "supervisor/domains/SaphariIcsrActions.opf"
 ;load opf "supervisor/domains/GregIcsrActions.opf"
 
 load db "supervisor/domains/Actions.db"
-;load db "supervisor/domains/SaphariIcsrObjects.db"
-;load db "supervisor/domains/SaphariIcsrActions.db"
+load db "supervisor/domains/SaphariIcsrObjects.db"
+load db "supervisor/domains/SaphariIcsrActions.db"
 ;load db "supervisor/domains/GregIcsrObjects.db"
 ;load db "supervisor/domains/GregIcsrActions.db"
 
-load opf "supervisor/domains/SpencerIcsrActions.opf"
-load db "supervisor/domains/SpencerIcsrActions.db"
+;load opf "supervisor/domains/SpencerIcsrActions.opf"
+;load db "supervisor/domains/SpencerIcsrActions.db"
 
 load db "supervisor/utilities/POMDP.db"
 
@@ -109,3 +109,5 @@ load opf "supervisor/utilities/POMDP.opf"
 
 load opf "supervisor/robot/Verbalization.opf"
 load db "supervisor/robot/Verbalization.db"
+
+load opf "supervisor/robot/HumanMonitors.opf"

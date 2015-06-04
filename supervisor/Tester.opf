@@ -8,6 +8,23 @@
 
 (
 
+ (defop |gtpid|
+   :invocation(!(Tester.testGtpId))
+  :body (
+	 (!(Mhp.init))
+	 (!(GtpActions.init))
+	 (?(Manipulation.moduleName @moduleName))
+         (!(= @idCommand (TERM-STRING-CAT  @moduleName ".getFreeId")))
+         (!(= @idCommand (MAKE-ATOM @idCommand)))
+         (!(= @requestCommand (TERM-STRING-CAT @moduleName ".request")))
+         (!(= @requestCommand (MAKE-ATOM @requestCommand)))
+
+         (!(@idCommand @actionId))
+
+	 (!(PRINT @actionId))
+      )
+  )
+
 (defop |TestSpencerIcsr|
   :invocation(!(Tester.TestSpencerIcsr))
   :body (
@@ -24,7 +41,7 @@
      (!(AgentActionMonitor.cleanMonitorSpheres))
      (!(AgentActionMonitor.calculateInferencesForAgents (. HERAKLES_HUMAN1 .)))
      (!(AgentActionMonitor.startMonitoringAgent HERAKLES_HUMAN1 ))
-     (=>(PlanManager.manageRobotActionsSeed  (. (. (. place (. PR2_ROBOT BRACKET_1 STOCK_TABLE .) .) 1 (. .) .)  .)  ))
+     (=>(PlanManager.manageRobotActionsSeed  (. (. (. take (. PR2_ROBOT BRACKET_1 .) .) 2 (. 1 .) .) (. (. place (. PR2_ROBOT BRACKET_1 STOCK_TABLE .) .) 1 (. .) .)  .)   ))
 
 
      ;(=>(PlanManager.goal HandleSurface (. ASSEMBLY_SURFACE_1 .)))
