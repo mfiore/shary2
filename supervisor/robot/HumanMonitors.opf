@@ -19,4 +19,12 @@
        )
 )
 
+(defop |TriggerMonitor|
+	:invocation(HumanMonitors.rosRequest trigger @monitorObject)
+	:body (
+		   (?(AgentActionMonitor.sphere @agentName (VAL @monitorObject) @actionName @sphereId))
+		   (!(AgentActionMonitor.simulateAgentAction @sphereId))
+
+		)
+	)
 )
