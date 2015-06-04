@@ -8,6 +8,8 @@
 
 (
 
+
+
 (defop |TestSpencerIcsr|
   :invocation(!(Tester.TestSpencerIcsr))
   :body (
@@ -42,12 +44,14 @@
   :invocation(!(Tester.testPlanGregIcsr))
   :body (
     (!(Controller.initAll))
-     (!(AgentActionMonitor.cleanMonitorSpheres))
-     (!(AgentActionMonitor.calculateInferencesForAgents (. HERAKLES_HUMAN1 .)))
-     (!(AgentActionMonitor.startMonitoringAgent HERAKLES_HUMAN1 ))
-     (=>(PlanManager.goal BuildStack (. StackArea .)))
-     (=>(PlanManager.newGoal TRUE))
-     (=>(PlanManager.managePlans))  
+    (=>(PlannerInterface.getPlan BuildStack (. StackArea .)))   ;;we ask for a plan
+
+    ; (!(AgentActionMonitor.cleanMonitorSpheres))
+    ; (!(AgentActionMonitor.calculateInferencesForAgents (. HERAKLES_HUMAN1 .)))
+    ;  (!(AgentActionMonitor.startMonitoringAgent HERAKLES_HUMAN1 ))
+    ;  (=>(PlanManager.goal BuildStack (. StackArea .)))
+    ;  (=>(PlanManager.newGoal TRUE))
+    ;  (=>(PlanManager.managePlans))  
 
     )
 
