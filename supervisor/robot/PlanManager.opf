@@ -28,7 +28,6 @@
           (?(PlanManager.timeToRetry @timeToRetry))
           (?(Robot.name @robotName))
 
-          (!(Verbalization.greet))
           (WHILE(?(PlanManager.shouldRun TRUE))
                 ;;wait for a new goal or for a stop
                 (^(|| (PlanManager.newGoal TRUE) (PlanManager.shouldRun FALSE) (AgentActionMonitor.unexpectedAction @agent)))
@@ -54,10 +53,12 @@
                          (< @planningFailures @maxPlanningFailures)
                          ))
 
-                      (IF(?(PlanManager.planningModality @agent ROBOT))  ;if robot plans he warns the user that it is planning
+              ;  (!(Tester.breakpoint))
+                      (IF(?(PlanManager.planningModality ROBOT))  ;if robot plans he warns the user that it is planning
                          (IF(?(EQUAL @planningFailures 0))
                                         ; (!(Acapela.say "Let me think of a plan..."))
                             (!(Verbalization.initPlan))
+
 
                             ELSE
                                         ; (!(Acapela.say "Let me think of another plan.."))
@@ -68,8 +69,8 @@
                          )
 
 
-                      (IF(?(EQUAL @planningFailures 0))
-                         )
+                ;      (IF(?(EQUAL @planningFailures 0))
+                 ;        )
                       (=>(PlannerInterface.getPlan (VAL @goal) (VAL @parameters)))   ;;we ask for a plan
                       (^(PlannerInterface.report @report))
                       (~>(PlannerInterface.report (VAL @report)))
@@ -84,9 +85,15 @@
                          (^(PlannerInterface.result @plan @planTree))
                          (~>(PlannerInterface.result (VAL @plan)))
 
+              
+                        (IF(?(EQUAL @planningFailures 0))
+                         (!(Verbalization.greet))
+
+                        )       
 
 
                          (!(Verbalization.verbalizePlan))
+                        ; (!(Tester.breakpoint))
                                         ; (IF(?(&(PlanManager.planningModality ROBOT) (PlanManager.shouldTellPlan TRUE)))  ;if the robot is leader for an agent it will verbalize the plan
                                         ; (!(PlanManager.tellPlan @plan))
                                         ; (!(Acapela.say "Let's start!"))
@@ -98,6 +105,7 @@
                             (!(PlanManager.analyzePlanTree @planTree @monitorActions))
 
 
+                            (!(Tester.breakpoint))
 
                             (=>(PlanManager.monitorPlan HERAKLES_HUMAN1 @monitorActions))
                      
@@ -223,6 +231,7 @@
    :documentation "used to clean facts at the end of a plan"
    :body (
 
+        (!(Tester.breakpoint))
           (WHILE(?(PlanManager.actionReport @action @report))
                 (~>(PlanManager.actionReport (VAL @action) (VAL @report)))
                 )
@@ -438,13 +447,14 @@
           (!(PlanManager.findStart @tree @startId))
           (!(PlanManager.findEnd @tree @endId))
           (=>(PlanManager.verbalization start (VAL @taskId) @startId))
-          (IF(?(PlanManager.verbalization end (VAL @taskId) @nodeList))
-             (!(= @nodeList (CONS-TAIL (VAL @endId) @nodeList)))
-             (=>(PlanManager.verbalization end (VAL @taskId) @nodeList))
+          (=>(PlanManager.verbalization end (VAL @taskId) @endId))
+          ; (IF(?(PlanManager.verbalization end (VAL @taskId) @nodeList))
+          ;    (!(= @nodeList (CONS-TAIL (VAL @endId) @nodeList)))
+          ;    (=>(PlanManager.verbalization end (VAL @taskId) @nodeList))
 
-             ELSE
-             (=>(PlanManager.verbalization end (VAL @taskId) (. @endId .)))
-             )
+          ;    ELSE
+          ;    (=>(PlanManager.verbalization end (VAL @taskId) (. @endId .)))
+          ;    )
           (=>(PlanManager.wasRobot TRUE))
           (~>(PlanManager.lastRobotLeaf @any))
           (=>(PlanManager.lastRobotLeaf @endId))
@@ -614,7 +624,7 @@
 
 
 (defop |getKnowledgeParameters|
-  :invocation(!(PlanManager.getKnowledgeParameters @taskName $returnParameters))
+  :invocation(!(PlanManager.getKnowledgeParameters @taskName @parameters $returnParameters))
   :body (
     (!(= @knowledgeParameters (. .)))
     (?(Actions.knowledgeParametersType (VAL @taskName) @knowledgeParametersTypes))
@@ -680,12 +690,12 @@
                   )
                )
          (IF(?(&(EQUAL @hasRobot TRUE) (EQUAL @hasHuman TRUE)))
-                                        ;      (!(PlanManager.addVerbalization @tree @taskId))
+             ;(!(PlanManager.addVerbalization @tree @taskId))
             (WHILE(?(~(NULL @subNodes)))
-                  (!(= @subNode (CAR @subNodes)))
-                  (!(= @subNodes (CDR @subNodes)))
-                  (!(PlanManager.analyzePlanTree @subNode  @tempMonitorList))
-                  )
+              (!(= @subNode (CAR @subNodes)))
+              (!(= @subNodes (CDR @subNodes)))
+              (!(PlanManager.analyzePlanTree @subNode  @tempMonitorList))
+              )
 
             ELSEIF(?(EQUAL @hasRobot TRUE))
             (!(PlanManager.addVerbalization @tree @taskId))
@@ -696,7 +706,7 @@
                   (!(= @anHuman (CAR @humanList)))
                   (!(= @humanList (CDR @humanList)))
 
-                  (!(PlanManager.getKnowledgeParameters (VAL @taskName) @knowledgeParameters))
+                  (!(PlanManager.getKnowledgeParameters (VAL @taskName) @parameters @knowledgeParameters))
                   (!(DatabaseInterface.find (AGENT-STATEMENT (VAL @robotName) (VAL @anHuman) (VAL @knowledgeParameters) PRACTICAL) @result))
                   (IF(?(EQUAL @result (. FALSE .)))
                      (!(= @ok FALSE))
@@ -751,6 +761,9 @@
   :invocation (PlanManager.monitorPlan @agent @taskList)
   :body (
          (?(Robot.name @robotName))
+          (=>(PlanManager.isManagingAgent @agent))
+
+         (!(Tester.breakpoint))
          (WHILE(?(&(~(NULL @taskList )) (~(PlanManager.stopAgent (VAL @agent)))))
                (!(= @task (CAR @taskList)))
                (!(= @taskList (CDR @taskList)))
@@ -797,7 +810,7 @@
                      )
 
                (WHILE(?(PlanManager.taskLink (VAL @actionId) @link))
-                     (^(||(PlanManager.actionCompleted (VAL @link)) (PlanManager.stopAgent (VAL @agent))))
+                     (^(||(PlanManager.actionReport (VAL @link) @report) (PlanManager.stopAgent (VAL @agent))))
                      (~>(PlanManager.taskLink (VAL @actionId) (VAL @link)))
                      )
 
@@ -810,7 +823,7 @@
                   (~>(PlanManager.taskAchieved))
                   (=>(PlanManager.actionReport (VAL @actionId) "OK"))
                   (!(Verbalization.verbalizeEndAction @actionId))
-                  (!(PlanManager.getKnowledgeParameters @actionName @knowledgeParameters))
+                  (!(PlanManager.getKnowledgeParameters @actionName @actionParameters @knowledgeParameters))
                   (!(DatabaseInterface.findList (AGENT-STATEMENT @robotName @agent @knowledgeParameters @l) (. @l .) @result))
                   (!(= @oldLevel (CAR(CAR @result))))
 
@@ -820,7 +833,7 @@
                   (!(SEND-MESSAGE DatabaseInterface (DatabaseInterface.operation updateKnowledge add (AGENT-STATEMENT @robotName @agent @knowledgeParameters PRACTICAL))))
 
                   (WHILE(?(PlanManager.subNodeLink (VAL @actionId) @subNodeLink))
-                        (=>(PlanManager.actionCompleted (VAL @subNodeLink)))
+                        (=>(PlanManager.actionReport (VAL @subNodeLink) "OK"))
                         (~>(PlanManager.subNodeLink (VAL @actionId) (VAL @subNodeLink)))
                         )
 
@@ -935,6 +948,7 @@
   :body (
          (!(= @oldObject NULL))
          (?(Robot.name @robotName))
+     ;    (!(Tester.breakpoint))
 
          (WHILE(?(~ (NULL @actions)) )
                (=>(PlanManager.isManagingAgent robot))
@@ -991,6 +1005,7 @@
                      )
                   (=>(ExecutionManager.execute @actionName @actionParameters @executionId))
                   (^(|| (ExecutionManager.report (VAL @executionId) @report) (PlanManager.stopAgent robot)))
+                  (^(ELAPSED-TIME (TIME) 1))
                   (IF(?(ExecutionManager.report (VAL @executionId) @report))
                      (!(ReportManager.unsub ExecutionManager.report @executionId))
                      (IF(?(~(EQUAL @report "OK")))
@@ -1000,8 +1015,9 @@
                         (!(FAILED))
                         )
 
-                     (=>( PlanManager.actionReport @actionId "OK"))
+                     (=>(PlanManager.actionReport @actionId "OK"))
                      (IF(?(PlanManager.verbalization end @taskId (VAL @actionId)))
+                   ;     (!(Tester.breakpoint))
                         (!(Verbalization.verbalizeEndAction @taskId))
                         )
 

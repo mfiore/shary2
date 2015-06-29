@@ -8,11 +8,37 @@
 
 (
 
+(defop |testInformationScreen|
+  :invocation(!(Tester.testInformationScreen))
+  :body (
+    (!(BaseActions.init))
+    (!(= @g1 (. 10.1 3.8 -2.9 .)))
+    (!(= @g2 (. 11.4 2.9 -0.4 .)))
+    (=>(BaseActions.action move (. @g1 @g2 .) @goId))
 
+  )
+
+)
+
+(defop |testWaypoints|
+  :invocation(!(Tester.testWaypoints))
+  :body (
+                  (!(= @base1 (. 15.5 5.5 -1.6 .)))
+                  (!(= @base2 (. 13.5 5.5 -1.6 .)))
+                  (!(= @base3 (. 14.5 3.5 -1.6 .)))
+
+                  (!(BaseActions.init))
+                  (!(BaseActions.getFreeId @goId))
+                  (!(ReportManager.sub BaseActions.report @goId))
+                  (=>(BaseActions.action move (. @base1 @base2 @base3 .) @goId))
+    )
+
+  ) 
 
 (defop |TestSpencerIcsr|
   :invocation(!(Tester.TestSpencerIcsr))
   :body (
+    (!(Timer.init))
     (!(DatabaseInterface.init))
     (!(BaseActions.init))
     (=>(ExecutionManager.execute icsrGuide 0))
@@ -44,14 +70,14 @@
   :invocation(!(Tester.testPlanGregIcsr))
   :body (
     (!(Controller.initAll))
-    (=>(PlannerInterface.getPlan BuildStack (. StackArea .)))   ;;we ask for a plan
+  ;  (=>(PlannerInterface.getPlan BuildStack (. StackArea .)))   ;;we ask for a plan
 
-    ; (!(AgentActionMonitor.cleanMonitorSpheres))
-    ; (!(AgentActionMonitor.calculateInferencesForAgents (. HERAKLES_HUMAN1 .)))
-    ;  (!(AgentActionMonitor.startMonitoringAgent HERAKLES_HUMAN1 ))
-    ;  (=>(PlanManager.goal BuildStack (. StackArea .)))
-    ;  (=>(PlanManager.newGoal TRUE))
-    ;  (=>(PlanManager.managePlans))  
+     (!(AgentActionMonitor.cleanMonitorSpheres))
+     (!(AgentActionMonitor.calculateInferencesForAgents (. HERAKLES_HUMAN1 .)))
+      (!(AgentActionMonitor.startMonitoringAgent HERAKLES_HUMAN1 ))
+      (=>(PlanManager.goal BuildStack (. StackArea .)))
+      (=>(PlanManager.newGoal TRUE))
+      (=>(PlanManager.managePlans))  
 
     )
 

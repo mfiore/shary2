@@ -6,48 +6,71 @@
 (
 
  (defop |guideObservations|
-   :invocation(!(IcsrGuide.getObservations $obs))
+   :invocation(!(IcsrGuide.getGuideObservations $obs))
    :body (
           (?(Robot.name @robotName))
 
-          (!(DatabaseInterface.findList (AGENT-STATEMENT (VAL @robotName) Human_Centroid distance @d) (. @d .) @result))
-          (!(= @distance (CAR(CAR @result))))
+          (!(= @distancePredicate (TERM-STRING-CAT "distance_" @robotName)))
+          (!(= @distancePredicate (MAKE-ATOM @distancePredicate)))
+          (!(= @deltaDistancePredicate (TERM-STRING-CAT "delta_distance_" @robotName))) 
+          (!(= @deltaDistancePredicate (MAKE-ATOM @deltaDistancePredicate)))
 
+          (!(DatabaseInterface.findList (AGENT-STATEMENT (VAL @robotName) person_1 @distancePredicate @d) (. @d .) @result))
+          (!(= @distanceNum (CAR(CAR @result))))
+
+          (IF(?(< @distanceNum 4))
+            (!(= @distance close))
+
+            ELSEIF(?(< @distanceNum 10))
+            (!(= @distance far))
+
+            ELSE
+            (!(= @distance outOfRange))
+
+            )
           (IF(?(EQUAL @distance outOfRange))
              (!(= @orientation unknown))
              (!(= @deltaDistance increasing))
              (!(= @isMoving unknown))
 
              ELSE
-             (!(DatabaseInterface.findList (AGENT-STATEMENT (VAL @robotName) Human_Centroid deltaDistanceSpencer @dd) (. @dd .) @result))
-             (IF(?(~(NULL @result)))
-                (!(= @deltaDistance (CAR(CAR @result))))
+             (!(DatabaseInterface.findList (AGENT-STATEMENT (VAL @robotName) person_1 @deltaDistancePredicate @dd) (. @dd .) @result))
+             (!(= @deltaDistanceNum (CAR(CAR @result))))
+             (IF(?(< @deltaDistanceNum -1))
+              (!(= @deltaDistance increasing))
 
-                ELSE
-                (!(= @deltaDistance stable))
-                )
+              ELSEIF(?(> @deltaDistanceNum 1))
+              (!(= @deltaDistance decreasing))
 
-             (!(DatabaseInterface.findList (AGENT-STATEMENT (VAL @robotName) Human_Centroid isFacing @o) (. @o .) @result))
-             (IF(?(~(NULL @result)))
-                (!(= @orientation(CAR(CAR @result))))
-               ; (IF(?(EQUAL @orientation pr2))
-                  (!(= @orientation towardRobot))
+              ELSE 
+              (!(= @deltaDistance stable))
+
+              )
+    
+            (!(= @orientation towardRobot))
+             ; (!(DatabaseInterface.findList (AGENT-STATEMENT (VAL @robotName) person_1 isFacing @o) (. @o .) @result))
+             ; (IF(?(~(NULL @result)))
+             ;    (!(= @orientation(CAR(CAR @result))))
+             ;   ; (IF(?(EQUAL @orientation pr2))
+             ;      (!(= @orientation towardRobot))
                   
-              ;    ELSE
-               ;   (!(= @orientation other))
-                ;  )
+             ;  ;    ELSE
+             ;   ;   (!(= @orientation other))
+             ;    ;  )
 
-                ELSE
-                (!(= @orientation towardRobot))
-                )
+             ;    ELSE
+             ;    (!(= @orientation towardRobot))
+             ;    )
 
-             (!(DatabaseInterface.findList (AGENT-STATEMENT (VAL @robotName) Human_Centroid isMoving @im) (. @im .) @result))
-             (IF(?(~(NULL @result)))
-                (!(= @isMoving (CAR(CAR @result))))
+             (!(DatabaseInterface.findList (AGENT-STATEMENT (VAL @robotName) person_1 isMoving @im) (. @im .) @result))
+             (!(= @isMovingNum (CAR(CAR @result))))
+             (IF(?(EQUAL @isMovingNum 1))
+               (!(= @isMoving moving))
+  
+               ELSE
+               (!(= @isMoving notMoving))
+              )
 
-                ELSE
-                (!(= @isMoving true))
-                )
              )
 
 
@@ -55,47 +78,165 @@
 
           )
    )
+
+  (defop |getControlSpeedObservations|
+    :invocation(!(IcsrGuide.getControlSpeedObservations $obs))
+    :body (
+        (?(Robot.name @robotName))
+
+          (!(= @distancePredicate (TERM-STRING-CAT "distance_" @robotName)))
+          (!(= @distancePredicate (MAKE-ATOM @distancePredicate)))
+
+          (!(DatabaseInterface.findList (AGENT-STATEMENT (VAL @robotName) person_1 @distancePredicate @d) (. @d .) @result))
+          (!(= @distanceNum (CAR(CAR @result))))
+
+          (!(= @highestDensity behind))
+          (!(= @inSlowArea false))
+          (IF(?(< @distanceNum 1.5))
+            (!(= @highestDensity sides))
+
+            ELSEIF(?(< @distanceNum 3))
+            (!(= @highestDensity behind))
+
+            ELSE
+            (!(= @inSlowArea true))
+            )
+            (!(= $obs (TERM-STRING-CAT @highestDensity @inSlowArea)))
+      )
+    )
+
+  (defop |backToBase|
+    :invocation(ExecutionManager.execute backToBase)
+    :body (
+           (!(= @goal (. 15.5 5.5 -1.6 .)))
+                (^(ELAPSED-TIME (TIME) 5))
+
+           (!(BaseActions.getFreeId @goId))
+                              (!(ReportManager.sub BaseActions.report @goId))
+                              (=>(BaseActions.action move (. @goal .) @goId))
+
+
+      )
+    )
+
+
+  (defop |proactiveGuide|
+    :invocation(ExecutionManager.execute proactiveGuide @executionId)
+    :body (
+      (!(= @goal (. 1 3.5 1 .)))
+      (!(= @base (. 15.5 5.5 -1.6 .)))
+
+      (?(Robot.name @robotName))
+      (^(ELAPSED-TIME (TIME) 5))
+      (!(BaseActions.getFreeId @goId))
+      (!(ReportManager.sub BaseActions.report @goId))
+      (=>(BaseActions.action move (. @goal @base .) @goId))
+      (^(ELAPSED-TIME (TIME) 10))
+      (!(SEND-MESSAGE control_speed (ControlSpeed.request accelerate)))
+      (^(control_speed.report @report))
+      (~>(control_speed.report (VAL @report)))
+      (^(ELAPSED-TIME (TIME) 1))
+      (!(SEND-MESSAGE control_speed (ControlSpeed.request accelerate)))
+      (^(control_speed.report @report))
+      (~>(control_speed.report (VAL @report)))
+      (^(ELAPSED-TIME (TIME) 1))
+      (!(SEND-MESSAGE control_speed (ControlSpeed.request accelerate)))
+      (^(control_speed.report @report))
+      (~>(control_speed.report (VAL @report)))
+      (^(ELAPSED-TIME (TIME) 1))
+      (!(SEND-MESSAGE control_speed (ControlSpeed.request accelerate)))
+      (^(control_speed.report @report))
+      (~>(control_speed.report (VAL @report)))
+
+    )
+  )
+
     (defop |icsrGuide|
            :invocation(ExecutionManager.execute icsrGuide @executionId)
            :body (
-                  (!(= @goal (. 2 4 0 .)))
-                  (!(= @base (. 5 3.5 0 .)))
+                  ;(!(= @goal (. 10 -1.2 0 .)))
+                  (!(= @goal (. 1 3.5 1 .)))
+                  
+                 ; (!(= @goal1 (. 0.5 5  1 .)))
+                 ; (!(= @goal2 (. 2.5  4.5 -0.6 .)))
+
+               ;   (!(= @base (. 15.5 5.5 -1.6 .)))
 
                   (?(Robot.name @robotName))
 
                   (!(= @timer ok))
                   (!(= @isMoving FALSE))
+                  (!(= @accelerateTimerId -1))
+                  (!(= @decelerateTimerId -1))
 			
-		  (^(ELAPSED-TIME (TIME) 5))
+		  (^(ELAPSED-TIME (TIME) 20))
                   (!(POMDP.init guideModel (VAL @timer) @guideAction))
-		  (!(= @nWait 0))
+                ; (!(POMDP.init controlSpeedModel "" @speedAction))
+
 
                   (WHILE(?(~(EQUAL @guideAction ABANDON)))
                         (IF(?(EQUAL @guideAction CONTINUE))
                            (IF(?(EQUAL @isMoving FALSE))
+
                               (!(= @isMoving TRUE))
                               (!(BaseActions.getFreeId @goId))
                               (!(ReportManager.sub BaseActions.report @goId))
                               (=>(BaseActions.action move (. @goal .) @goId))
-                              )
+                            )
+                 ;             ELSE
+
+                  ;           (!(IcsrGuide.getControlSpeedObservations @speedObs))
+                   ;          (!(= @speedObs (MAKE-ATOM @speedObs)))
+                             ; (!(POMDP.update controlSpeedModel "" @speedObs @speedAction))
+                             ; (IF(?(EQUAL @speedAction accelerate))
+                             ;   (IF(?(EQUAL @accelerateTimerId -1))
+                             ;     (!(Timer.getFreeId @accelerateTimerId))
+                             ;     (=>(Timer.startTimer 2 @accelerateTimerId))
+
+                             ;     ELSEIF(?(Timer.elapsedTime (VAL @accelerateTimerId)))
+                             ;       (~>(Timer.elapsedTime (VAL @accelerateTimerId)))
+                             ;       (!(= @accelerateTimerId -1))
+                                    
+                             ;       ELSE
+                             ;       (!(= @speedAction continue))
+                             ;       )
+
+                             ;    ELSEIF(?(EQUAL @speedAction @decelerate))
+                             ;     (IF(?(EQUAL @decelerateTimerId -1))
+                             ;      (!(Timer.getFreeId @decelerateTimerId))
+                             ;      (=>(Timer.startTimer 2 @decelerateTimerId))
+
+                             ;      ELSEIF(?(Timer.elapsedTime (VAL @decelerateTimerId)))
+                             ;        (~>(Timer.elapsedTime (VAL @decelerateTimerId)))
+                             ;        (!(= @decelerateTimerId -1))
+                                    
+                             ;        ELSE
+                             ;        (!(= @speedAction continue))
+                             ;        )
+                             ;      )
+
+
+                                
+                             ;  (!(SEND-MESSAGE control_speed (ControlSpeed.request @speedAction)))
+                             ;  (^(control_speed.report @report))
+                             ;  (~>(control_speed.report (VAL @report)))
+                             ;  )
 
                            ELSEIF(?(EQUAL @guideAction WAIT))
                            (IF(?(EQUAL @isMoving TRUE))
-			      (!(= @nWait (+ @nWait 1)))
                               (=>(BaseActions.stop @goId))
                               (^(BaseActions.report (VAL @goId) @report))
                               (~>(BaseActions.report (VAL @goId) (VAL @report)))
                               (!(ReportManager.unsub BaseActions.report (VAL @goId)))
                               (!(= @isMoving FALSE))
-		      )
+                              )
                            )
 
                         (^(ELAPSED-TIME (TIME) 1))
-                        (!(IcsrGuide.getObservations @obs))
+                        (!(IcsrGuide.getGuideObservations @obs))
                         (!(= @obs (MAKE-ATOM @obs)))
                         (!(POMDP.update guideModel (VAL @timer) (VAL @obs) @guideAction))
                         )
-		  (!(PRINT @nWait))
                   (=>(BaseActions.stop @goId))
                   (^(BaseActions.report (VAL @goId) @report))
                   (~>(BaseActions.report (VAL @goId) (VAL @report)))

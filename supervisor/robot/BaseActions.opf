@@ -56,7 +56,7 @@
          (!(SEM-P BaseActions.sem))
 
          (IF(?(BaseActions.isActive SIM))
-            ;(!(ReportManager.publish BaseActions.report @id "OK"))
+                                        ;(!(ReportManager.publish BaseActions.report @id "OK"))
 
 
             ELSEIF(?(BaseActions.isActive TRUE))
@@ -69,61 +69,63 @@
 
             (!(= @reportName2 (TERM-STRING-CAT (VAL @name) ".move.update")))
             (!(= @reportName2 (MAKE-ATOM @reportName2)))
-            ;(IF(?(Softmotion.isActive TRUE))
+                                        ;(IF(?(Softmotion.isActive TRUE))
+            (WHILE(?(~(NULL @waypoints)))
+                  (!(= @nextLocation (CAR @waypoints)))
+                  (!(= @waypoints (CDR @waypoints)))
+                  (!(SEND-MESSAGE @name (move euler @nextLocation)))
 
-               (!(SEND-MESSAGE @name (move euler @waypoints)))
-               (!(= @nextLocation (CAR @waypoints)))
-               (!(= @waypoints (CDR @waypoints)))
-               (!(= @completed FALSE))
+                  (^(|| (@reportName1 @status) (@reportName2 @status) (BaseActions.stop (VAL @id)) (ELAPSED-TIME (TIME) @time)))
+                  (IF(?(BaseActions.stop (VAL @id)))  ;;if we receive a stop request we send a stop to the ros node and wait for the reports
+                     (!(BaseActions.getFreeId @stopId))
+                     (=>(BaseActions.action stop (VAL @stopId)))
+                     (!(ReportManager.sub BaseActions.report @stopId))
+                     (^(BaseActions.report (VAL @stopId) @report))
+                     (!(ReportManager.unsub BaseActions.report @stopId))
 
-               (WHILE(?(EQUAL @completed FALSE))
-                     (^(|| (@reportName1 @status) (@reportName2 @status) (BaseActions.stop (VAL @id)) (ELAPSED-TIME (TIME) @time)))
-                     (IF(?(BaseActions.stop (VAL @id)))  ;;if we receive a stop request we send a stop to the ros node and wait for the reports
-                        (!(BaseActions.getFreeId @stopId))
-                        (=>(BaseActions.action stop (VAL @stopId)))
-                        (!(ReportManager.sub BaseActions.report @stopId))
-                        (^(BaseActions.report (VAL @stopId) @report))
-                        (!(ReportManager.unsub BaseActions.report @stopId))
+                     (^(@reportName1 @status))
+                     (^(@reportName2 @status))
+                     (~>(@reportName1 (VAL @status)))
+                     (~>(@reportName2 (VAL @status)))
 
-                        (^(@reportName1 @status))
-                        (^(@reportName2 @status))
-                        (~>(@reportName1 (VAL @status)))
-                        (~>(@reportName2 (VAL @status)))
+                     (!(ReportManager.publish BaseActions.report @id "STOPPED"))
 
-                        (!(ReportManager.publish BaseActions.report @id "STOPPED"))
+                     (!(= @completed TRUE))
 
-                        (!(= @completed TRUE))
+                     ELSEIF(?(@reportName1 OK))
+                     (~>(@reportName1 @status))
+                     (=>(BaseActions.update @id "OK"))
+                     ;;.location (VAL @nextLocation)))  ;;this should be handled by toaster so we ares it
+                     ;; (IF(?(~(NULL @waypoints)))
+                                        ;  (!(= @nextLocation (CAR @waypoints)))
+                                        ;  (!(= @waypoints (CDR @waypoints)))
+                    ; (!(ReportManager.publish BaseActions.report @id "OK"))
 
-                        ELSEIF(?(@reportName1 OK))
-                        (~>(@reportName1 @status))
-                                        ;(=>(Robot.location (VAL @nextLocation)))  ;;this should be handled by toaster so we ares it
-                        (IF(?(~(NULL @waypoints)))
-                           (!(= @nextLocation (CAR @waypoints)))
-                           (!(= @waypoints (CDR @waypoints)))
-                           )
-                        ELSEIF(?(@reportName2 OK))
-                        (~>(@reportName2 @status))
-                        (!(ReportManager.publish BaseActions.report @id "OK"))
 
-                        (!(= @completed TRUE))
-                        ELSE
-                        (~>(@reportName1 @status))
-                        (~>(@reportName2 @status))
-                        (!(ReportManager.publish BaseActions.report @id "FAILURE"))
+                     ELSEIF(?(@reportName2 OK))
+                     (~>(@reportName2 @status))
+                     ;(!(ReportManager.publish BaseActions.report @id "OK"))
 
-                        (!(= @completed TRUE))
-                        )
+                    ; (!(= @completed TRUE))
+                     ELSE
+                     (~>(@reportName1 @status))
+                     (~>(@reportName2 @status))
+                     (!(ReportManager.publish BaseActions.report @id "FAILURE"))
+                     (!(FAILED))
+
                      )
-               (~>(@reportName1 @status))
-               (~>(@reportName2 @status))
 
- ;              ELSE
-;               (!(ReportManager.publish BaseActions.report @id "FAILURE"))
-              ; )
-            ELSE
+                  (~>(@reportName1 @status))
+                  (~>(@reportName2 @status))
+
+                                        ;              ELSE
+                                        ;               (!(ReportManager.publish BaseActions.report @id "FAILURE"))
+                                        ; )
+                  )
             (!(ReportManager.publish BaseActions.report @id "OK"))
+
+            (!(SEM-V BaseActions.sem))
             )
-         (!(SEM-V BaseActions.sem))
          )
   )
 

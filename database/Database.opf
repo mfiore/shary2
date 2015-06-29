@@ -47,8 +47,7 @@
 
                 (!(== (VAL @element) (. @model @subject @predicate @value .)))
 
-                (!(SEND-MESSAGE @name (Database.operation add)))
-                (!(SEND-MESSAGE @name (AGENT-STATEMENT @model @subject @predicate @value )))
+                (!(SEND-MESSAGE @name (Database.operation add (AGENT-STATEMENT @model @subject @predicate @value ))))
                 )
 
 
