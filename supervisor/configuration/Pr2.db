@@ -30,7 +30,7 @@
 (Viman.isActive TRUE)
 (Spark.isActive factsManagement TRUE)
 (Spark.isActive monitorSpheres TRUE)
-(Spark.isActive base TRUE)
+(Spark.isActive BASE TRUE)
 (Acapela.isActive FALSE)
 (Waypoints.isActive FALSE)
 (PathPlanner.isActive TRUE)

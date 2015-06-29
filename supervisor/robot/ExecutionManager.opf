@@ -1,4 +1,5 @@
 
+git
 ;; -*-Lisp-*-
 ;;author: Michelangelo Fiore
 ;;this module contains high-level actions like take an item, give, drop.
@@ -263,7 +264,7 @@
       (!(= @requestCommand (MAKE-ATOM @requestCommand)))
 	  ;; ;;plan and execute the trajectory
 
-      (=>(@idCommand @pickId))
+      (!(@idCommand @pickId))
       (=>(@requestCommand pick @object @armForPick @pickId))
       (!(ExecutionManager.handleReport @moduleName @pickId @executionId TRUE TRUE (. (. (AGENT-STATEMENT PR2_ROBOT (VAL @object) isReachable false) .) (. (AGENT-STATEMENT PR2_ROBOT (VAL @object) isReachableBy PR2_ROBOT) (AGENT-STATEMENT PR2_ROBOT (VAL @object) isReachable true) .) .)))
 
@@ -908,17 +909,19 @@
          (!(ExecutionManager.handleReport ExecutionManager @poseId @executionId TRUE TRUE (. .)))
 
          ;;get the manipulation module (ex. GTP, MHP)
-         (?(Manipulation.moduleName @moduleName))
+	 (?(Manipulation.moduleName @moduleName))
          (!(= @idCommand (TERM-STRING-CAT  @moduleName ".getFreeId")))
          (!(= @idCommand (MAKE-ATOM @idCommand)))
          (!(= @requestCommand (TERM-STRING-CAT @moduleName ".request")))
          (!(= @requestCommand (MAKE-ATOM @requestCommand)))
 
          (!(@idCommand @actionId))
-         (=>(@requestCommand place @object @placement @actionId)
+
+
+         (=>(@requestCommand place @object @placement @actionId))
          (!(ExecutionManager.handleReport @moduleName @actionId @executionId TRUE TRUE (. .)))
 
-         (!(Actions.setPostconditions place @postParameters))
+         (!(Actions.setPostconditions place @postParams))
 
          (!(ReportManager.publish ExecutionManager.report  @executionId "OK"))
 
@@ -931,7 +934,7 @@
 
 
 
-)
+
 (defop |closeGripper|
   :invocation(ExecutionManager.execute closeGripper @parameters @executionId)
   :documentation "closes the RIGHT or LEFT gripper."

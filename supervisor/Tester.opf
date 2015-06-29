@@ -3,10 +3,28 @@
 
 ;;This file contains procedures to test the single modules of the
 ;system.
-
-
-
 (
+
+(defop |gtpid|
+   :invocation(!(Tester.testGtpId))
+  :body (
+	 (!(Mhp.init))
+	 (!(GtpActions.init))
+	 (?(Manipulation.moduleName @moduleName))
+         (!(= @idCommand (TERM-STRING-CAT  @moduleName ".getFreeId")))
+         (!(= @idCommand (MAKE-ATOM @idCommand)))
+         (!(= @requestCommand (TERM-STRING-CAT @moduleName ".request")))
+         (!(= @requestCommand (MAKE-ATOM @requestCommand)))
+
+         (!(@idCommand @actionId))
+
+	 (!(PRINT @actionId))
+      )
+  )
+
+	 (!(PRINT @actionId))
+      )
+  )
 
 (defop |testInformationScreen|
   :invocation(!(Tester.testInformationScreen))
@@ -38,7 +56,6 @@
 (defop |TestSpencerIcsr|
   :invocation(!(Tester.TestSpencerIcsr))
   :body (
-    (!(Timer.init))
     (!(DatabaseInterface.init))
     (!(BaseActions.init))
     (=>(ExecutionManager.execute icsrGuide 0))
@@ -70,14 +87,14 @@
   :invocation(!(Tester.testPlanGregIcsr))
   :body (
     (!(Controller.initAll))
-  ;  (=>(PlannerInterface.getPlan BuildStack (. StackArea .)))   ;;we ask for a plan
+    (=>(PlannerInterface.getPlan BuildStack (. StackArea .)))   ;;we ask for a plan
 
-     (!(AgentActionMonitor.cleanMonitorSpheres))
-     (!(AgentActionMonitor.calculateInferencesForAgents (. HERAKLES_HUMAN1 .)))
-      (!(AgentActionMonitor.startMonitoringAgent HERAKLES_HUMAN1 ))
-      (=>(PlanManager.goal BuildStack (. StackArea .)))
-      (=>(PlanManager.newGoal TRUE))
-      (=>(PlanManager.managePlans))  
+    ; (!(AgentActionMonitor.cleanMonitorSpheres))
+    ; (!(AgentActionMonitor.calculateInferencesForAgents (. HERAKLES_HUMAN1 .)))
+    ;  (!(AgentActionMonitor.startMonitoringAgent HERAKLES_HUMAN1 ))
+    ;  (=>(PlanManager.goal BuildStack (. StackArea .)))
+    ;  (=>(PlanManager.newGoal TRUE))
+    ;  (=>(PlanManager.managePlans))  
 
     )
 

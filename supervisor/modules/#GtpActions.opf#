@@ -10,7 +10,7 @@
    :documentation "init the module"
    :body (
 	  (=>(GtpActions.freeId 0))
-      (!(Mhp.getFreeId @id))
+	  (!(Mhp.getFreeId @id))
       (=>(Mhp.request fetchEnvironment @id))
       (!(GtpActions.handleReport Mhp @id 0))
 	  ) 
@@ -247,9 +247,6 @@
 
 	  (IF(?(EQUAL @configurationName MANIPULATION_RIGHT))
 	     (!(= @configurationName manipulationPoseRight))
-
-	     ELSEIF(?(EQUAL @configurationName NAV))
-	     (!(= @configurationName restPosi))
 	     )
 
       (!(Mhp.getFreeId @id))

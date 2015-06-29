@@ -2,7 +2,7 @@ include "new-default.inc"
 include "semaphore.inc"
 
 load db "supervisor/Config.db"
-load db "supervisor/configuration/Pr2Sim.db"
+load db "supervisor/configuration/Pr2.db"
 
 
 load opf "supervisor/Tester.opf"
@@ -109,3 +109,5 @@ load opf "supervisor/utilities/POMDP.opf"
 
 load opf "supervisor/robot/Verbalization.opf"
 load db "supervisor/robot/Verbalization.db"
+
+load opf "supervisor/robot/HumanMonitors.opf"
