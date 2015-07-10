@@ -25,9 +25,6 @@
       )
   )
 
-	 (!(PRINT @actionId))
-      )
-  )
 
 (defop |TestSpencerIcsr|
   :invocation(!(Tester.TestSpencerIcsr))
@@ -41,11 +38,13 @@
 (defop |TestPlanSaphariIcsr|
   :invocation(!(Tester.testPlanSaphariIcsr))
   :body (
-    (!(Controller.initAll))
-     (!(AgentActionMonitor.cleanMonitorSpheres))
-     (!(AgentActionMonitor.calculateInferencesForAgents (. HERAKLES_HUMAN1 .)))
-     (!(AgentActionMonitor.startMonitoringAgent HERAKLES_HUMAN1 ))
-     (=>(PlanManager.manageRobotActionsSeed  (. (. (. place (. PR2_ROBOT BRACKET_1 STOCK_TABLE .) .) 1 (. .) .)  .)  ))
+    ;(!(Controller.initAll))
+     ;(!(AgentActionMonitor.cleanMonitorSpheres))
+     ;(!(AgentActionMonitor.calculateInferencesForAgents (. HERAKLES_HUMAN1 .)))
+     ;(!(AgentActionMonitor.startMonitoringAgent HERAKLES_HUMAN1 ))
+;     (=>(PlanManager.manageRobotActionsSeed  (. (. (. go (. PR2_ROBOT WORK_LOCATION_1 .) .) 1 (. .)  .)  (. (. place (. PR2_ROBOT BRACKET_1 WORK_LOCATION_1 .) .) 2 (. 1 .) .)  .)  ))
+
+     (=>(PlanManager.manageRobotActionsSeed  (. (. (. go (. PR2_ROBOT STOCK_TABLE .) .) 1 (. .)  .)  (. (. take (. PR2_ROBOT BRACKET_1 .) .) 2 (. 1 .) .)  .)  ))
 
 
      ;(=>(PlanManager.goal HandleSurface (. ASSEMBLY_SURFACE_1 .)))
