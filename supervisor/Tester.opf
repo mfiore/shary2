@@ -81,6 +81,24 @@
 
   )
 
+(defop |testPlanMardi|
+  :invocation(!(Tester.testPlanMardi))
+  :body (
+    (!(Controller.initAll))
+    (=>(PlannerInterface.getPlan BuildStack (. StackArea .)))   ;;we ask for a plan
+
+    ; (!(AgentActionMonitor.cleanMonitorSpheres))
+    ; (!(AgentActionMonitor.calculateInferencesForAgents (. HERAKLES_HUMAN1 .)))
+    ;  (!(AgentActionMonitor.startMonitoringAgent HERAKLES_HUMAN1 ))
+    ;  (=>(PlanManager.goal BuildStack (. StackArea .)))
+    ;  (=>(PlanManager.newGoal TRUE))
+    ;  (=>(PlanManager.managePlans))  
+
+    )
+
+  )
+
+
 
 (defop |testPlanGregIcsr|
   :invocation(!(Tester.testPlanGregIcsr))

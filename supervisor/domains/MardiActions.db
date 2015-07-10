@@ -1,0 +1,35 @@
+
+(
+
+
+
+ (PlannerInterface.action hatp Travelto go)
+ (PlannerInterface.action hatp Handover handover)
+ (PlannerInterface.action hatp Pick take)
+ (PlannerInterface.action hatp Place place)
+ (PlannerInterface.action hatp Scan exploreHead)
+
+
+
+(PlannerInterface.parameterLinks hatp Pick (. 0 1 .))
+ (PlannerInterface.parameterLinks hatp Place (. 0 1 2 .))
+ (PlannerInterface.parameterLinks hatp Scan (. 0 .))
+ (PlannerInterface.parameterLinks hatp Travelto (. 0 1 .))
+
+
+
+(Acapela.translation take "take")
+(Acapela.translation place "place")
+(Acapela.translation handover "handover")
+(Acapela.translation exploreHad "exploreHead")
+(Acapela.translation go "go")
+
+
+
+
+
+
+
+
+
+)

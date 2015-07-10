@@ -1,4 +1,4 @@
-
+(
 (Object.type PR2_ROBOT ROBOT AGENT)
 (Object.type HERAKLES_HUMAN1 HUMAN AGENT)
 
@@ -28,5 +28,5 @@
 (Object.actions CUBE (. take .))
 (Object.actions BOX (. take .))
 
-
 (Object.actions PLACEMAT (. place .))
+)

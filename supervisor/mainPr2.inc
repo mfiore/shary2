@@ -84,13 +84,18 @@ include "supervisor/domains/Actions.sym"
 
 load opf "supervisor/domains/Actions.opf"
 ;load opf "supervisor/domains/SaphariIcsrActions.opf"
-load opf "supervisor/domains/GregIcsrActions.opf"
+;load opf "supervisor/domains/GregIcsrActions.opf"
 
 load db "supervisor/domains/Actions.db"
 ;load db "supervisor/domains/SaphariIcsrObjects.db"
 ;load db "supervisor/domains/SaphariIcsrActions.db"
-load db "supervisor/domains/GregIcsrObjects.db"
-load db "supervisor/domains/GregIcsrActions.db"
+;load db "supervisor/domains/GregIcsrObjects.db"
+;load db "supervisor/domains/GregIcsrActions.db"
+
+load db "supervisor/domains/MardiObjects.db"
+load db "supervisor/domains/MardiActions.db"
+
+
 
 ;load opf "supervisor/domains/SpencerIcsrActions.opf"
 ;load db "supervisor/domains/SpencerIcsrActions.db"
