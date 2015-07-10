@@ -1,6 +1,6 @@
 
 ;; -*-Lisp-*-
-;opt;author: Michelangelo Fiore
+;;author: Michelangelo Fiore
 ;;this module contains high-level actions like take an item, give, drop.
 (
 
@@ -10,10 +10,16 @@
    :body (
           (!(SEM-CREATE ExecutionManager.sem 1 SEM-FIFO))
           (=>(ExecutionManager.freeId 0))
-
+	  ()
 	  )
 
    )
+ 
+ 
+ 
+
+  
+ 
  
  (defop |getFreeId|
    :invocation(!(ExecutionManager.getFreeId $id))
@@ -23,7 +29,10 @@
 	  (?(ExecutionManager.freeId $id))
 	  (=>(ExecutionManager.freeId (+ $id 1)))
 	  (!(SEM-V ExecutionManager.sem))
-	 
+
+	  
+	  
+	  
 	 )
    )
 
@@ -502,18 +511,25 @@
   :body (
          (?(Robot.name @robotName))
 
-         (!(= @type (CAR @parameters)))
+         (!(= @agent1 (CAR @parameters)))
+         (!(= @parameters (CDR @parameters)))
+         (!(= @agent2 (CAR @parameters)))
          (!(= @parameters (CDR @parameters)))
          (!(= @object (CAR @parameters)))
          (!(= @parameters (CDR @parameters)))
-         (!(= agent (CAR @parameters)))
-         (!(= @parameters (CDR @parameters)))
 
-         (IF(?(EQUAL @type GRAB))
-            (!(= @preCondParameters (. (VAL @agent) (VAL @object) (VAL @robotName) .)))
-            ELSE
-            (!(= @preCondParameters (. (VAL @robotName) (VAL @object) (VAL @agent) .)))
-            )
+         (IF(?(EQUAL @agent1 (VAL @robotName)))
+          (!(= @agent @agent2))
+          (!(= @type GIVE))
+          (!(= @preCondParameters (. (VAL @robotName) (VAL @object) (VAL @agent) .)))
+
+
+          ELSE
+          (!(= @agent @agent1))
+          (!(= @type GRAB))
+          (!(= @preCondParameters (. (VAL @agent) (VAL @object) (VAL @robotName) .)))
+
+          )
 
          (!(Actions.checkPreconditions handover @preCondParameters @result))
          (IF(?(EQUAL @result FALSE))

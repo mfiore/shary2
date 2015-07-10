@@ -11,4 +11,4 @@ load opf "database/Tester.opf"
 load db "supervisor/domains/Objects.db"
 load db "database/HatpRules.db"
 
-load db "database/domains/saphari-icsr.db"
+load db "database/domains/greg-icsr.db"

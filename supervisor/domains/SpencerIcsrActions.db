@@ -3,4 +3,10 @@
     (POMDP.action guideModel 0 CONTINUE)
     (POMDP.action guideModel 1 WAIT)
     (POMDP.action guideModel 2 ABANDON)
+
+
+    (POMDP.action controlSpeedModel 0 decelerate)
+    (POMDP.action controlSpeedModel 1 continue)
+    (POMDP.action controlSpeedModel 2 accelerate)
+
 )

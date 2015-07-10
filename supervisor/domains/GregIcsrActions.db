@@ -37,7 +37,7 @@
  (PlannerInterface.parameterLinks hatp ApplyOperation (. 0 1 2 .))
  
 
- (Actions.monitorInformation pick (. (SUBJECT TYPE ID 0 PREDICATE hasInHand VALUE TYPE ID 1) .) 60 )
+ (Actions.monitorInformation take (. (SUBJECT TYPE ID 0 PREDICATE hasInHand VALUE TYPE ID 1) .) 60 )
  (Actions.monitorInformation place (. (SUBJECT TYPE ID 1 PREDICATE isOn VALUE TYPE ID 2) .) 60)
  (Actions.monitorInformation placeOnStack (. (SUBJECT TYPE ID 1 PREDICATE isOn VALUE TYPE SYMBOL StackArea) .) 60)
  (Actions.monitorInformation applyOperation (. (SUBJECT TYPE ID 1 PREDICATE isDone VALUE TYPE SYMBOL true) .) 60)

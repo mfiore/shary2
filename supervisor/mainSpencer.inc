@@ -14,6 +14,7 @@ include "supervisor/robot/HeadActions.sym"
 include "supervisor/robot/PathPlanner.sym"
 include "supervisor/robot/BaseActions.sym"
 include "supervisor/robot/ReportManager.sym"
+include "supervisor/utilities/Timer.sym"
 
 
 
@@ -32,6 +33,8 @@ load opf "supervisor/robot/ReportManager.opf"
 
 load opf "supervisor/utilities/POMDP.opf"
 load db  "supervisor/utilities/POMDP.db"
+load opf  "supervisor/utilities/Timer.opf"
+load db  "supervisor/utilities/Timer.db"
 
 load opf "supervisor/domains/SpencerIcsrActions.opf"
 load db "supervisor/domains/SpencerIcsrActions.db"

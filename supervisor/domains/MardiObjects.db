@@ -1,0 +1,32 @@
+
+(Object.type PR2_ROBOT ROBOT AGENT)
+(Object.type HERAKLES_HUMAN1 HUMAN AGENT)
+
+
+(Object.type LOTR_TAPE TAPE PICKABLE)
+(Object.type WALLE_TAPE TAPE PICKABLE)
+(Object.type GREY_TAPE TAPE PICKABLE)
+(Object.type BLACK_TAPE TAPE PICKABLE)
+
+
+(Object.type BLACK_CUBE CUBE PICKABLE)
+(Object.type BLUE_CUBE CUBE PICKABLE)
+(Object.type GREEN_CUBE CUBE PICKABLE)
+(Object.type RED_CUBE CUBE PICKABLE)
+(Object.type YELLOW_CUBE CUBE PICKABLE)
+
+(Object.type PLACEMAT_RED PLACEMAT PLACEMENT)
+(Object.type PLACEMAT_BLUE PLACEMAT PLACEMENT)
+(Object.type PLACEMAT_GREEN PLACEMAT PLACEMENT)
+(Object.type PLACEMAT_PURPLE PLACEMAT PLACEMENT)
+
+(Object.type TABLE_4 TABLE SUPPORT)
+
+(Object.type SURPRISE_BOX BOX PICKABLE)
+
+(Object.actions TAPE (. take .))
+(Object.actions CUBE (. take .))
+(Object.actions BOX (. take .))
+
+
+(Object.actions PLACEMAT (. place .))

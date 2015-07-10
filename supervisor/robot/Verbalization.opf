@@ -9,7 +9,8 @@
 	:body (
 		(?(Verbalization.bridgeName @bridgeName))
 		(!(SEND-MESSAGE @bridgeName (Verbalization.request init_speech)))
-
+		(^(Verbalization.report @report))
+		(~>(Verbalization.report @report))
 		)
 	)
 (defop |InitPlan|
@@ -17,6 +18,7 @@
 	:body (
 		(?(Verbalization.bridgeName @bridgeName))
 		(!(SEND-MESSAGE @bridgeName (Verbalization.request init_plan)))
+		;(^(Verbalization.report @report))
 		)
 	)
 (defop |VerbalizeCurrentPlan|
@@ -24,6 +26,7 @@
 	:body (
 		(?(Verbalization.bridgeName @bridgeName))
 		(!(SEND-MESSAGE @bridgeName (Verbalization.request verbalize_current_plan)))
+		(^(Verbalization.report @report))
 		)
 	)
 (defop |VerbalizeReplan|
@@ -31,6 +34,9 @@
 	:body (
 		(?(Verbalization.bridgeName @bridgeName))
 		(!(SEND-MESSAGE @bridgeName (Verbalization.request replan)))
+		(^(Verbalization.report @report))
+				(~>(Verbalization.report @report))
+
 		)
 
 	)
@@ -39,6 +45,9 @@
 	:body (
 		(?(Verbalization.bridgeName @bridgeName))
 		(!(SEND-MESSAGE @bridgeName (Verbalization.request init_execution @actionId)))
+		(^(Verbalization.report @report))
+		(~>(Verbalization.report @report))
+
 		)
 
 	)
@@ -47,6 +56,10 @@
 	:body (
 		(?(Verbalization.bridgeName @bridgeName))
 		(!(SEND-MESSAGE @bridgeName (Verbalization.request end_execution @actionId)))
+		(^(Verbalization.report @report))
+		(~>(Verbalization.report @report))
+
+
 		)
 	)
 )

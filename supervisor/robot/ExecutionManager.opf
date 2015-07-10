@@ -10,10 +10,16 @@
    :body (
           (!(SEM-CREATE ExecutionManager.sem 1 SEM-FIFO))
           (=>(ExecutionManager.freeId 0))
-
+	  
 	  )
 
    )
+ 
+ 
+ 
+
+  
+ 
  
  (defop |getFreeId|
    :invocation(!(ExecutionManager.getFreeId $id))
@@ -23,7 +29,10 @@
 	  (?(ExecutionManager.freeId $id))
 	  (=>(ExecutionManager.freeId (+ $id 1)))
 	  (!(SEM-V ExecutionManager.sem))
-	 
+
+	  
+	  
+	  
 	 )
    )
 
