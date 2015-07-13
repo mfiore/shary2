@@ -24,6 +24,140 @@
 	  )
    )
 
+(defop |exploreHead|
+  :invocation(HeadActions.action exploreHead @actionId)
+  :body (
+
+    (!(HeadActions.getFreeId @headId))
+    (!(ReportManager.sub HeadActions.report @headId))
+    (=>(HeadActions.action moveHead -1.2 0.7 @headId))
+    (^(HeadActions.report (VAL @headId) @report))
+    (~>(HeadActions.report (VAL @headId) @report))
+    (!(ReportManager.unsub HeadActions.report @headId))
+
+    (!(HeadActions.getFreeId @headId))
+    (!(ReportManager.sub HeadActions.report @headId))
+    (=>(HeadActions.action moveHead -1.1 0.7 @headId))
+    (^(HeadActions.report (VAL @headId) @report))
+    (~>(HeadActions.report (VAL @headId) @report))
+    (!(ReportManager.unsub HeadActions.report @headId))
+
+    (!(HeadActions.getFreeId @headId))
+    (!(ReportManager.sub HeadActions.report @headId))
+    (=>(HeadActions.action moveHead -0.4 0.79@headId))
+    (^(HeadActions.report (VAL @headId) @report))
+    (~>(HeadActions.report (VAL @headId) @report))
+    (!(ReportManager.unsub HeadActions.report @headId))
+
+    (!(HeadActions.getFreeId @headId))
+    (!(ReportManager.sub HeadActions.report @headId))
+    (=>(HeadActions.action moveHead -0.65 0.9 @headId))
+    (^(HeadActions.report (VAL @headId) @report))
+    (~>(HeadActions.report (VAL @headId) @report))
+    (!(ReportManager.unsub HeadActions.report @headId))
+
+    (!(HeadActions.getFreeId @headId))
+    (!(ReportManager.sub HeadActions.report @headId))
+    (=>(HeadActions.action moveHead -0.0 0.9 @headId))
+    (^(HeadActions.report (VAL @headId) @report))
+    (~>(HeadActions.report (VAL @headId) @report))
+    (!(ReportManager.unsub HeadActions.report @headId))
+
+    (!(HeadActions.getFreeId @headId))
+    (!(ReportManager.sub HeadActions.report @headId))
+    (=>(HeadActions.action moveHead -0.4 0.45 @headId))
+    (^(HeadActions.report (VAL @headId) @report))
+    (~>(HeadActions.report (VAL @headId) @report))
+    (!(ReportManager.unsub HeadActions.report @headId))
+
+    (!(HeadActions.getFreeId @headId))
+    (!(ReportManager.sub HeadActions.report @headId))
+    (=>(HeadActions.action moveHead -0.3 0.5 @headId))
+    (^(HeadActions.report (VAL @headId) @report))
+    (~>(HeadActions.report (VAL @headId) @report))
+    (!(ReportManager.unsub HeadActions.report @headId))
+
+    (!(HeadActions.getFreeId @headId))
+    (!(ReportManager.sub HeadActions.report @headId))
+    (=>(HeadActions.action moveHead 0.3 0.7 @headId))
+    (^(HeadActions.report (VAL @headId) @report))
+    (~>(HeadActions.report (VAL @headId) @report))
+    (!(ReportManager.unsub HeadActions.report @headId))
+
+    (!(HeadActions.getFreeId @headId))
+    (!(ReportManager.sub HeadActions.report @headId))
+    (=>(HeadActions.action moveHead 0.3 0.5 @headId))
+    (^(HeadActions.report (VAL @headId) @report))
+    (~>(HeadActions.report (VAL @headId) @report))
+    (!(ReportManager.unsub HeadActions.report @headId))
+
+    (!(HeadActions.getFreeId @headId))
+    (!(ReportManager.sub HeadActions.report @headId))
+    (=>(HeadActions.action moveHead 0.2 0.6 @headId))
+    (^(HeadActions.report (VAL @headId) @report))
+    (~>(HeadActions.report (VAL @headId) @report))
+    (!(ReportManager.unsub HeadActions.report @headId))
+
+    (!(HeadActions.getFreeId @headId))
+    (!(ReportManager.sub HeadActions.report @headId))
+    (=>(HeadActions.action moveHead 0.5 1.1 @headId))
+    (^(HeadActions.report (VAL @headId) @report))
+    (~>(HeadActions.report (VAL @headId) @report))
+    (!(ReportManager.unsub HeadActions.report @headId))
+
+    (!(HeadActions.getFreeId @headId))
+    (!(ReportManager.sub HeadActions.report @headId))
+    (=>(HeadActions.action moveHead 0.5 0.6 @headId))
+    (^(HeadActions.report (VAL @headId) @report))
+    (~>(HeadActions.report (VAL @headId) @report))
+    (!(ReportManager.unsub HeadActions.report @headId))
+
+    (!(HeadActions.getFreeId @headId))
+    (!(ReportManager.sub HeadActions.report @headId))
+    (=>(HeadActions.action moveHead 0.6 0.9 @headId))
+    (^(HeadActions.report (VAL @headId) @report))
+    (~>(HeadActions.report (VAL @headId) @report))
+    (!(ReportManager.unsub HeadActions.report @headId))
+
+    (!(HeadActions.getFreeId @headId))
+    (!(ReportManager.sub HeadActions.report @headId))
+    (=>(HeadActions.action moveHead 0.6 0.6 @headId))
+    (^(HeadActions.report (VAL @headId) @report))
+    (~>(HeadActions.report (VAL @headId) @report))
+    (!(ReportManager.unsub HeadActions.report @headId))
+
+    (=>(HeadActions.report @actionId "OK"))
+    )
+)
+
+(defop |moveHeadPanTilt|
+  :invocation(HeadActions.action moveHead @pan @tilt @actionId)
+  :body (
+    (!(Viman.getFreeId @vimanId))
+    (!(ReportManager.sub Viman.report @vimanId))
+    (=>(Viman.request stopTracking @vimanId))
+    (^(Viman.report (VAL @vimanId) @report))
+    (!(ReportManager.unsub Viman.report @vimanId))
+    (~>(Viman.report (VAL @vimanId) @report))
+
+    (!(Softmotion.getFreeId @smId))
+    (!(ReportManager.sub Softmotion.report @smId))
+    (=>(Softmotion.request moveHead @pan @tilt @id))
+    (~>(Softmotion.report @smId @report))
+    (!(ReportManager.unsub Softmotion.report @smId))
+
+    (!(Viman.getFreeId @vimanId))
+    (!(ReportManager.sub Viman.report @vimanId))
+    (=>(Viman.request activateTracking @vimanId))
+    (^(Viman.report (VAL @vimanId) @report))
+    (!(ReportManager.unsub Viman.report @vimanId))
+    (~>(Viman.report (VAL @vimanId) @report))
+
+    (=>(HeadActions.report @actionId OK))
+
+    )
+  )
+
 (defop |moveHeadDirection|
   :invocation(HeadActions.action moveHeadDirection @direction @actionId)
   :body (

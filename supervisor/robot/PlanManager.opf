@@ -40,7 +40,7 @@
 
                    ELSEIF(?(AgentActionMonitor.unexpectedAction @agent))
                    (~>(AgentActionMonitor.unexpectedAction @agente))
-                   (PlanManager.chooseGoal @goal @parameters)
+                   (!(PlanManager.chooseGoal @goal @parameters))
                    )
 
                                         ; (!(PlanManager.tellGoal @goal @parameters))

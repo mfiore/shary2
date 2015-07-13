@@ -1,0 +1,12 @@
+(
+
+	(defop |chooseGoal|
+		:invocation (!(PlanManager.chooseGoal $goal $parameters))
+		:body (
+			(IF(?(PlanManager.goal localise @parameters))
+				
+				)
+			)
+		)
+
+)

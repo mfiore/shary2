@@ -1,0 +1,82 @@
+(
+
+	(defop |scanPreconditions|
+		:invocation(!(Actions.checkPreconditions scan @parameters $return))
+		:body (
+			(!(= @agent (CAR @parameters)))
+			(!(= @parameters (CDR @parameters)))
+			(!(= @location (CAR @parameters)))
+			(!(= @parameters (CDR @parameters)))
+
+			(?(Robot.name @robotName))
+
+			(!(DatabaseInterface.find (AGENT-STATEMENT (VAL @robotName) (VAL @location) scanned @v) (. @v .) @result))
+			(!(= @isScanned (CAR(CAR @result))))
+
+			(IF(?(EQUAL @isScanned true))
+				(!(= $return FALSE))
+				
+				ELSE
+				(!(= $return TRUE))
+				)
+		)
+	)
+
+	(defop |scanPostconditions|
+		:invocation(!(Action.setPostconditions scan @parameters))
+		:body (
+			(!(= @agent (CAR @parameters)))
+			(!(= @parameters (CDR @parameters)))
+			(!(= @location (CAR @parameters)))
+			(!(= @parameters (CDR @parameters)))
+
+			(?(Robot.name @robotName))
+
+			(!(DatabaseInterface.set (AGENT-STATEMENT (VAL @robotName) (VAL @location) scanned true) @result))
+
+			)
+
+		)
+
+	(defop |scan|
+		:invocation (ExecutionManager.execute scan @parameters @executionId)
+		:body (
+			    (!(= @location (CAR @parameters)))
+			    (!(= @parameters (CDR @parameters)))
+			    (!(= @object (CAR @parameters)))
+			    (!(= @parameters (CDR @parameters)))
+
+
+			    (!(= @precondParameters (. (VAL @robotName) (VAL @location) (VAL @object) .)))
+			    (!(Action.checkPreconditions scan @precondParameters @return))
+
+			    (IF(?(EQUAL @return FALSE))
+			    	(=>(ExecutionManager.report (VAL @executionId) "FAILURE"))
+			    	(!(FAILED))
+			    	)
+
+       		    (?(Robot.name @robotName))
+
+       		    (=>(ExecutionManager.isExecutingAction @executionId))
+
+       		   	(!(HeadActions.getFreeId @scanId))
+       		   	(=>(HeadActions.action exploreHead @scanId))
+       		   	(!(ExecutionManager.handleReport HeadActions @scanId @executionId TRUE TRUE (. .)))
+
+       		   	(!(Actions.setPostconditions scan @precondParameters)))
+
+       		   	(!(DatabaseInterface.find (AGENT-STATEMENT (VAL @robotName) (VAL @object) isOn (VAL @location) @result)))
+       
+       		   	(IF(?(EQUAL @result (. TRUE .)))
+
+       		   	(=>(ExecutionManager.report (VAL @executionId) "OK"))
+       		   	
+       		   	ELSE 
+       		   	(=>(ExecutionManager.report (VAL @executionId) "FAILURE"))
+       		   	)
+       		   	(~>(ExecutionManager.isExecutingAction @executionId))
+
+			)
+
+		)
+)

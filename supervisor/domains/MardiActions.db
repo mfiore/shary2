@@ -1,0 +1,9 @@
+(
+
+(PlannerInterface.action hatp Scan scan)
+(PlannerInterface.parameterLinks hatp Scan (. 0 1 2 .))
+(Acapela.translation scan "scan")
+
+
+
+)
