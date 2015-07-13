@@ -5,6 +5,16 @@
 ;system.
 (
 
+(defop |testScan|
+  :invocation(!(Tester.testScan))
+  :body (
+	 (!(Controller.initAll))
+	 (=>(ExecutionManager.execute scan (. TABLE_4 LOTR_TAPE .) 0))
+	 
+	 )
+)
+
+
 (defop |gtpid|
    :invocation(!(Tester.testGtpId))
   :body (

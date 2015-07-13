@@ -39,7 +39,7 @@
 	     (!(= @armJoint LEFT_ARM))
 	     )
 	  
-	  (=>(Softmotion.freeId (+ @id 1)))
+
 
 	  (!(= @parameters 
 	       (PR2SM_TRACK_STR 
@@ -50,7 +50,7 @@
 
       (!(GenomInterface.handleRequest  PR2SOFTMOTION PR2SOFTMOTION_TRACKQ (Softmotion.stop (VAL @id)) (FALSE) (FALSE) 300 (VAL @parameters) @report @result))
       (!(ReportManager.publish Softmotion.report (VAL @id) (VAL @report)))
-	  (=>(Softmotion.freeId (+ @id 1)))
+
 	 
 	  (IF(?(EQUAL @arm RIGHT))
 	     (!(SEM-V Softmotion.sem))
@@ -73,7 +73,7 @@
 	     (!(SEM-P Softmotion.sem))
 	     )
 	  
-	  (=>(Softmotion.freeId (+ @id 1)))
+
 	  
 	  (!(= @parameters 
 	       (PR2SM_TRACK_STR 
@@ -84,7 +84,7 @@
 
 	  (!(GenomInterface.handleRequest  PR2SOFTMOTION PR2SOFTMOTION_TRACKQ (Softmotion.stop (VAL @id)) (Robot.isMovingArm (VAL @arm) TRUE) (Robot.isMovingArm (VAL @arm) FALSE) 300 (VAL @parameters) @report @result))
       (!(ReportManager.publish Softmotion.report (VAL @id) (VAL @report)))
-	  (=>(Softmotion.freeId (+ @id 1)))
+
 	 
 	  (IF(?(EQUAL @arm RIGHT))
 	     (!(SEM-V Softmotion.sem))
@@ -106,7 +106,7 @@
                                 @l_wrist_roll @l_gripper @l_gripper_false @id
                                 )
   :body (
-         (=>(Softmotion.freeId (+ @id 1)))
+
 
          (!(= @parameters
                   (PR2SM_QSTR
@@ -153,7 +153,7 @@
   :documentation
   :body (
 	 (!(SEM-P Softmotion.sem))
-	 (=>(Softmotion.freeId (+ @id 1)))
+
 
 	   
 	   (!(= @parameters 
@@ -207,7 +207,7 @@
 	   
 	   (!(SEM-P Softmotion.sem))
 
-	   (=>(Softmotion.freeId (+ @id 1)))
+	   
 
 	   
 	   (!(= @parameters 
@@ -259,7 +259,7 @@
   :body (
 
 	  
-	  (=>(Softmotion.freeId (+ @id 1)))
+
 	  
 	  (!(GenomInterface.handleRequest PR2SOFTMOTION PR2SOFTMOTION_HALT (Softmotion.stop (VAL @id)) (FALSE) (FALSE) 300  NIL @report @result))
       (!(ReportManager.publish Softmotion.report (VAL @id) (VAL @report)))
@@ -275,7 +275,7 @@
   :body (
 
 	  
-	  (=>(Softmotion.freeId (+ @id 1)))
+	  
 	  
 	  (!(GenomInterface.handleRequest PR2SOFTMOTION PR2SOFTMOTION_RESUME (Softmotion.stop (VAL @id)) (FALSE) (FALSE) 300  NIL @report @result))
       (!(ReportManager.publish Softmotion.report (VAL @id) (VAL @report)))
@@ -291,7 +291,7 @@
 
 
 
-	  (=>(Softmotion.freeId (+ @id 1)))
+	  
 	  
 	  (!(GenomInterface.handleRequest PR2SOFTMOTION PR2SOFTMOTION_STOP (Softmotion.stop (VAL @id)) (FALSE) (FALSE) 300  NIL @report @result))
 	  (=> (Robot.isMoving HEAD FALSE))
@@ -313,7 +313,7 @@
    :body (
 	 
 	  
-	  (=>(Softmotion.freeId (+ @id 1)))
+	  
 	  (IF(?(||(EQUAL @state ROPEN) (EQUAL @state RCLOSE) (EQUAL @state RCANCEL) (EQUAL @state RGRAB) (EQUAL @state RRELEASE)))
 	     (!(SEM-P Softmotion.sem))
 	     
@@ -416,7 +416,7 @@
    :body (
 	  (!(SEM-P Softmotion.sem)) 
 	  
-	  (=>(Softmotion.freeId (+ @id 1)))
+	  
 	  (!(= @parameters (PR2SM_xyzHead 
            (x  (VAL @x))
            (y  (VAL @y))

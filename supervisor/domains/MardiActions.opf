@@ -10,7 +10,7 @@
 
 			(?(Robot.name @robotName))
 
-			(!(DatabaseInterface.find (AGENT-STATEMENT (VAL @robotName) (VAL @location) scanned @v) (. @v .) @result))
+			(!(DatabaseInterface.findList (AGENT-STATEMENT (VAL @robotName) (VAL @location) scanned @v) (. @v .) @result))
 			(!(= @isScanned (CAR(CAR @result))))
 
 			(IF(?(EQUAL @isScanned true))
@@ -23,7 +23,7 @@
 	)
 
 	(defop |scanPostconditions|
-		:invocation(!(Action.setPostconditions scan @parameters))
+		:invocation(!(Actions.setPostconditions scan @parameters))
 		:body (
 			(!(= @agent (CAR @parameters)))
 			(!(= @parameters (CDR @parameters)))
@@ -48,7 +48,7 @@
 
 
 			    (!(= @precondParameters (. (VAL @robotName) (VAL @location) (VAL @object) .)))
-			    (!(Action.checkPreconditions scan @precondParameters @return))
+			    (!(Actions.checkPreconditions scan @precondParameters @return))
 
 			    (IF(?(EQUAL @return FALSE))
 			    	(=>(ExecutionManager.report (VAL @executionId) "FAILURE"))
