@@ -63,9 +63,9 @@
        		   	(=>(HeadActions.action exploreHead @scanId))
        		   	(!(ExecutionManager.handleReport HeadActions @scanId @executionId TRUE TRUE (. .)))
 
-       		   	(!(Actions.setPostconditions scan @precondParameters)))
+       		   	(!(Actions.setPostconditions scan @precondParameters))
 
-       		   	(!(DatabaseInterface.find (AGENT-STATEMENT (VAL @robotName) (VAL @object) isOn (VAL @location) @result)))
+       		   	(!(DatabaseInterface.find (AGENT-STATEMENT (VAL @robotName) (VAL @object) isOn (VAL @location)) @result))
        
        		   	(IF(?(EQUAL @result (. TRUE .)))
 
