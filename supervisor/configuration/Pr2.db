@@ -33,7 +33,7 @@
 (Spark.isActive BASE TRUE)
 (Acapela.isActive FALSE)
 (Waypoints.isActive FALSE)
-(PathPlanner.isActive TRUE)
+(PathPlanner.isActive FALSE)
 (ExecutionManager.isActive execution TRUE)
 (BaseActions.isActive TRUE)
 (Manipulation.moduleName GtpActions)

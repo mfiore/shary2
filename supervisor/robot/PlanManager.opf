@@ -347,7 +347,22 @@
       (!(ExecutionManager.getFreeId @executionId))
       (!(ReportManager.sub ExecutionManager.report @executionId))
 
-      (=>(ExecutionManager.execute @seedAction @seedActionParameters @executionId))
+     (IF(?(EQUAL @seedAction go))
+	 (!(= @realActionParameters (CONS-TAIL go @seedActionParameters)))
+	 (!(= @realAction simpleGo))
+	 
+	 ELSEIF(?(EQUAL @seedAction search))
+	 (!(= @realActionParameters (CONS-TAIL go @seedActionParameters)))
+	 (!(= @realAction simpleGo))
+
+	 ELSE
+	 (!(= @realActionParameters (VAL @seedActionParameters)))
+	 (!(= @realAction (VAL @seedAction)))
+	 )
+
+      (=>(ExecutionManager.execute @realAction @realActionParameters @executionId))
+
+ 
       (^(|| (ExecutionManager.report (VAL @executionId) @report) (PlanManager.stopAgent robot) (AttentionalInterface.stop)))
       (IF(?(ExecutionManager.isActive execution SIM))
         (^(ELAPSED-TIME (TIME) 10))
