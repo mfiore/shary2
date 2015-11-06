@@ -1,14 +1,24 @@
 (
 
+	;; (defop |getRequest|
+	;; 	:invocation(RequestManager.getRequest @command @parameters @caller)
+	;; 	:body (
+	;; 		(!(ExecutionManager.getFreeId @executionId))
+	;; 		(=>(ExecutionManager.execute @command @parameters @executionId))
+	;; 		(^(ExecutionManager.report (VAL @executionId)))
+	;; 		(!(SEND-MESSAGE @caller (ReportManager.report @report)))
+	;; 	)
+
+	;)				
+
 	(defop |getRequest|
-		:invocation(RequestManager.getRequest @command @parameters @caller)
-		:body (
-			(!(ExecutionManager.getFreeId @executionId))
-			(=>(ExecutionManager.execute @command @parameters @executionId))
-			(^(ExecutionManager.report (VAL @executionId)))
-			(!(SEND-MESSAGE @caller (ReportManager.report @report)))
-
-		)
-
-	)
+	       :invocation(RequestManager.request @goal @parameters @caller)
+	       :body (
+		      (=>(PlanManager.goal (VAL @goal) (VAL @parameters)))
+		      (=>(PlanManager.newGoal TRUE))
+		      (^(PlanManager.report @report))
+;		      (!(SEND-MESSAGE @caller (RequestManager.report @report)))
+		      
+		      )
+	       )
 )

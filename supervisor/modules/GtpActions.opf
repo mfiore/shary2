@@ -413,7 +413,7 @@
 
           )
    )
-
+)
 (defop |handleReport|
   :invocation(!(GtpActions.handleReport @module @id @actionId))
   :documentation "Utility function to avoid some code duplication when waiting for the response of a genom module. This can't be used when we don't want to fail if the genom request fails"
