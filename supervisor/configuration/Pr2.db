@@ -39,7 +39,7 @@
 (Manipulation.moduleName GtpActions)
 (MonitorManager.isActive TRUE)
 
-
+(ExecutionManager.pressureControls TRUE)
 
 ;;Joints
 (Robot.joints HEAD)

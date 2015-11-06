@@ -326,10 +326,11 @@
 		      
                       (IF(?(EQUAL @task pick))
                          (!(= @postParams (. (VAL @robotName) (VAL @object) (VAL @arm) .)))
-			 (!(Actions.setPostconditions take (VAL @postParams)))
-                         
 
-                         (=>(GtpActions.objectAttachment @taskId))
+			 (!(DatabaseInterface.find (AGENT-STATEMENT (VAL @robotName) RIGHT_GRIPPER detectPression TRUE) @result))
+			 (IF(?(|| (EQUAL @result (. TRUE .)) (ExecutionManager.pressureControls FALSE)))
+			     (!(Actions.setPostconditions take (VAL @postParams)))
+			     (=>(GtpActions.objectAttachment @taskId))
                          )
 		      
                       ELSEIF(?(EQUAL @subTrajName "release"))

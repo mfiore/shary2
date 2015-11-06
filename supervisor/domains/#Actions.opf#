@@ -1,0 +1,448 @@
+;; -*-Lisp-*-
+;;author: Michelangelo Fiore
+;;this files contains procedures related to action management.
+(
+
+ (defop |takePreconditions|
+   :invocation(!(Actions.checkPreconditions take @parameters $return))
+   :body (
+          (?(Robot.name @robotName))
+
+	  
+          (!(= @agent (CAR @parameters)))
+          (!(= @parameters (CDR @parameters)))
+          (!(= @object (CAR @parameters)))
+          (!(= @parameters (CDR @parameters)))
+
+
+
+          (!(= @factList (. .)))
+          (!(= @ok TRUE))
+
+          (!(DatabaseInterface.findList (AGENT-STATEMENT (VAL @robotName) (VAL @agent) hasInHand @o) (. @o .) @result))
+          (!(= @n (LENGTH @result)))
+          (IF(?(EQUAL @agent @robotName))
+             (IF(?(> @n 1))
+                (!(= @ok FALSE))
+                )
+
+             ELSE
+             (IF(~(NULL @result))
+                (!(= @ok FALSE))
+                )
+             )
+
+          (!(= $return (VAL @ok)))
+          )
+   )
+
+ (defop |takePostConditions|
+   :invocation(!(Actions.setPostconditions take @parameters))
+   :body (
+          (?(Robot.name @robotName))
+
+          (!(= @agent (CAR @parameters)))
+          (!(= @parameters (CDR @parameters)))
+          (!(= @object (CAR @parameters)))
+          (!(= @parameters (CDR @parameters)))
+          (IF(?(NULL @parameters))
+             (!(= @arm RIGHT))
+             ELSE
+             (!(= @arm (CAR @parameters)))
+             (!(= @parameters (CDR @parameters)))
+             )
+
+          (!(= @addFacts (. (AGENT-STATEMENT (VAL @robotName) (VAL @agent) hasInHand (VAL @object)) .)))
+          (!(= @setFacts (.
+                            (AGENT-STATEMENT (VAL @robotName) (VAL @agent) (VAL @arm) (VAL @object))
+                          .)
+               ))
+          (!(= @removeFacts (. .)))
+          (IF(?(Spark.isActive factsManagement FALSE))
+             (!(DatabaseInterface.findList (AGENT-STATEMENT (VAL @robotName) (VAL @object) isReachableBy @a) (. @a .) @result))
+             (WHILE(?(~(NULL @result)))
+                   (!(= @ag (CAR(CAR @result))))
+                   (!(= @result (CDR @result)))
+                   (!(= @fact (AGENT-STATEMENT (VAL @robotName) (VAL @object) isReachableBy (VAL @ag))))
+                   (!(= @removeFacts (CONS-TAIL (VAL @fact) @removeFacts)))
+                   )
+             (!(DatabaseInterface.findList (AGENT-STATEMENT (VAL @robotName) (VAL @object) isOn @s) (. @s .) @result))
+             (WHILE(?(~(NULL @result)))
+                   (!(= @support (CAR(CAR @result))))
+                   (!(= @result (CDR @result)))
+                   (!(= @fact (AGENT-STATEMENT (VAL @robotName) (VAL @object) isOn (VAL @support))))
+                   (!(= @removeFacts (CONS-TAIL (VAL @fact) @removeFacts)))
+                )
+             )
+          (!(DatabaseInterface.addSetRemoveFacts @addFacts @setFacts @removeFacts @result))
+
+          (IF(?(Spark.isActive BASE TRUE))
+            (!(Spark.getFreeId @sparkId))
+            (!(ReportManager.sub Spark.report @sparkId))
+            (=>(Spark.request setObjectInHand  (VAL @agent) (VAL @object) (VAL @arm) TRUE (VAL @sparkId)))
+            (^(Spark.report (VAL @sparkId) @report))
+            (!(ReportManager.unsub Spark.report @sparkId))
+          )
+          (!(AgentActionMonitor.cleanObjectMonitorSpheres @object))
+	  (IF(?(~(EQUAL @agent @robotName)))
+          (!(AgentActionMonitor.calculatePresentInferences @agent))
+	  )
+
+   )
+
+   )
+
+ (defop |placePreconditions|
+   :invocation(!(Actions.checkPreconditions place @parameters $return))
+   :body (
+          (?(Robot.name @robotName))
+
+          (!(= @agent (CAR @parameters)))
+          (!(= @parameters (CDR @parameters)))
+          (!(= @object (CAR @parameters)))
+          (!(= @parameters (CDR @parameters)))
+          (!(= @placement (CAR @parameters)))
+          (!(= @parameters (CDR @parameters)))
+
+          (!(DatabaseInterface.find (AGENT-STATEMENT (VAL @robotName) (VAL @agent) hasInHand (VAL @object)) @result))
+          (IF(?(EQUAL @result (. TRUE .)))
+             (!(= $return TRUE))
+             ELSE
+             (!(= $return FALSE))
+             )
+
+          )
+   )
+
+ (defop |placePostconditions|
+   :invocation(!(Actions.setPostconditions place @parameters))
+   :body (
+          (?(Robot.name @robotName))
+;          (!(== (VAL @parameters) (. @agent @object @placement @position .)))
+
+          (!(= @agent (CAR @parameters)))
+          (!(= @parameters (CDR @parameters)))
+          (!(= @object (CAR @parameters)))
+          (!(= @parameters (CDR @parameters)))
+          (!(= @placement (CAR @parameters)))
+          (!(= @parameters (CDR @parameters)))
+          (!(= @position (CAR @parameters)))
+          (!(= @parameters (CDR @parameters)))
+
+
+          (!(DatabaseInterface.findList (AGENT-STATEMENT (VAL @robotName) (VAL @agent) RIGHT @o) (. @o .) @result))
+          (IF(?(NULL @result))
+             (!(= @arm LEFT))
+             ELSE
+             (!(= @arm RIGHT))
+             )
+          (!(= @removeFacts (. (AGENT-STATEMENT (VAL @robotName) (VAL @agent) hasInHand (VAL @object))
+                               (AGENT-STATEMENT (VAL @robotName) (VAL @agent) (VAL @arm) (VAL @object))
+                               .)))
+          (!(= @addFacts (. .)))
+          (IF(?(Spark.isActive factsManagement FALSE))
+             (!(= @addFacts (. (AGENT-STATEMENT (VAL @robotName) (VAL @object) isOn (VAL @placement)) .)))
+             (!(DatabaseInterface.findList (AGENT-STATEMENT (VAL @robotName) (VAL @placement) isOn @s) (. @s .) @result))
+             (IF(?(~(NULL @result)))
+                (WHILE(?(~(NULL @result)))
+                      (!(= @support (CAR(CAR @result))))
+                      (!(= @result (CDR @result)))
+                      (!(= @addFacts (CONS-TAIL (AGENT-STATEMENT (VAL @robotName) (VAL @object) isOn (VAL @support)) @addFacts)))
+                )
+                )
+             )
+
+          (!(DatabaseInterface.addSetRemoveFacts @addFacts (. .) @removeFacts @result))
+
+          (IF(?(Spark.isActive BASE TRUE))
+            (!(Spark.getFreeId @sparkId))
+            (!(ReportManager.sub Spark.report @sparkId))
+            (=>(Spark.request setObjectInHand (VAL @agent) (VAL @object) (VAL @arm) FALSE (VAL @sparkId)))
+            (^(Spark.report (VAL @sparkId) @report))
+            (!(ReportManager.unsub Spark.report @sparkId))
+
+
+            (!(= @x (CAR @position)))
+            (!(= @position (CDR @position)))
+            (!(= @y (CAR @position)))
+  ;;          (!(== (VAL @position) (. @x @y @z .)))
+
+  (!(Spark.getFreeId @sparkId))
+  (!(ReportManager.sub Spark.report @sparkId))
+  (=>(Spark.request placeObjectForSimu (VAL @object) @x @y 0.75 0 0 0 0 @sparkId))
+  (^(Spark.report (VAL @sparkId) @report))
+  (!(ReportManager.unsub Spark.report @sparkId))
+)
+          (!(AgentActionMonitor.cleanObjectMonitorSpheres @placement))
+	  (IF(?(~(EQUAL @agent @robotName)))
+          (!(AgentActionMonitor.calculatePresentInferences @agent))
+	  )
+          )
+   )
+
+ (defop |handoverPreconditions|
+   :invocation (!(Actions.checkPreconditions handover @parameters $return))
+   :body (
+
+
+          (!(= @agent1 (CAR @parameters)))
+          (!(= @parameters (CDR @parameters)))
+          (!(= @object (CAR @parameters)))
+          (!(= @parameters (CDR @parameters)))
+          (!(= @agent2 (CAR @parameters)))
+          (!(= @parameters (CDR @parameters)))
+
+
+          (?(Robot.name @robotName))
+
+          (!(DatabaseInterface.find (AGENT-STATEMENT (VAL @robotName) (VAL @agent1) hasInHand (VAL @object)) @result))
+          (IF(?(EQUAL @result (. FALSE .)))
+             (!(= $return FALSE))
+             ELSE
+             (?(Object.type (VAL @agent2) @class @type))
+             ;(?(Agents.maxObjects (VAL @class) @max))
+
+
+             (!(DatabaseInterface.findList (AGENT-STATEMENT (VAL @robotName) (VAL @agent2) hasInHand @o) (. @o .) @result))
+             (IF(?(~(NULL @result)))
+              (!(= $result FALSE))
+
+              ELSE
+              (!(= $return TRUE))
+
+              )
+             ;(!(= @numObjects (LENGTH @result)))
+
+             ; (IF(?(> @numObjects (- @max 1)))
+                ; (!(= $return FALSE))
+
+                ; ELSE
+                ; (!(= $return TRUE))
+                ; )
+             ; )
+
+          )
+   )
+)
+ (defop |handoverPostconditions|
+   :invocation(!(Actions.setPostconditions handover @parameters))
+   :body (
+
+          (!(= @agent1 (CAR @parameters)))
+          (!(= @parameters (CDR @parameters)))
+          (!(= @object (CAR @parameters)))
+          (!(= @parameters (CDR @parameters)))
+          (!(= @agent2 (CAR @parameters)))
+          (!(= @parameters (CDR @parameters)))
+          (!(= @arm (CAR @parameters)))
+          (!(= @parameters (CDR @parameters)))
+
+
+          (?(Robot.name @robotName))
+
+          (!(DatabaseInterface.find (AGENT-STATEMENT (VAL @robotName) (VAL @agent1) RIGHT (VAL @object)) @result))
+          (IF(?(EQUAL @result (. TRUE .)))
+             (!(= @firstArm RIGHT))
+
+             ELSE
+             (!(= @firstArm LEFT))
+             )
+
+          (!(= @removeFacts (. (AGENT-STATEMENT (VAL @robotName) (VAL @agent1) hasInHand (VAL @object))
+                               (AGENT-STATEMENT (VAL @robotName) (VAL @agent1) (VAL @firstArm) (VAL @object))
+                               .)))
+          (!(= @setFacts  (. (AGENT-STATEMENT (VAL @robotName) (VAL @agent2) hasInHand (VAL @object))
+                             (AGENT-STATEMENT (VAL @robotName) (VAL @agent2) (VAL @arm) (VAL @object))
+                           .)
+               ))
+
+          (!(DatabaseInterface.addSetRemoveFacts (. .) @setFacts @removeFacts @result))
+
+          (IF(?(Spark.isActive BASE TRUE))
+
+            (!(Spark.getFreeId @sparkId))
+            (!(ReportManager.sub Spark.report @sparkId))
+            (=>(Spark.request setObjectInHand (VAL @agent1) (VAL @object) (VAL @firstArm) FALSE (VAL @sparkId)))
+            (^(Spark.report (VAL @sparkId) @report))
+            (!(ReportManager.unsub Spark.report @sparkId))
+
+            (!(Spark.getFreeId @sparkId))
+            (!(ReportManager.sub Spark.report @sparkId))
+            (=>(Spark.request setObjectInHand (VAL @agent2) (VAL @object) (VAL @arm) TRUE (VAL @sparkId)))
+            (^(Spark.report (VAL @sparkId) @report))
+            (!(ReportManager.unsub Spark.report @sparkId))
+
+          )
+          (IF(?(~(EQUAL @agent2 @robotName)))
+             (!(AgentActionMonitor.calculateInferencesForAgents (. @agent2 .)))
+
+             ELSE
+             (!(AgentActionMonitor.calculateInferencesForAgents (. @agent1 .)))
+
+             )
+
+          )
+   )
+
+ (defop |throwPreconditions|
+   :invocation(!(Actions.checkPreconditions throw @parameters $return))
+   :body (
+
+          (!(= @agent (CAR @parameters)))
+          (!(= @parameters (CDR @parameters)))
+          (!(= @object (CAR @parameters)))
+          (!(= @parameters (CDR @parameters)))
+          (!(= @bin (CAR @parameters)))
+          (!(= @parameters (CDR @parameters)))
+
+          (?(Robot.name @robotName))
+
+          (!(DatabaseInterface.find (AGENT-STATEMENT (VAL @robotName) (VAL @agent) hasInHand (VAL @object)) @result))
+          (IF(?(EQUAL @result (. TRUE .)))
+             (!(= $return TRUE))
+
+             ELSE
+             (!(= $return FALSE))
+             )
+
+          )
+   )
+ (defop |throwPostconditions|
+   :invocation(!(Actions.setPostconditions throw @parameters))
+   :body (
+          (!(= @agent (CAR @parameters)))
+          (!(= @parameters (CDR @parameters)))
+          (!(= @object (CAR @parameters)))
+          (!(= @parameters (CDR @parameters)))
+          (!(= @bin (CAR @parameters)))
+          (!(= @parameters (CDR @parameters)))
+
+
+          (?(Robot.name @robotName))
+
+          (!(DatabaseInterface.find (AGENT-STATEMENT (VAL @robotName) (VAL @agent) RIGHT (VAL @object)) @result))
+          (IF(?(NULL @result))
+             (!(= @arm LEFT))
+
+             ELSE
+             (!(= @arm RIGHT))
+             )
+
+          (!(= @removeFacts (.
+                             (AGENT-STATEMENT (VAL @robotName) (VAL @agent) hasInHand (VAL @object))
+                             (AGENT-STATEMENT (VAL @robotName) (VAL @agent (VAL @arm) (VAL @object)))
+                             .)))
+          (!(= @setFacts (. .)))
+
+          (IF(?(Spark.isActive factsManagement FALSE))
+             (!(= @setFacts (. (AGENT-STATEMENT (VAL @robotName) (VAL @object) isIn (VAL @bin))
+                             .)))
+             )
+          (!(DatabaseInterface.addSetRemoveFacts (. .) @setFacts @removeFacts @result))
+
+
+          (IF(?(Spark.isActive BASE TRUE))
+
+            (!(Spark.getFreeId @sparkId))
+            (!(ReportManager.sub Spark.report @sparkId))
+            (=>(Spark.request setObjectInHand (VAL @agent) (VAL @object) (VAL @arm) FALSE (VAL @sparkId)))
+            (^(Spark.report (VAL @sparkId) @report))
+            (!(ReportManager.unsub Spark.report @sparkId))
+
+            (!(Spark.getFreeId @sparkId))
+            (!(ReportManager.sub Spark.report @sparkId))
+            (=>(Spark.request placeObjectForSimu (VAL @object) 0 0 0 0 0 0 0 @sparkId))
+            (^(Spark.report (VAL @sparkId) @report))
+            (!(ReportManager.unsub Spark.report @sparkId))
+
+            (!(Spark.getFreeId @sparkId))
+            (!(ReportManager.sub Spark.report @sparkId))
+            (=>(Spark.request setInferrenceForObject @object 1 @bin 0 SPARK_IS_IN 0.0 @sparkId))
+            (^(Spark.report (VAL @sparkId) @report))
+            (!(ReportManager.unsub Spark.report @sparkId))
+
+            (!(Spark.getFreeId @sparkId))
+            (!(ReportManager.sub Spark.report @sparkId))
+            (=>(Spark.request placeObjectForSimu (VAL @object) 0 0 0 0 0 0 1 @sparkId))
+            (^(Spark.report (VAL @sparkId) @report))
+            (!(ReportManager.unsub Spark.report @sparkId))
+
+          )
+          (!(AgentActionMonitor.cleanObjectMonitorSpheres @bin))
+          (!(AgentActionMonitor.calculatePresentInferences @agent))
+
+
+          )
+   )
+
+ (defop |checkPreconditionsGo|
+   :invocation(!(Actions.checkPreconditions go @parameters $return))
+   :body (
+          (!(= $return TRUE))
+          )
+   )
+
+ (defop |setPostconditionsGo|
+   :invocation(!(Actions.setPostconditions go @parameters))
+   :body (
+          (?(Robot.name @robotName))
+
+          (!(= @agent (CAR @parameters)))
+          (!(= @parameters (CDR @parameters)))
+          (!(= @location (CAR @parameters)))
+          (!(= @parameters (CDR @parameters)))
+
+
+
+          (!(= @setFacts (. (AGENT-STATEMENT (VAL @robotName) (VAL @agent) isAt (VAL @location))
+                            .)))
+          (!(DatabaseInterface.addSetRemoveFacts (. .) @setFacts (. .) @result))
+
+          (IF(?(~(EQUAL @agent @robotName)))
+             (!(AgentActionMonitor.calculateInferencesForAgents (. @agent .)))
+             )
+          )
+   )
+
+ (defop |checkPreconditionsPoint|
+   :invocation(!(Actions.checkPreconditions pointTo @parameters $return))
+   :body (
+
+          (!(= @agent (CAR @parameters)))
+          (!(= @parameters (CDR @parameters)))
+          (!(= @location (CAR @parameters)))
+          (!(= @parameters (CDR @parameters)))
+
+
+
+          (?(Robot.name (VAL @robotName)))
+          ;(?(Object.type (VAL @agent) @class @type))
+          ;(?(Agents.maxObjects (VAL @class) @max))
+
+          ;(!(DatabaseInterface.findList (AGENT-STATEMENT (VAL @robotNAme) (VAL @agent) hasInHand @o) (. @o .) @result))
+          ;(IF(?(> (LENGTH @result) (- @max 1) ))
+           ;  (!(= $return FALSE))
+
+            ; ELSE
+             (!(= $return TRUE))
+;             )
+          )
+   )
+
+ (defop |setPostconditionsPoint|
+   :invocation(!(Actions.setPostconditions pointTo @parameters))
+   :body (
+          (!(== (VAL @parameters) (. @agent @location .)))
+          (!(DatabaseInterface.set (AGENT-STATEMENT PR2_ROBOT (VAL @location) state HIGHLIGHTED) @result))
+          )
+   )
+
+ (defop |setPostconditionsMoveToPose|
+   :invocation(!(Actions.setPostconditions moveToPose @parameters))
+   :body (
+          (!(== (VAL @parameters) (. @agent @pose .)))
+          (?(Robot.name @robotName))
+          (!(DatabaseInterface.add (AGENT-STATEMENT (VAL @robotName) (VAL @agent) pose (VAL @pose)) @result))
+          )
+   )
+)
