@@ -74,7 +74,7 @@
       ;      (!(GtpActions.getFreeId @gtpId))
  ;     (=>(GtpActions.action moveTo sNaviPose @gtpId))
   ;    (!(ExecutionManager.handleReport GtpActions @gtpId @executionId TRUE TRUE (. .) ))
-
+	  (=>(PlanManager.managePlans))
 
 	  )
    )

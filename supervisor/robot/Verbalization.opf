@@ -7,10 +7,12 @@
 (defop	|Greet|
 	:invocation(!(Verbalization.greet))
 	:body (
-		(?(Verbalization.bridgeName @bridgeName))
-		(!(SEND-MESSAGE @bridgeName (Verbalization.request init_speech)))
-		(^(Verbalization.report @report))
-		(~>(Verbalization.report @report))
+	        (IF(?(Verbalization.isActive TRUE))
+		   (?(Verbalization.bridgeName @bridgeName))
+		   (!(SEND-MESSAGE @bridgeName (Verbalization.request init_speech)))
+		   (^(Verbalization.report @report))
+		   (~>(Verbalization.report @report))
+		)
 		)
 	)
 (defop |InitPlan|
@@ -24,41 +26,50 @@
 (defop |VerbalizeCurrentPlan|
 	:invocation(!(Verbalization.verbalizePlan))
 	:body (
-		(?(Verbalization.bridgeName @bridgeName))
-		(!(SEND-MESSAGE @bridgeName (Verbalization.request verbalize_current_plan)))
-		(^(Verbalization.report @report))
-		)
+	        (IF(?(Verbalization.isActive TRUE))
+
+		   (?(Verbalization.bridgeName @bridgeName))
+		   (!(SEND-MESSAGE @bridgeName (Verbalization.request verbalize_current_plan)))
+		   (^(Verbalization.report @report))
+		   )
+	     )
 	)
 (defop |VerbalizeReplan|
 	:invocation(!(Verbalization.verbalizeReplan))
 	:body (
+	        (IF(?(Verbalization.isActive TRUE))
+
 		(?(Verbalization.bridgeName @bridgeName))
 		(!(SEND-MESSAGE @bridgeName (Verbalization.request replan)))
 		(^(Verbalization.report @report))
 				(~>(Verbalization.report @report))
-
+			  )
 		)
 
 	)
 (defop |VerbalizeStartAction|
 	:invocation(!(Verbalization.verbalizeStartAction @actionId))
 	:body (
+	        (IF(?(Verbalization.isActive TRUE))
+
 		(?(Verbalization.bridgeName @bridgeName))
 		(!(SEND-MESSAGE @bridgeName (Verbalization.request init_execution @actionId)))
 		(^(Verbalization.report @report))
 		(~>(Verbalization.report @report))
-
+		)
 		)
 
 	)
 (defop |VerbalizeEndAction|
 	:invocation(!(Verbalization.verbalizeEndAction @actionId))
 	:body (
+	        (IF(?(Verbalization.isActive TRUE))
+
 		(?(Verbalization.bridgeName @bridgeName))
 		(!(SEND-MESSAGE @bridgeName (Verbalization.request end_execution @actionId)))
 		(^(Verbalization.report @report))
 		(~>(Verbalization.report @report))
-
+		)
 
 		)
 	)
