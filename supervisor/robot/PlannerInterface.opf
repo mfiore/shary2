@@ -184,27 +184,36 @@
 			 (PARAMETERS (VAL @parameters))
 			 )))
 	  (!(SEND-MESSAGE @hatp @message))
+	  ;; (^(HATP-REP 
+	  ;;    (REQ-ID (VAL @id))
+	  ;;    (REPORT @report)
+	  ;;    (STREAMS
+	  ;;    (ACTION-LIST @actionList)
+	  ;;    (LINK-LIST @linkList)
+	  ;; 	  )
+	  ;; 	  (TREE 
+	  ;; 	  	(TASK-LIST @taskList)
+	  ;; 	  	(LINK-LIST @treeLinkList)
+	  ;; 	  )
+	  ;; 	  ))
 	  (^(HATP-REP 
 	     (REQ-ID (VAL @id))
 	     (REPORT @report)
-	     (STREAMS
+	     
 	     (ACTION-LIST @actionList)
 	     (LINK-LIST @linkList)
 	  	  )
-	  	  (TREE 
-	  	  	(TASK-LIST @taskList)
-	  	  	(LINK-LIST @treeLinkList)
 	  	  )
-	  	  ))
+	  	  
 	  
 	  (=>(PlannerInterface.report @report))  ;send the report
 	  (IF(?(EQUAL @report OK))  ;if everything is okay we get the plan
 	     ;;for now we plan just for an human and a robot but we could generalize it in the future
 	     
-	     (!(= @taskList (CAR @taskList)))
+;	     (!(= @taskList (CAR @taskList)))
 	     (!(PlannerInterface.parseStreams @actionList @linkList @streamPlan))
 		 
-		 (!(PlannerInterface.parseHatpTree @taskList @linkList @parsedTree))	     
+;		 (!(PlannerInterface.parseHatpTree @taskList @linkList @parsedTree)) ;
 	 
 		   
 	     (=>(PlannerInterface.result @streamPlan @parsedTree))

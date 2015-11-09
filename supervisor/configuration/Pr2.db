@@ -24,13 +24,13 @@
 (PlannerInterface.usePlanner HATP)            ;;name of the used task planner
 
 ;;Modules
-(Mhp.isActive FALSE)
+(Mhp.isActive TRUE)
 (Softmotion.isActive TRUE)
-(Gtp.isActive FALSE)
+(Gtp.isActive TRUE)
 (Viman.isActive TRUE)
 (Spark.isActive factsManagement TRUE)
 (Spark.isActive monitorSpheres TRUE)
-(Spark.isActive BASE TRUE)
+(Spark.isActive BASE SIM)
 (Acapela.isActive FALSE)
 (Waypoints.isActive FALSE)
 (PathPlanner.isActive FALSE)
@@ -38,6 +38,8 @@
 (BaseActions.isActive TRUE)
 (Manipulation.moduleName GtpActions)
 (MonitorManager.isActive TRUE)
+(Verbalization.isActive FALSE)
+(MonitorSpheres.sim TRUE)
 
 (ExecutionManager.pressureControls TRUE)
 

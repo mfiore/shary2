@@ -1,8 +1,10 @@
 (
 
+(Actions.nParameters scan 3)
+
 (PlannerInterface.action hatp Scan scan)
 (PlannerInterface.parameterLinks hatp Scan (. 0 1 2 .))
-(Acapela.translation scan "scan")
+
 
 
  (PlannerInterface.action hatp Travelto go)
@@ -12,10 +14,9 @@
 
 
 
-
 (PlannerInterface.parameterLinks hatp Pick (. 0 1 .))
  (PlannerInterface.parameterLinks hatp Place (. 0 1 2 .))
- (PlannerInterface.parameterLinks hatp Scan (. 0 .))
+ (PlannerInterface.parameterLinks hatp Scan (. 0 1 2 .))
  (PlannerInterface.parameterLinks hatp Travelto (. 0 1 .))
 
 
@@ -23,10 +24,25 @@
 (Acapela.translation take "take")
 (Acapela.translation place "place")
 (Acapela.translation handover "handover")
-(Acapela.translation exploreHad "exploreHead")
+(Acapela.translation exploreHead "exploreHead")
 (Acapela.translation go "go")
-
-
+(Acapela.translation scan "scan")
+(Acapela.translation Livingroom_coffeetable "coffee table")
+(Acapela.translation Livingroom_table "table")
+(Acapela.translation Livingroom "living room")
+(Acapela.translation Bedroom "bedroom")
+(Acapela.translation Kitchen_table "kitchen table")
+(Acapela.translation GREY_TAPE "grey tape")
+(Acapela.translation BLACK_TAPE "black tape")
+(Acapela.translation LOTR_TAPE "lotr tape")
+(Acapela.translation WALLEE_TAPE "wallee tape")
+(Acapela.translation BLACK_CUBE "black cube")
+(Acapela.translation BLUE_CUBE "blue cube")
+(Acapela.translation GREEN_CUBE "green cube")
+(Acapela.translation ACCESSKIT "green cube")
+(Acapela.translation SURPRISE_BOX "green cube")
+(Acapela.translation PINK_TRASHBIN "pink trashbin")
+(Acapela.translation PR2_ROBOT "robot")
 
 
 
