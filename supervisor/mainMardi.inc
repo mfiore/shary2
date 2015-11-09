@@ -45,6 +45,7 @@ include "supervisor/robot/HeadActions.sym"
 include "supervisor/robot/PlannerInterface.sym"
 include "supervisor/robot/AgentActionMonitor.sym"
 include "supervisor/robot/ReportManager.sym"
+include "supervisor/robot/RequestManager.sym"
 
 
 include "supervisor/robot/Monitors.sym"
@@ -77,7 +78,7 @@ load opf "supervisor/robot/MonitorManager.opf"
 load opf "supervisor/robot/DatabaseInterface.opf"
 load opf "supervisor/robot/PlanManager.opf"
 load opf "supervisor/robot/ReportManager.opf"
-
+load opf "supervisor/robot/RequestManager.opf"
 
 
 include "supervisor/domains/Actions.sym"

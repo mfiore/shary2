@@ -24,9 +24,9 @@
 (PlannerInterface.usePlanner HATP)            ;;name of the used task planner
 
 ;;Modules
-(Mhp.isActive TRUE)
+(Mhp.isActive FALSE)
 (Softmotion.isActive TRUE)
-(Gtp.isActive TRUE)
+(Gtp.isActive FALSE)
 (Viman.isActive TRUE)
 (Spark.isActive factsManagement TRUE)
 (Spark.isActive monitorSpheres TRUE)
