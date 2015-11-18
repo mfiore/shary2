@@ -320,18 +320,19 @@
 
 
                    (IF(?(EQUAL @subTrajName "grasp"))
-                      (!(ArmActions.getFreeId @id))
+        	      (!(ArmActions.getFreeId @id))
                       (=>(ArmActions.action closeGripper (VAL @arm) @id))
                       (!(GtpActions.handleReport ArmActions @id @gtpId))
 		      
                       (IF(?(EQUAL @task pick))
                          (!(= @postParams (. (VAL @robotName) (VAL @object) (VAL @arm) .)))
-
-			 (!(DatabaseInterface.find (AGENT-STATEMENT (VAL @robotName) RIGHT_GRIPPER detectPression TRUE) @result))
-			 (IF(?(|| (EQUAL @result (. TRUE .)) (ExecutionManager.pressureControls FALSE)))
+			 
+		;	 (!(DatabaseInterface.find (AGENT-STATEMENT (VAL @robotName) RIGHT_GRIPPER detectPression TRUE) @result))
+		;	 (IF(?(|| (EQUAL @result (. TRUE .)) (ExecutionManager.pressureControls FALSE)))
 			     (!(Actions.setPostconditions take (VAL @postParams)))
 			     (=>(GtpActions.objectAttachment @taskId))
-                         )
+                 ;        )
+			    )
 		      
                       ELSEIF(?(EQUAL @subTrajName "release"))
                       (IF(?(EQUAL @task place))
@@ -404,6 +405,7 @@
                    (!(= @follow 0))
                    )
              )
+
           (!(Mhp.getFreeId @id))
           (=>(Mhp.request clearGtpInputs @id))
           (!(GtpActions.handleReport Mhp @id @gtpId))
@@ -413,7 +415,7 @@
 
           )
    )
-)
+
 (defop |handleReport|
   :invocation(!(GtpActions.handleReport @module @id @actionId))
   :documentation "Utility function to avoid some code duplication when waiting for the response of a genom module. This can't be used when we don't want to fail if the genom request fails"

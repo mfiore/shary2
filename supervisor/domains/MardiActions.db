@@ -30,6 +30,7 @@
 (Acapela.translation Livingroom_coffeetable "coffee table")
 (Acapela.translation Livingroom_table "table")
 (Acapela.translation Livingroom "living room")
+(Acapela.translation Bedroom_shelf "bedroom shelf")
 (Acapela.translation Bedroom "bedroom")
 (Acapela.translation Kitchen_table "kitchen table")
 (Acapela.translation GREY_TAPE "grey tape")

@@ -49,6 +49,45 @@
             )
          )
   )
+
+(defop |moveSeconds|
+  :invocation(BaseActions.action moveSeconds @seconds @direction @id)
+  :body (
+	 (!(SEM-P BaseActions.sem))
+
+          (?(BaseActions.bridgeName @name))
+          (?(BaseActions.timeToWait @time))
+
+	  (!(= @reportName1 (TERM-STRING-CAT (VAL @name) ".moveSeconds.report")))
+          (!(= @reportName1 (MAKE-ATOM @reportName1)))
+
+	 
+	  (!(SEND-MESSAGE (VAL @name) (moveSeconds (VAL @seconds) (VAL @direction))))
+	  
+	  (^(|| (@reportName1 @report) (ELAPSED-TIME (TIME) (VAL @time)
+						 (BaseActions.stop (VAL @id)))))
+
+	  (IF(?(BaseActions.stop (VAL @id)))  ;;if we receive a stop request we send a stop to the ros node and wait for the reports
+	     (!(BaseActions.getFreeId @stopId))
+	     (=>(BaseActions.action stop (VAL @stopId)))
+	     (!(ReportManager.sub BaseActions.report @stopId))
+	     (^(BaseActions.report (VAL @stopId) @report))
+	     (!(ReportManager.unsub BaseActions.report @stopId))
+	     
+	     (^(@reportName1 @status))
+	     (~>(@reportName1 (VAL @status)))
+	     
+	     (!(ReportManager.publish BaseActions.report @id "STOPPED"))
+	     
+	     ELSEIF(?(@reportName1 OK))
+	     (~>(@reportName1 @status))
+	     (!(ReportManager.publish BaseActions.report @id "OK"))
+	     )
+	  (!(SEM-V BaseActions.sem))
+	  )
+  )
+
+
 (defop |move|
   :invocation(BaseActions.action move @waypoints @id)
   :documentation "moves the robot through a list of waypoints"

@@ -93,15 +93,21 @@
 		       
 		   (=>(MonitorManager.isMonitoringTarget @monitorId))
 		   
-           (!(MonitorManager.findTarget @target @targetPart @result))
-           (IF(?(EQUAL @result TRUE))
-              (IF(?(Object.isTrackable (VAL @target) TRUE))
-                 (!(HeadActions.getFreeId @actionId))
-                 (!(ReportManager.sub HeadActions.report @actionId))
-                 (=>(HeadActions.action track (VAL @target) (VAL @actionId)))
-                 (^(HeadActions.report (VAL @actionId) @executionReport))
-                 (!(ReportManager.unsub HeadActions.report @actionId))
-                 )
+        ;   (!(MonitorManager.findTarget @target @targetPart @result))
+         ;  (IF(?(EQUAL @result TRUE))
+          ;    (IF(?(Object.isTrackable (VAL @target) TRUE))
+           ;      (!(HeadActions.getFreeId @actionId))
+            ;     (!(ReportManager.sub HeadActions.report @actionId))
+             ;    (=>(HeadActions.action track (VAL @target) (VAL @actionId)))
+              ;   (^(HeadActions.report (VAL @actionId) @executionReport))
+               ;  (!(ReportManager.unsub HeadActions.report @actionId))
+                ; )
+
+		   (!(HeadActions.getFreeId @actionId))
+		   (!(ReportManager.sub HeadActions.report @actionId))
+		   (=>(HeadActions.action lookAt (VAL @target) @targetPart @actionId))
+		   (^(HeadActions.report (VAL @actionId) @executionReport))
+		   (!(ReportManager.unsub HeadActions.report @actionId))
 
               (^(MonitorManager.cancelMonitoring (VAL @monitorId))) ;(&(MonitorManager.highestAvailablePriority @newP) (> @newP @priority))))
 
@@ -112,11 +118,11 @@
                  (~>(MonitorManager.target @target @targetPart @priority (VAL @monitorId)))
                  )
 
-              ELSE
-              (!(ReportManager.publish MonitorManager.report @monitorId "FAILURE"))
-              (!(Queue.pop (VAL @queueInUse)))
-              (~>(MonitorManager.target @target @targetPart @priority (VAL @monitorId)))
-           )
+             ;;  ELSE
+           ;;    (!(ReportManager.publish MonitorManager.report @monitorId "FAILURE"))
+           ;;    (!(Queue.pop (VAL @queueInUse)))
+           ;;    (~>(MonitorManager.target @target @targetPart @priority (VAL @monitorId)))
+           ;; )
 
            (~>(MonitorManager.isMonitoringTarget (VAL @monitorId)))
 

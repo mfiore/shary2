@@ -228,7 +228,7 @@
 
 	  (!(= @done FALSE))
 	  
-	  (WHILE(?(~(EQUAL @done TRUE)))
+;	  (WHILE(?(~(EQUAL @done TRUE)))
 
 		;;we move to manipulation pose
 		(!(= @moveToPoseParams (. MANIPULATION_RIGHT .)))
@@ -240,10 +240,10 @@
 
 		;;set the parameters for the monitor manager
 
-		;;  (!(MonitorManager.getFreeId @monitorId))
+		;(!(MonitorManager.getFreeId @monitorId))
 		;;  ;;start the monitoring
-		;; (!(MonitorManager.monitorTarget @object "NO_NAME" HIGH @monitorId))
-		;;  (^(|| (MonitorManager.isMonitoringTarget (VAL @monitorId)) (MonitorManager.report (VAL @monitorId) @monitorReport )))
+		;(!(MonitorManager.monitorTarget @object "NO_NAME" HIGH @monitorId))
+		;(^(|| (MonitorManager.isMonitoringTarget (VAL @monitorId)) (MonitorManager.report (VAL @monitorId) @monitorReport )))
 		;;   (IF(?(~(MonitorManager.isMonitoringTarget (VAL @monitorId))))
 		;;          ;;there is an error (for example the object is not there)
 		;;          (!(ReportManager.publish ExecutionManager.report @executionId @monitorReport))
@@ -257,16 +257,16 @@
 		
 					;     (=>(MonitorManager.cancelMonitoring (VAL @monitorId)))
 
-		;; (!(MonitorManager.getFreeId @monitorId))
-		;;    ;;start the monitoring
-		;;   (!(MonitorManager.monitorTarget @object "NO_NAME" HIGH @monitorId))
-		;;    (^(|| (MonitorManager.isMonitoringTarget (VAL @monitorId)) (MonitorManager.report (VAL @monitorId) @monitorReport )))
-		;;     (IF(?(~(MonitorManager.isMonitoringTarget (VAL @monitorId))))
-		;;            ;;there is an error (for example the object is not there)
-		;;            (!(ReportManager.publish ExecutionManager.report @executionId @monitorReport))
-		;;            (~>(ExecutionManager.isExecutingAction (VAL @executionId)))
-		;;            (!(FAILED))
-		;;            )
+		 (!(MonitorManager.getFreeId @monitorId))
+		    ;;start the monitoring
+		   (!(MonitorManager.monitorTarget @object "NO_NAME" HIGH @monitorId))
+		    (^(|| (MonitorManager.isMonitoringTarget (VAL @monitorId)) (MonitorManager.report (VAL @monitorId) @monitorReport )))
+		     (IF(?(~(MonitorManager.isMonitoringTarget (VAL @monitorId))))
+		            ;;there is an error (for example the object is not there)
+		            (!(ReportManager.publish ExecutionManager.report @executionId @monitorReport))
+		            (~>(ExecutionManager.isExecutingAction (VAL @executionId)))
+		            (!(FAILED))
+		            )
 
 		;;everything is good. Monitoring has started. We can choose an arm for take if needed
 		
@@ -289,17 +289,18 @@
 		(=>(@requestCommand pick @object @armForPick @pickId))
 		(!(ExecutionManager.handleReport @moduleName @pickId @executionId TRUE TRUE (. (. (AGENT-STATEMENT PR2_ROBOT (VAL @object) isReachable false) .) (. (AGENT-STATEMENT PR2_ROBOT (VAL @object) isReachableBy PR2_ROBOT) (AGENT-STATEMENT PR2_ROBOT (VAL @object) isReachable true) .) .)))
 
-		(!(DatabaseInterface.find (AGENT-STATEMENT (VAL @robotName) RIGHT_GRIPPER detectPression TRUE) @result))
-		(IF(?(|| (EQUAL @result (. TRUE .)) (ExecutionManager.pressureControls FALSE)))
-		   (!(= @done TRUE))
-		   ELSE
-		   (IF(?(EQUAL @nFailures 2))
-		      (!(ReportManager.publish ExecutionManager.report  (VAL @executionId) "FAILURE"))
-		      (~>(ExecutionManager.isExecutingAction (VAL @executionId)))
-		      (!(FAILED))
-		      )
-		   )
-      )
+
+	;	(!(DatabaseInterface.find (AGENT-STATEMENT (VAL @robotName) RIGHT_GRIPPER detectPression TRUE) @result))
+	;	(IF(?(|| (EQUAL @result (. TRUE .)) (ExecutionManager.pressureControls FALSE)))
+	;	   (!(= @done TRUE))
+	;	   ELSE
+	;	   (IF(?(EQUAL @nFailures 2))
+	;	      (!(ReportManager.publish ExecutionManager.report  (VAL @executionId) "FAILURE"))
+	;	      (~>(ExecutionManager.isExecutingAction (VAL @executionId)))
+	;	      (!(FAILED))
+	;	      )
+	;	   )
+;      )
 	 (=>(MonitorManager.cancelMonitoring (VAL @monitorId)))
 
       (!(ReportManager.publish ExecutionManager.report  (VAL @executionId) "OK"))
@@ -1102,6 +1103,10 @@
             )
 
          (=>(ExecutionManager.isExecutingAction @executionId))
+	 (!(Viman.getFreeId @vimanId))
+	 (=>(Viman.request stopTracking @vimanId))
+	 (!(ExecutionManager.handleReport Viman @vimanId @executionId FALSE FALSE (. .)))
+
 	 (IF(?(EQUAL @mode go))
 	    (!(ExecutionManager.getFreeId @poseId))
 	    (=>(ExecutionManager.execute moveToPose (. NAV .) @poseId))
@@ -1123,13 +1128,21 @@
 
                ELSE
 	     
-               (?(PathPlanner.coordinates (VAL @mode) (VAL @goal) @x @y @theta))
+               (?(PathPlanner.coordinates  (VAL @goal) @x @y @theta))
                (!(= @waypoints (. (. @x @y @theta .) .)))
                )
             ;;move to place
             (!(BaseActions.getFreeId @baseActionsId))
             (=>(BaseActions.action move @waypoints @baseActionsId))
             (!(ExecutionManager.handleReport BaseActions @baseActionsId @executionId FALSE TRUE (. .)))
+
+    	    (!(ExecutionManager.getFreeId @poseId))
+	    (=>(ExecutionManager.execute moveToPose (. MANIPULATION_RIGHT .) @poseId))
+	    (!(ExecutionManager.handleReport ExecutionManager @poseId @executionId TRUE TRUE (. .) ))
+
+	    (!(BaseActions.getFreeId @baseActionsId))
+	    (=>(BaseActions.action moveSeconds 2 f @baseActionsId))
+	    (!(ExecutionManager.handleReport BaseActions @baseActionsId @executionId TRUE TRUE (. .)))
 
             ELSE
             (?(PathPlanner.getCoordinates (VAL @goal) @x @y @theta))
@@ -1145,6 +1158,11 @@
          (~>(ExecutionManager.isExecutingAction @executionId))
 
          (!(Actions.setPostconditions go @params))
+
+	 (!(Viman.getFreeId @vimanId))
+	 (=>(Viman.request activateTracking @vimanId))
+	 (!(ExecutionManager.handleReport Viman @vimanId @executionId FALSE FALSE (. .)))
+
          (!(ReportManager.publish ExecutionManager.report  (VAL @executionId) "OK"))
          )
 
