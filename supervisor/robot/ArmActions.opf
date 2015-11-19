@@ -62,7 +62,7 @@
 
 	  (=>(Robot.pose (VAL @arm) NO_NAME NO_NAME OTHER))
 
-      (IF(?(Supervisor.sim FALSE))
+      (IF(?(ExecutionManager.isActive execution TRUE))
 	     (IF(?(~(EQUAL @object NO_NAME)))
 		(!(= @result NULL))
 		;;this is done because in take requestes MHP doesn't need the support that the object is on but we still want to record this information in the system
@@ -282,7 +282,7 @@
    :invocation(ArmActions.action useGripper @state @actionId)
    :documentation "Moves the gripper to state @state"
    :body (
-      (IF(?(Supervisor.sim FALSE))
+      (IF(?(ExecutionManager.isActive execution TRUE))
 	     (!(Softmotion.getFreeId @smId))
 	     
 	     (=>(Softmotion.request useGripper (VAL @state) (VAL @smId)))

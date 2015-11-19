@@ -21,9 +21,6 @@
  :invocation(!(ReportManager.publish @report @id @value))
  :body (
         ;(IF(?(ReportManager.subNumber (VAL @report) (VAL @id) @n))
-         ;  (=>(@report @id @value))
-
-          ; ELSEIF(?(Mhp.sim TRUE))
            (=>(@report @id @value))
            ;)
         )

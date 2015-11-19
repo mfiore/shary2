@@ -216,7 +216,7 @@
 	   (!(GenomInterface.handleRequest SPARK SPARK_PLACEOBJECT  (Spark.stop (VAL @id)) (FALSE) (FALSE) 300 (VAL @param) @report @result))
        (!(ReportManager.publish Spark.report (VAL @id) (VAL @report)))
 
-       (IF(?(Facts.sim TRUE))
+       (IF(?(Spark.isActive factsManagement SIM))
           (!(DatabaseInterface.findList (AGENT-STATEMENT PR2_ROBOT @agent hasInHand (VAL @object)) (. @agent .) @result))
           (IF(?(~(NULL @result)))
              (!(= @agent (CAR(CAR @result))))
@@ -320,7 +320,7 @@
          (!(ExecutionManager.handleReport Spark @sparkId @executionId FALSE FALSE NO_NAME))
          )
 
-      (IF(?(Facts.sim TRUE))
+      (IF(?(Spark.isActive factsManagement SIM))
          (!(DatabaseInterface.findList (AGENT-STATEMENT PR2_ROBOT (VAL @object) isOn @support) (. @support .) @result))
          (WHILE(?(~(NULL @result)))
                (!(= @support (CAR(CAR @result))))

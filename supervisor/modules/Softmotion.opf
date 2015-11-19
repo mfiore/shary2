@@ -383,7 +383,7 @@
 	  )
       
 	  
-      (IF (?(Softmotion.sim FALSE)) ;;the gripper doesn't seem to work in simulation
+      (IF (?(Softmotion.isActive TRUE)) ;;the gripper doesn't seem to work in simulation
 	      (!(= @parameters (PR2SM_gripperGrabRelease (VAL @state))))	     
 
           (!(GenomInterface.handleRequest PR2SOFTMOTION PR2SOFTMOTION_GRIPPERGRABRELEASE (Softmotion.stop (VAL @id)) (VAL @irAddFact) (VAL @stopFact) @waitTime @parameters @report @result))
@@ -427,7 +427,7 @@
 	  (!(GenomInterface.handleRequest PR2SOFTMOTION PR2SOFTMOTION_GETPANTILTFROMXYZ (Softmotion.stop (VAL @id)) (FALSE) (FALSE) 300 @parameters @report @result))
       (!(ReportManager.publish Softmotion.report (VAL @id) (VAL @report)))
 
-      (IF(?(Softmotion.sim FALSE))
+      (IF(?(Softmotion.isActive TRUE))
 	     (!(== (VAL @result) (PR2SM_PanTilt 
 				  (pan  @pan)
 				  (tilt  @tilt))

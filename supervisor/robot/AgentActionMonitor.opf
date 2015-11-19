@@ -313,7 +313,7 @@
    :invocation(AgentActionMonitor.startMonitorSphereLoop) 
    :documentation "Loop to read the poster of the monitor spheres"
    :body (
-      (IF(?(MonitorSpheres.sim FALSE))
+      (IF(?(Spark.isActive monitorSpheres TRUE))
 	     (WHILE(?(~(AgentActionMonitor.stopMonitorSphereLoop)))
 		   (!(AgentActionMonitor.readMonitorSpheresPoster))
 		   (^ (ELAPSED-TIME (TIME) 1))

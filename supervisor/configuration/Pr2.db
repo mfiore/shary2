@@ -34,18 +34,14 @@
 (Acapela.isActive FALSE)
 (Waypoints.isActive FALSE)
 (PathPlanner.isActive FALSE)
-(ExecutionManager.isActive execution TRUE)
 (BaseActions.isActive TRUE)
 (Manipulation.moduleName GtpActions)
 (MonitorManager.isActive TRUE)
 (Verbalization.isActive FALSE)
-(MonitorSpheres.sim TRUE)
-(Supervisor.sim FALSE)
-(Softmotion.sim FALSE)
-
-(Mhp.sim FALSE)
 
 (ExecutionManager.pressureControls TRUE)
+(ExecutionManager.isActive execution TRUE)
+(ExecutionManager.approachAfterMove TRUE)
 
 ;;Joints
 (Robot.joints HEAD)

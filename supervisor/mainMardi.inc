@@ -1,7 +1,6 @@
 include "new-default.inc"
 include "semaphore.inc"
 
-;load db "supervisor/Config.db"
 load db "supervisor/configuration/Pr2.db"
 
 

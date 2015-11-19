@@ -1,15 +1,6 @@
 (
 
-	;; (defop |getRequest|
-	;; 	:invocation(RequestManager.getRequest @command @parameters @caller)
-	;; 	:body (
-	;; 		(!(ExecutionManager.getFreeId @executionId))
-	;; 		(=>(ExecutionManager.execute @command @parameters @executionId))
-	;; 		(^(ExecutionManager.report (VAL @executionId)))
-	;; 		(!(SEND-MESSAGE @caller (ReportManager.report @report)))
-	;; 	)
 
-	;)				
 
 	(defop |getRequest|
 	       :invocation(RequestManager.request @goal @parameters @caller)
